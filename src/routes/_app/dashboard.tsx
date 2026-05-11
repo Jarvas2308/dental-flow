@@ -11,7 +11,9 @@ import {
 } from "recharts";
 import {
   TrendingUp, TrendingDown, Wallet, Receipt, FlaskConical, CircleDollarSign,
+  Activity, CalendarDays, Trophy, Sparkles, Crown, Percent,
 } from "lucide-react";
+import { ProceduresAnalytics } from "@/components/procedures-analytics";
 
 export const Route = createFileRoute("/_app/dashboard")({
   component: Dashboard,
