@@ -35,7 +35,7 @@ export function useCreate(table: TableName) {
   return useMutation({
     mutationFn: async (values: Record<string, any>) => {
       const payload = { ...values, user_id: user!.id };
-      const { error } = await supabase.from(table).insert(payload);
+      const { error } = await (supabase.from(table) as any).insert(payload);
       if (error) throw error;
     },
     onSuccess: () => {
