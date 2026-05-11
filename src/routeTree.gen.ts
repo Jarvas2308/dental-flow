@@ -13,6 +13,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppLaboratorioRouteImport } from './routes/_app/laboratorio'
+import { Route as AppFluxoCaixaRouteImport } from './routes/_app/fluxo-caixa'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppContasRouteImport } from './routes/_app/contas'
 import { Route as AppConsultorioRouteImport } from './routes/_app/consultorio'
@@ -35,6 +36,11 @@ const IndexRoute = IndexRouteImport.update({
 const AppLaboratorioRoute = AppLaboratorioRouteImport.update({
   id: '/laboratorio',
   path: '/laboratorio',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFluxoCaixaRoute = AppFluxoCaixaRouteImport.update({
+  id: '/fluxo-caixa',
+  path: '/fluxo-caixa',
   getParentRoute: () => AppRoute,
 } as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
@@ -65,6 +71,7 @@ export interface FileRoutesByFullPath {
   '/consultorio': typeof AppConsultorioRoute
   '/contas': typeof AppContasRoute
   '/dashboard': typeof AppDashboardRoute
+  '/fluxo-caixa': typeof AppFluxoCaixaRoute
   '/laboratorio': typeof AppLaboratorioRoute
 }
 export interface FileRoutesByTo {
@@ -74,6 +81,7 @@ export interface FileRoutesByTo {
   '/consultorio': typeof AppConsultorioRoute
   '/contas': typeof AppContasRoute
   '/dashboard': typeof AppDashboardRoute
+  '/fluxo-caixa': typeof AppFluxoCaixaRoute
   '/laboratorio': typeof AppLaboratorioRoute
 }
 export interface FileRoutesById {
@@ -85,6 +93,7 @@ export interface FileRoutesById {
   '/_app/consultorio': typeof AppConsultorioRoute
   '/_app/contas': typeof AppContasRoute
   '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/fluxo-caixa': typeof AppFluxoCaixaRoute
   '/_app/laboratorio': typeof AppLaboratorioRoute
 }
 export interface FileRouteTypes {
@@ -96,6 +105,7 @@ export interface FileRouteTypes {
     | '/consultorio'
     | '/contas'
     | '/dashboard'
+    | '/fluxo-caixa'
     | '/laboratorio'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
     | '/consultorio'
     | '/contas'
     | '/dashboard'
+    | '/fluxo-caixa'
     | '/laboratorio'
   id:
     | '__root__'
@@ -115,6 +126,7 @@ export interface FileRouteTypes {
     | '/_app/consultorio'
     | '/_app/contas'
     | '/_app/dashboard'
+    | '/_app/fluxo-caixa'
     | '/_app/laboratorio'
   fileRoutesById: FileRoutesById
 }
@@ -154,6 +166,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppLaboratorioRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/fluxo-caixa': {
+      id: '/_app/fluxo-caixa'
+      path: '/fluxo-caixa'
+      fullPath: '/fluxo-caixa'
+      preLoaderRoute: typeof AppFluxoCaixaRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/dashboard': {
       id: '/_app/dashboard'
       path: '/dashboard'
@@ -190,6 +209,7 @@ interface AppRouteChildren {
   AppConsultorioRoute: typeof AppConsultorioRoute
   AppContasRoute: typeof AppContasRoute
   AppDashboardRoute: typeof AppDashboardRoute
+  AppFluxoCaixaRoute: typeof AppFluxoCaixaRoute
   AppLaboratorioRoute: typeof AppLaboratorioRoute
 }
 
@@ -198,6 +218,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppConsultorioRoute: AppConsultorioRoute,
   AppContasRoute: AppContasRoute,
   AppDashboardRoute: AppDashboardRoute,
+  AppFluxoCaixaRoute: AppFluxoCaixaRoute,
   AppLaboratorioRoute: AppLaboratorioRoute,
 }
 

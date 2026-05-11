@@ -6,12 +6,14 @@ import {
   FlaskConical,
   Settings,
   LogOut,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 
 const items = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/fluxo-caixa", label: "Fluxo", icon: TrendingUp },
   { to: "/contas", label: "Contas", icon: Wallet },
   { to: "/consultorio", label: "Consultório", icon: Stethoscope },
   { to: "/laboratorio", label: "Laboratório", icon: FlaskConical },
@@ -80,7 +82,7 @@ export function MobileNav() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   return (
     <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t bg-card/95 backdrop-blur">
-      <div className="grid grid-cols-5">
+      <div className="grid grid-cols-6">
         {items.map(({ to, label, icon: Icon }) => {
           const active = path === to || path.startsWith(to + "/");
           return (
