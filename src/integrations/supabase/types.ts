@@ -14,7 +14,248 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      atendimentos: {
+        Row: {
+          created_at: string
+          data: string
+          forma_pagamento: string
+          id: string
+          nota_fiscal: boolean
+          paciente: string
+          procedimento: string
+          taxa: number
+          user_id: string
+          valor_bruto: number
+          valor_liquido: number
+        }
+        Insert: {
+          created_at?: string
+          data: string
+          forma_pagamento: string
+          id?: string
+          nota_fiscal?: boolean
+          paciente: string
+          procedimento: string
+          taxa?: number
+          user_id: string
+          valor_bruto: number
+          valor_liquido: number
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          forma_pagamento?: string
+          id?: string
+          nota_fiscal?: boolean
+          paciente?: string
+          procedimento?: string
+          taxa?: number
+          user_id?: string
+          valor_bruto?: number
+          valor_liquido?: number
+        }
+        Relationships: []
+      }
+      custos_laboratorio: {
+        Row: {
+          atendimento_id: string | null
+          created_at: string
+          data: string
+          id: string
+          laboratorio: string
+          paciente: string
+          procedimento: string | null
+          tipo_trabalho: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          atendimento_id?: string | null
+          created_at?: string
+          data: string
+          id?: string
+          laboratorio: string
+          paciente: string
+          procedimento?: string | null
+          tipo_trabalho: string
+          user_id: string
+          valor: number
+        }
+        Update: {
+          atendimento_id?: string | null
+          created_at?: string
+          data?: string
+          id?: string
+          laboratorio?: string
+          paciente?: string
+          procedimento?: string | null
+          tipo_trabalho?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custos_laboratorio_atendimento_id_fkey"
+            columns: ["atendimento_id"]
+            isOneToOne: false
+            referencedRelation: "atendimentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      formas_pagamento: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+          taxa: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+          taxa?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+          taxa?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      gastos_fixos: {
+        Row: {
+          categoria: string | null
+          created_at: string
+          data: string
+          id: string
+          nome: string
+          observacoes: string | null
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          categoria?: string | null
+          created_at?: string
+          data: string
+          id?: string
+          nome: string
+          observacoes?: string | null
+          user_id: string
+          valor: number
+        }
+        Update: {
+          categoria?: string | null
+          created_at?: string
+          data?: string
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          user_id?: string
+          valor?: number
+        }
+        Relationships: []
+      }
+      gastos_variaveis: {
+        Row: {
+          categoria: string | null
+          created_at: string
+          data: string
+          id: string
+          nome: string
+          observacoes: string | null
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          categoria?: string | null
+          created_at?: string
+          data: string
+          id?: string
+          nome: string
+          observacoes?: string | null
+          user_id: string
+          valor: number
+        }
+        Update: {
+          categoria?: string | null
+          created_at?: string
+          data?: string
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          user_id?: string
+          valor?: number
+        }
+        Relationships: []
+      }
+      laboratorios: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      procedimentos: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tipos_trabalho: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
