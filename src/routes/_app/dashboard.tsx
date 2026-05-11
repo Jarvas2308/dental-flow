@@ -12,6 +12,7 @@ import {
 import {
   TrendingUp, TrendingDown, Wallet, Receipt, FlaskConical, CircleDollarSign,
 } from "lucide-react";
+import { ProceduresAnalytics } from "@/components/procedures-analytics";
 
 export const Route = createFileRoute("/_app/dashboard")({
   component: Dashboard,
@@ -110,6 +111,8 @@ function Dashboard() {
           </ResponsiveContainer>
         </div>
       </div>
+
+      <ProceduresAnalytics mes={mes} />
     </>
   );
 }
