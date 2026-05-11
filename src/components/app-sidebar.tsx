@@ -6,12 +6,14 @@ import {
   FlaskConical,
   Settings,
   LogOut,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 
 const items = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/fluxo-caixa", label: "Fluxo", icon: TrendingUp },
   { to: "/contas", label: "Contas", icon: Wallet },
   { to: "/consultorio", label: "Consultório", icon: Stethoscope },
   { to: "/laboratorio", label: "Laboratório", icon: FlaskConical },
