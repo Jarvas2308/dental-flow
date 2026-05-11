@@ -12,7 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppLaboratorioRouteImport } from './routes/_app/laboratorio'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
+import { Route as AppContasRouteImport } from './routes/_app/contas'
+import { Route as AppConsultorioRouteImport } from './routes/_app/consultorio'
+import { Route as AppCadastrosRouteImport } from './routes/_app/cadastros'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -28,35 +32,90 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppLaboratorioRoute = AppLaboratorioRouteImport.update({
+  id: '/laboratorio',
+  path: '/laboratorio',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppContasRoute = AppContasRouteImport.update({
+  id: '/contas',
+  path: '/contas',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppConsultorioRoute = AppConsultorioRouteImport.update({
+  id: '/consultorio',
+  path: '/consultorio',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCadastrosRoute = AppCadastrosRouteImport.update({
+  id: '/cadastros',
+  path: '/cadastros',
   getParentRoute: () => AppRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/cadastros': typeof AppCadastrosRoute
+  '/consultorio': typeof AppConsultorioRoute
+  '/contas': typeof AppContasRoute
   '/dashboard': typeof AppDashboardRoute
+  '/laboratorio': typeof AppLaboratorioRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/cadastros': typeof AppCadastrosRoute
+  '/consultorio': typeof AppConsultorioRoute
+  '/contas': typeof AppContasRoute
   '/dashboard': typeof AppDashboardRoute
+  '/laboratorio': typeof AppLaboratorioRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/_app/cadastros': typeof AppCadastrosRoute
+  '/_app/consultorio': typeof AppConsultorioRoute
+  '/_app/contas': typeof AppContasRoute
   '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/laboratorio': typeof AppLaboratorioRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/dashboard'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/cadastros'
+    | '/consultorio'
+    | '/contas'
+    | '/dashboard'
+    | '/laboratorio'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/dashboard'
-  id: '__root__' | '/' | '/_app' | '/login' | '/_app/dashboard'
+  to:
+    | '/'
+    | '/login'
+    | '/cadastros'
+    | '/consultorio'
+    | '/contas'
+    | '/dashboard'
+    | '/laboratorio'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/login'
+    | '/_app/cadastros'
+    | '/_app/consultorio'
+    | '/_app/contas'
+    | '/_app/dashboard'
+    | '/_app/laboratorio'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -88,6 +147,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/laboratorio': {
+      id: '/_app/laboratorio'
+      path: '/laboratorio'
+      fullPath: '/laboratorio'
+      preLoaderRoute: typeof AppLaboratorioRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/dashboard': {
       id: '/_app/dashboard'
       path: '/dashboard'
@@ -95,15 +161,44 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/contas': {
+      id: '/_app/contas'
+      path: '/contas'
+      fullPath: '/contas'
+      preLoaderRoute: typeof AppContasRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/consultorio': {
+      id: '/_app/consultorio'
+      path: '/consultorio'
+      fullPath: '/consultorio'
+      preLoaderRoute: typeof AppConsultorioRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/cadastros': {
+      id: '/_app/cadastros'
+      path: '/cadastros'
+      fullPath: '/cadastros'
+      preLoaderRoute: typeof AppCadastrosRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
+  AppCadastrosRoute: typeof AppCadastrosRoute
+  AppConsultorioRoute: typeof AppConsultorioRoute
+  AppContasRoute: typeof AppContasRoute
   AppDashboardRoute: typeof AppDashboardRoute
+  AppLaboratorioRoute: typeof AppLaboratorioRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppCadastrosRoute: AppCadastrosRoute,
+  AppConsultorioRoute: AppConsultorioRoute,
+  AppContasRoute: AppContasRoute,
   AppDashboardRoute: AppDashboardRoute,
+  AppLaboratorioRoute: AppLaboratorioRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
