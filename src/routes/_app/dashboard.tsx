@@ -112,6 +112,8 @@ function Dashboard() {
           </ResponsiveContainer>
         </div>
       </div>
+
+      <ProceduresAnalytics mes={mes} />
     </>
   );
 }
