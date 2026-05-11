@@ -50,7 +50,7 @@ export function useUpdate(table: TableName) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, values }: { id: string; values: Record<string, any> }) => {
-      const { error } = await supabase.from(table).update(values).eq("id", id);
+      const { error } = await (supabase.from(table) as any).update(values).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: [table] }),
