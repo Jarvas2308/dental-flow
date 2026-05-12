@@ -134,13 +134,6 @@ function FluxoCaixa() {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={categoria} onValueChange={setCategoria}>
-              <SelectTrigger className="w-[170px]"><SelectValue placeholder="Categoria" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todas">Todas categorias</SelectItem>
-                {categorias.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-              </SelectContent>
-            </Select>
             <Select value={pagamento} onValueChange={setPagamento}>
               <SelectTrigger className="w-[170px]"><SelectValue placeholder="Pagamento" /></SelectTrigger>
               <SelectContent>
