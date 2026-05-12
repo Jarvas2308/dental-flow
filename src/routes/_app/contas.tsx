@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useTable, useCreate, useDelete, useUpdate } from "@/hooks/use-data";
+import { useEnsureRecurring } from "@/hooks/use-recurring";
 import { brl, currentMonthKey, monthKey, monthLabel, monthOptions } from "@/lib/format";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import {
@@ -19,7 +20,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Plus, Pencil, Search, Loader2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Pencil, Search, Loader2, Check, RotateCw } from "lucide-react";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { toast } from "sonner";
 
@@ -27,33 +30,46 @@ export const Route = createFileRoute("/_app/contas")({
   component: Contas,
 });
 
-type Tbl = "gastos_fixos" | "gastos_variaveis";
-
-type Gasto = {
+type Despesa = {
   id?: string;
   nome: string;
   valor: number | string;
-  data: string;
-  categoria: string;
-  observacoes: string;
+  vencimento: string;
+  data_pagamento?: string | null;
+  status: "pago" | "pendente" | "atrasado";
+  recorrente: boolean;
+  observacoes?: string | null;
+  origem_id?: string | null;
 };
 
-const empty = (): Gasto => ({
-  nome: "", valor: "", data: new Date().toISOString().slice(0, 10),
-  categoria: "", observacoes: "",
+const empty = (): Despesa => ({
+  nome: "", valor: "", vencimento: new Date().toISOString().slice(0, 10),
+  status: "pendente", recorrente: false, observacoes: "",
 });
 
-function GastoForm({
-  table, editing, onClose,
+function statusBadge(s: string) {
+  if (s === "pago") return <Badge className="bg-success text-success-foreground hover:bg-success/90">Pago</Badge>;
+  if (s === "atrasado") return <Badge variant="destructive">Atrasado</Badge>;
+  return <Badge variant="outline">Pendente</Badge>;
+}
+
+function computeStatus(d: Despesa): "pago" | "pendente" | "atrasado" {
+  if (d.status === "pago") return "pago";
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const v = new Date(d.vencimento + "T00:00:00");
+  return v < today ? "atrasado" : "pendente";
+}
+
+function DespesaForm({
+  editing, onClose,
 }: {
-  table: Tbl;
   editing?: any;
   onClose?: () => void;
 }) {
-  const create = useCreate(table);
-  const update = useUpdate(table);
+  const create = useCreate("despesas");
+  const update = useUpdate("despesas");
   const [open, setOpen] = useState(!!editing);
-  const [v, setV] = useState<Gasto>(editing ? { ...editing } : empty());
+  const [v, setV] = useState<Despesa>(editing ? { ...editing } : empty());
 
   useEffect(() => { if (open) setV(editing ? { ...editing } : empty()); }, [open, editing]);
 
@@ -64,12 +80,14 @@ function GastoForm({
     e.preventDefault();
     if (!v.nome.trim()) return toast.error("Informe o nome");
     if (!Number(v.valor)) return toast.error("Informe o valor");
-    const payload = {
+    const payload: any = {
       nome: v.nome.trim(),
       valor: Number(v.valor),
-      data: v.data,
-      categoria: v.categoria?.trim() || null,
-      observacoes: v.observacoes?.trim() || null,
+      vencimento: v.vencimento,
+      status: v.status,
+      recorrente: v.recorrente,
+      data_pagamento: v.status === "pago" ? (v.data_pagamento || v.vencimento) : null,
+      observacoes: v.observacoes?.toString().trim() || null,
     };
     if (isEdit) await update.mutateAsync({ id: editing.id, values: payload });
     else await create.mutateAsync(payload);
@@ -81,18 +99,16 @@ function GastoForm({
     <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) onClose?.(); }}>
       {!isEdit && (
         <DialogTrigger asChild>
-          <Button><Plus className="h-4 w-4" /> Novo</Button>
+          <Button><Plus className="h-4 w-4" /> Nova despesa</Button>
         </DialogTrigger>
       )}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>
-            {isEdit ? "Editar despesa" : table === "gastos_fixos" ? "Novo gasto fixo" : "Novo gasto variável"}
-          </DialogTitle>
+          <DialogTitle>{isEdit ? "Editar despesa" : "Nova despesa"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-1.5">
-            <Label>Nome da despesa</Label>
+            <Label>Nome</Label>
             <Input required value={v.nome} onChange={(e) => setV({ ...v, nome: e.target.value })} />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -102,17 +118,39 @@ function GastoForm({
                 onChange={(e) => setV({ ...v, valor: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Data</Label>
-              <Input type="date" required value={v.data} onChange={(e) => setV({ ...v, data: e.target.value })} />
+              <Label>Vencimento</Label>
+              <Input type="date" required value={v.vencimento}
+                onChange={(e) => setV({ ...v, vencimento: e.target.value })} />
             </div>
+            <div className="space-y-1.5">
+              <Label>Status</Label>
+              <Select value={v.status} onValueChange={(s: any) => setV({ ...v, status: s })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pendente">Pendente</SelectItem>
+                  <SelectItem value="pago">Pago</SelectItem>
+                  <SelectItem value="atrasado">Atrasado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {v.status === "pago" && (
+              <div className="space-y-1.5">
+                <Label>Pago em</Label>
+                <Input type="date" value={v.data_pagamento ?? v.vencimento}
+                  onChange={(e) => setV({ ...v, data_pagamento: e.target.value })} />
+              </div>
+            )}
           </div>
-          <div className="space-y-1.5">
-            <Label>Categoria</Label>
-            <Input value={v.categoria} onChange={(e) => setV({ ...v, categoria: e.target.value })} />
+          <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40">
+            <div>
+              <Label className="cursor-pointer">Despesa recorrente</Label>
+              <p className="text-xs text-muted-foreground">Repete automaticamente todo mês</p>
+            </div>
+            <Switch checked={v.recorrente} onCheckedChange={(c) => setV({ ...v, recorrente: c })} />
           </div>
           <div className="space-y-1.5">
             <Label>Observações</Label>
-            <Textarea value={v.observacoes} onChange={(e) => setV({ ...v, observacoes: e.target.value })} />
+            <Textarea value={v.observacoes ?? ""} onChange={(e) => setV({ ...v, observacoes: e.target.value })} />
           </div>
           <DialogFooter>
             <Button type="submit" disabled={busy}>
@@ -126,133 +164,147 @@ function GastoForm({
   );
 }
 
-function EditGasto({ table, row }: { table: Tbl; row: any }) {
+function EditDespesa({ row }: { row: any }) {
   const [editing, setEditing] = useState<any | null>(null);
   return (
     <>
       <Button variant="ghost" size="icon" aria-label="Editar" onClick={() => setEditing(row)}>
         <Pencil className="h-4 w-4 text-muted-foreground" />
       </Button>
-      {editing && <GastoForm table={table} editing={editing} onClose={() => setEditing(null)} />}
+      {editing && <DespesaForm editing={editing} onClose={() => setEditing(null)} />}
     </>
   );
 }
 
-function GastosSection({ table }: { table: Tbl }) {
+function Contas() {
+  useEnsureRecurring();
   const [mes, setMes] = useState(currentMonthKey());
-  const [cat, setCat] = useState("__all");
+  const [aba, setAba] = useState<"todas" | "pendente" | "atrasado" | "pago">("todas");
   const [q, setQ] = useState("");
-  const list = useTable<any>(table, "data");
-  const del = useDelete(table);
+  const list = useTable<any>("despesas", "vencimento", true);
+  const upd = useUpdate("despesas");
+  const del = useDelete("despesas");
 
-  const cats = useMemo(
-    () => Array.from(new Set((list.data ?? []).map((r) => r.categoria).filter(Boolean))),
-    [list.data],
-  );
+  // Aplica status calculado (atrasado) e ordena por vencimento ASC
+  const enriched = useMemo(() => {
+    return (list.data ?? []).map((r) => ({ ...r, status: computeStatus(r) }));
+  }, [list.data]);
 
-  const rows = (list.data ?? [])
-    .filter((r) => monthKey(r.data) === mes)
-    .filter((r) => cat === "__all" || r.categoria === cat)
-    .filter((r) => !q || r.nome.toLowerCase().includes(q.toLowerCase()));
+  const rowsMes = useMemo(() => enriched
+    .filter((r) => monthKey(r.vencimento) === mes)
+    .filter((r) => aba === "todas" ? true : r.status === aba)
+    .filter((r) => !q || r.nome.toLowerCase().includes(q.toLowerCase()))
+    .sort((a, b) => a.vencimento.localeCompare(b.vencimento)),
+    [enriched, mes, aba, q]);
 
-  const total = rows.reduce((s, r) => s + Number(r.valor || 0), 0);
+  const totMes = enriched.filter((r) => monthKey(r.vencimento) === mes);
+  const totalPago = totMes.filter((r) => r.status === "pago").reduce((s, r) => s + Number(r.valor), 0);
+  const totalPendente = totMes.filter((r) => r.status === "pendente").reduce((s, r) => s + Number(r.valor), 0);
+  const totalAtrasado = totMes.filter((r) => r.status === "atrasado").reduce((s, r) => s + Number(r.valor), 0);
+  const totalGeral = totalPago + totalPendente + totalAtrasado;
+
+  const marcarPago = (r: any) => {
+    upd.mutate({
+      id: r.id,
+      values: { status: "pago", data_pagamento: new Date().toISOString().slice(0, 10) },
+    });
+  };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-2 items-center">
+    <>
+      <PageHeader title="Despesas" description="Controle de contas e gastos do consultório"
+        actions={<DespesaForm />}
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-6">
+        <StatCard label={`Total · ${monthLabel(mes)}`} value={brl(totalGeral)} tone="primary" />
+        <StatCard label="Pago" value={brl(totalPago)} tone="success" />
+        <StatCard label="Pendente" value={brl(totalPendente)} tone="warning" />
+        <StatCard label="Atrasado" value={brl(totalAtrasado)} tone="destructive" />
+      </div>
+
+      <div className="flex flex-wrap gap-2 mb-4 items-center">
         <Select value={mes} onValueChange={setMes}>
-          <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
           <SelectContent>
             {monthOptions(12).map((m) => <SelectItem key={m} value={m} className="capitalize">{monthLabel(m)}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Select value={cat} onValueChange={setCat}>
-          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Categoria" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__all">Todas categorias</SelectItem>
-            {cats.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-          </SelectContent>
-        </Select>
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar..." value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" />
-        </div>
-        <GastoForm table={table} />
-      </div>
-
-      <div className="rounded-2xl border bg-card overflow-hidden" style={{ boxShadow: "var(--shadow-soft)" }}>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Data</TableHead>
-              <TableHead>Nome</TableHead>
-              <TableHead>Categoria</TableHead>
-              <TableHead className="text-right">Valor</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {list.isLoading && (
-              <TableRow><TableCell colSpan={5} className="text-center py-12">
-                <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
-              </TableCell></TableRow>
-            )}
-            {!list.isLoading && rows.length === 0 && (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-12">Sem lançamentos neste mês.</TableCell></TableRow>
-            )}
-            {rows.map((r) => (
-              <TableRow key={r.id}>
-                <TableCell className="text-muted-foreground">{new Date(r.data).toLocaleDateString("pt-BR")}</TableCell>
-                <TableCell className="font-medium">{r.nome}</TableCell>
-                <TableCell>{r.categoria || "—"}</TableCell>
-                <TableCell className="text-right font-medium">{brl(r.valor)}</TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-1">
-                    <EditGasto table={table} row={r} />
-                    <ConfirmDelete
-                      title="Excluir despesa?"
-                      description={`"${r.nome}" será removida permanentemente.`}
-                      onConfirm={() => del.mutate(r.id)}
-                    />
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        <div className="flex justify-between items-center px-4 py-3 border-t bg-muted/30">
-          <span className="text-sm text-muted-foreground">{rows.length} lançamento(s)</span>
-          <span className="font-semibold">Total: {brl(total)}</span>
+          <Input placeholder="Buscar despesa..." value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" />
         </div>
       </div>
-    </div>
-  );
-}
 
-function Contas() {
-  const [mes] = useState(currentMonthKey());
-  const fixos = useTable<any>("gastos_fixos");
-  const variaveis = useTable<any>("gastos_variaveis");
-
-  const tF = (fixos.data ?? []).filter((r) => monthKey(r.data) === mes).reduce((s, r) => s + Number(r.valor), 0);
-  const tV = (variaveis.data ?? []).filter((r) => monthKey(r.data) === mes).reduce((s, r) => s + Number(r.valor), 0);
-
-  return (
-    <>
-      <PageHeader title="Contas" description="Controle de despesas do consultório" />
-      <div className="grid gap-4 sm:grid-cols-3 mb-6">
-        <StatCard label={`Fixos · ${monthLabel(mes)}`} value={brl(tF)} tone="warning" />
-        <StatCard label={`Variáveis · ${monthLabel(mes)}`} value={brl(tV)} tone="warning" />
-        <StatCard label="Total Geral" value={brl(tF + tV)} tone="primary" />
-      </div>
-
-      <Tabs defaultValue="fixos">
+      <Tabs value={aba} onValueChange={(v) => setAba(v as any)}>
         <TabsList>
-          <TabsTrigger value="fixos">Gastos fixos</TabsTrigger>
-          <TabsTrigger value="variaveis">Gastos variáveis</TabsTrigger>
+          <TabsTrigger value="todas">Todas ({totMes.length})</TabsTrigger>
+          <TabsTrigger value="pendente">Pendentes</TabsTrigger>
+          <TabsTrigger value="atrasado">Atrasadas</TabsTrigger>
+          <TabsTrigger value="pago">Pagas</TabsTrigger>
         </TabsList>
-        <TabsContent value="fixos" className="mt-4"><GastosSection table="gastos_fixos" /></TabsContent>
-        <TabsContent value="variaveis" className="mt-4"><GastosSection table="gastos_variaveis" /></TabsContent>
+        <TabsContent value={aba} className="mt-4">
+          <div className="rounded-2xl border bg-card overflow-hidden" style={{ boxShadow: "var(--shadow-soft)" }}>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Vencimento</TableHead>
+                  <TableHead>Despesa</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Valor</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {list.isLoading && (
+                  <TableRow><TableCell colSpan={5} className="text-center py-12">
+                    <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
+                  </TableCell></TableRow>
+                )}
+                {!list.isLoading && rowsMes.length === 0 && (
+                  <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-12">Nenhuma despesa.</TableCell></TableRow>
+                )}
+                {rowsMes.map((r) => (
+                  <TableRow key={r.id}>
+                    <TableCell className="text-muted-foreground">
+                      {new Date(r.vencimento + "T00:00:00").toLocaleDateString("pt-BR")}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        {r.nome}
+                        {r.recorrente && <RotateCw className="h-3 w-3 text-muted-foreground" aria-label="Recorrente" />}
+                      </div>
+                    </TableCell>
+                    <TableCell>{statusBadge(r.status)}</TableCell>
+                    <TableCell className="text-right font-medium">{brl(r.valor)}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        {r.status !== "pago" && (
+                          <Button variant="ghost" size="icon" aria-label="Marcar como pago"
+                            onClick={() => marcarPago(r)}>
+                            <Check className="h-4 w-4 text-success" />
+                          </Button>
+                        )}
+                        <EditDespesa row={r} />
+                        <ConfirmDelete
+                          title="Excluir despesa?"
+                          description={`"${r.nome}" será removida permanentemente.`}
+                          onConfirm={() => del.mutate(r.id)}
+                        />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <div className="flex justify-between items-center px-4 py-3 border-t bg-muted/30">
+              <span className="text-sm text-muted-foreground">{rowsMes.length} despesa(s)</span>
+              <span className="font-semibold">
+                Total: {brl(rowsMes.reduce((s, r) => s + Number(r.valor), 0))}
+              </span>
+            </div>
+          </div>
+        </TabsContent>
       </Tabs>
     </>
   );
