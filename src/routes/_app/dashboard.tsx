@@ -23,19 +23,22 @@ function Dashboard() {
   const opts = monthOptions(12);
 
   const atendimentos = useTable<any>("atendimentos", "data");
-  const fixos = useTable<any>("gastos_fixos", "data");
-  const variaveis = useTable<any>("gastos_variaveis", "data");
+  const despesas = useTable<any>("despesas", "vencimento");
   const lab = useTable<any>("custos_laboratorio", "data");
 
   const filt = <T extends { data: string }>(rows: T[] = []) =>
     rows.filter((r) => monthKey(r.data) === mes);
 
+  const filtDesp = (rows: any[] = []) =>
+    rows.filter((r) => monthKey(r.vencimento) === mes);
+
   const totBruto = filt(atendimentos.data).reduce((s, r: any) => s + Number(r.valor_bruto || 0), 0);
   const totLiquido = filt(atendimentos.data).reduce((s, r: any) => s + Number(r.valor_liquido || 0), 0);
-  const totFixos = filt(fixos.data).reduce((s, r: any) => s + Number(r.valor || 0), 0);
-  const totVar = filt(variaveis.data).reduce((s, r: any) => s + Number(r.valor || 0), 0);
+  const totDesp = filtDesp(despesas.data ?? []).reduce((s, r: any) => s + Number(r.valor || 0), 0);
+  const totDespPagas = filtDesp(despesas.data ?? []).filter((r: any) => r.status === "pago").reduce((s, r: any) => s + Number(r.valor || 0), 0);
+  const totDespPendentes = totDesp - totDespPagas;
   const totLab = filt(lab.data).reduce((s, r: any) => s + Number(r.valor || 0), 0);
-  const lucro = totLiquido - totFixos - totVar - totLab;
+  const lucro = totLiquido - totDesp - totLab;
 
   const chartData = useMemo(() => {
     const months = monthOptions(6).reverse();
@@ -43,8 +46,7 @@ function Dashboard() {
       const rec = (atendimentos.data ?? []).filter((r: any) => monthKey(r.data) === m)
         .reduce((s, r: any) => s + Number(r.valor_liquido || 0), 0);
       const desp =
-        (fixos.data ?? []).filter((r: any) => monthKey(r.data) === m).reduce((s, r: any) => s + Number(r.valor || 0), 0) +
-        (variaveis.data ?? []).filter((r: any) => monthKey(r.data) === m).reduce((s, r: any) => s + Number(r.valor || 0), 0) +
+        (despesas.data ?? []).filter((r: any) => monthKey(r.vencimento) === m).reduce((s, r: any) => s + Number(r.valor || 0), 0) +
         (lab.data ?? []).filter((r: any) => monthKey(r.data) === m).reduce((s, r: any) => s + Number(r.valor || 0), 0);
       return {
         mes: monthLabel(m).replace(" de ", "/"),
@@ -53,7 +55,7 @@ function Dashboard() {
         Lucro: Number((rec - desp).toFixed(2)),
       };
     });
-  }, [atendimentos.data, fixos.data, variaveis.data, lab.data]);
+  }, [atendimentos.data, despesas.data, lab.data]);
 
   return (
     <>
@@ -76,8 +78,8 @@ function Dashboard() {
         <StatCard label="Receita Bruta" value={brl(totBruto)} tone="primary" icon={<TrendingUp className="h-4 w-4" />} />
         <StatCard label="Receita Líquida" value={brl(totLiquido)} tone="success" icon={<CircleDollarSign className="h-4 w-4" />} hint="Após taxas de cartão" />
         <StatCard label="Lucro Líquido" value={brl(lucro)} tone={lucro >= 0 ? "success" : "destructive"} icon={<Wallet className="h-4 w-4" />} hint="Receita líq. − despesas − laboratório" />
-        <StatCard label="Gastos Fixos" value={brl(totFixos)} tone="warning" icon={<Receipt className="h-4 w-4" />} />
-        <StatCard label="Gastos Variáveis" value={brl(totVar)} tone="warning" icon={<TrendingDown className="h-4 w-4" />} />
+        <StatCard label="Despesas" value={brl(totDesp)} tone="warning" icon={<Receipt className="h-4 w-4" />} hint={`Pagas ${brl(totDespPagas)} · Pend. ${brl(totDespPendentes)}`} />
+        <StatCard label="Pendentes" value={brl(totDespPendentes)} tone={totDespPendentes > 0 ? "warning" : "success"} icon={<TrendingDown className="h-4 w-4" />} />
         <StatCard label="Laboratório" value={brl(totLab)} icon={<FlaskConical className="h-4 w-4" />} />
       </div>
 

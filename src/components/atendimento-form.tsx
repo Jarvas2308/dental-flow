@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useCreate, useTable, useUpdate } from "@/hooks/use-data";
 import { brl } from "@/lib/format";
 import {
@@ -7,11 +7,16 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import {
+  Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Pencil, Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Check, ChevronsUpDown, Loader2, Pencil, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 type Atendimento = {
@@ -41,10 +46,26 @@ export function AtendimentoForm({
 }) {
   const procedimentos = useTable<any>("procedimentos", "nome", true);
   const formas = useTable<any>("formas_pagamento", "nome", true);
+  const atendimentos = useTable<any>("atendimentos", "data");
   const create = useCreate("atendimentos");
   const update = useUpdate("atendimentos");
   const [open, setOpen] = useState(!!editing);
   const [v, setV] = useState<Atendimento>(editing ? { ...editing } : empty());
+  const [procOpen, setProcOpen] = useState(false);
+
+  // Procedimentos ordenados por frequência de uso, com fallback alfabético
+  const procedimentosOrdenados = useMemo(() => {
+    const freq = new Map<string, number>();
+    (atendimentos.data ?? []).forEach((a: any) => {
+      if (a.procedimento) freq.set(a.procedimento, (freq.get(a.procedimento) ?? 0) + 1);
+    });
+    return [...(procedimentos.data ?? [])].sort((a, b) => {
+      const fa = freq.get(a.nome) ?? 0;
+      const fb = freq.get(b.nome) ?? 0;
+      if (fb !== fa) return fb - fa;
+      return a.nome.localeCompare(b.nome, "pt-BR");
+    });
+  }, [procedimentos.data, atendimentos.data]);
 
   useEffect(() => {
     if (open) setV(editing ? { ...editing } : empty());
@@ -104,13 +125,32 @@ export function AtendimentoForm({
             </div>
             <div className="space-y-1.5">
               <Label>Procedimento</Label>
-              <Select value={v.procedimento} onValueChange={(val) => setV({ ...v, procedimento: val })}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>
-                  {(procedimentos.data ?? []).map((p) => <SelectItem key={p.id} value={p.nome}>{p.nome}</SelectItem>)}
-                  {(procedimentos.data ?? []).length === 0 && <div className="p-3 text-xs text-muted-foreground">Cadastre em Cadastros</div>}
-                </SelectContent>
-              </Select>
+              <Popover open={procOpen} onOpenChange={setProcOpen}>
+                <PopoverTrigger asChild>
+                  <Button type="button" variant="outline" role="combobox" aria-expanded={procOpen}
+                    className={cn("w-full justify-between font-normal", !v.procedimento && "text-muted-foreground")}>
+                    {v.procedimento || "Selecione ou busque..."}
+                    <ChevronsUpDown className="h-4 w-4 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Buscar procedimento..." />
+                    <CommandList>
+                      <CommandEmpty>Nenhum procedimento. Cadastre em Cadastros.</CommandEmpty>
+                      <CommandGroup>
+                        {procedimentosOrdenados.map((p) => (
+                          <CommandItem key={p.id} value={p.nome}
+                            onSelect={(val) => { setV({ ...v, procedimento: val }); setProcOpen(false); }}>
+                            <Check className={cn("h-4 w-4", v.procedimento === p.nome ? "opacity-100" : "opacity-0")} />
+                            {p.nome}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="space-y-1.5">
               <Label>Data</Label>

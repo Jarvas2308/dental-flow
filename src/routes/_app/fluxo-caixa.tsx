@@ -19,35 +19,23 @@ export const Route = createFileRoute("/_app/fluxo-caixa")({
   component: FluxoCaixa,
 });
 
-type Filtro = "todas" | string; // categoria
 type FiltroPag = "todas" | string;
 
 function FluxoCaixa() {
   const [mes, setMes] = useState(currentMonthKey());
-  const [categoria, setCategoria] = useState<Filtro>("todas");
   const [pagamento, setPagamento] = useState<FiltroPag>("todas");
 
   const atendimentos = useTable<any>("atendimentos", "data");
-  const fixos = useTable<any>("gastos_fixos", "data");
-  const variaveis = useTable<any>("gastos_variaveis", "data");
+  const despesas = useTable<any>("despesas", "vencimento");
   const lab = useTable<any>("custos_laboratorio", "data");
 
-  const isLoading =
-    atendimentos.isLoading || fixos.isLoading || variaveis.isLoading || lab.isLoading;
+  const isLoading = atendimentos.isLoading || despesas.isLoading || lab.isLoading;
 
   const [year, monthNum] = mes.split("-").map(Number);
   const diasNoMes = new Date(year, monthNum, 0).getDate();
   const hoje = new Date();
   const ehMesAtual = currentMonthKey() === mes;
   const diaAtual = ehMesAtual ? Math.min(hoje.getDate(), diasNoMes) : diasNoMes;
-
-  const categorias = useMemo(() => {
-    const set = new Set<string>();
-    [...(fixos.data ?? []), ...(variaveis.data ?? [])].forEach((r) => {
-      if (r.categoria) set.add(r.categoria);
-    });
-    return Array.from(set).sort();
-  }, [fixos.data, variaveis.data]);
 
   const formasPag = useMemo(() => {
     const set = new Set<string>();
@@ -61,16 +49,14 @@ function FluxoCaixa() {
     .filter((r) => pagamento === "todas" || r.forma_pagamento === pagamento),
     [atendimentos.data, mes, pagamento]);
 
+  // Saídas: despesas (com data = vencimento) + lab (data)
   const sai = useMemo(() => {
     const all = [
-      ...(fixos.data ?? []).map((r) => ({ ...r, _origem: "Fixo" })),
-      ...(variaveis.data ?? []).map((r) => ({ ...r, _origem: "Variável" })),
-      ...(lab.data ?? []).map((r) => ({ ...r, _origem: "Laboratório", categoria: "Laboratório" })),
+      ...(despesas.data ?? []).map((r) => ({ ...r, data: r.vencimento, _origem: "Despesa" })),
+      ...(lab.data ?? []).map((r) => ({ ...r, _origem: "Laboratório" })),
     ];
-    return all
-      .filter((r) => monthKey(r.data) === mes)
-      .filter((r) => categoria === "todas" || r.categoria === categoria);
-  }, [fixos.data, variaveis.data, lab.data, mes, categoria]);
+    return all.filter((r) => monthKey(r.data) === mes);
+  }, [despesas.data, lab.data, mes]);
 
   const totalEntradas = ent.reduce((s, r) => s + Number(r.valor_liquido || 0), 0);
   const totalSaidas = sai.reduce((s, r) => s + Number(r.valor || 0), 0);
@@ -83,11 +69,10 @@ function FluxoCaixa() {
       .filter((r) => new Date(r.data) <= limite)
       .reduce((s, r) => s + Number(r.valor_liquido || 0), 0);
     const sds =
-      (fixos.data ?? []).filter((r) => new Date(r.data) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0) +
-      (variaveis.data ?? []).filter((r) => new Date(r.data) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0) +
+      (despesas.data ?? []).filter((r) => new Date(r.vencimento) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0) +
       (lab.data ?? []).filter((r) => new Date(r.data) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0);
     return ents - sds;
-  }, [atendimentos.data, fixos.data, variaveis.data, lab.data, year, monthNum, diasNoMes]);
+  }, [atendimentos.data, despesas.data, lab.data, year, monthNum, diasNoMes]);
 
   // Saldo atual (até hoje, considerando todos os meses)
   const saldoAtual = useMemo(() => {
@@ -95,11 +80,10 @@ function FluxoCaixa() {
       .filter((r) => new Date(r.data) <= hoje)
       .reduce((s, r) => s + Number(r.valor_liquido || 0), 0);
     const sds =
-      (fixos.data ?? []).filter((r) => new Date(r.data) <= hoje).reduce((s, r) => s + Number(r.valor || 0), 0) +
-      (variaveis.data ?? []).filter((r) => new Date(r.data) <= hoje).reduce((s, r) => s + Number(r.valor || 0), 0) +
+      (despesas.data ?? []).filter((r) => new Date(r.vencimento) <= hoje).reduce((s, r) => s + Number(r.valor || 0), 0) +
       (lab.data ?? []).filter((r) => new Date(r.data) <= hoje).reduce((s, r) => s + Number(r.valor || 0), 0);
     return ents - sds;
-  }, [atendimentos.data, fixos.data, variaveis.data, lab.data]);
+  }, [atendimentos.data, despesas.data, lab.data]);
 
   // Dias do mês com agregados
   const diario = useMemo(() => {
@@ -148,13 +132,6 @@ function FluxoCaixa() {
                 {monthOptions(12).map((m) => (
                   <SelectItem key={m} value={m} className="capitalize">{monthLabel(m)}</SelectItem>
                 ))}
-              </SelectContent>
-            </Select>
-            <Select value={categoria} onValueChange={setCategoria}>
-              <SelectTrigger className="w-[170px]"><SelectValue placeholder="Categoria" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todas">Todas categorias</SelectItem>
-                {categorias.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={pagamento} onValueChange={setPagamento}>
