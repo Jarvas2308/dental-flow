@@ -125,13 +125,32 @@ export function AtendimentoForm({
             </div>
             <div className="space-y-1.5">
               <Label>Procedimento</Label>
-              <Select value={v.procedimento} onValueChange={(val) => setV({ ...v, procedimento: val })}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                <SelectContent>
-                  {(procedimentos.data ?? []).map((p) => <SelectItem key={p.id} value={p.nome}>{p.nome}</SelectItem>)}
-                  {(procedimentos.data ?? []).length === 0 && <div className="p-3 text-xs text-muted-foreground">Cadastre em Cadastros</div>}
-                </SelectContent>
-              </Select>
+              <Popover open={procOpen} onOpenChange={setProcOpen}>
+                <PopoverTrigger asChild>
+                  <Button type="button" variant="outline" role="combobox" aria-expanded={procOpen}
+                    className={cn("w-full justify-between font-normal", !v.procedimento && "text-muted-foreground")}>
+                    {v.procedimento || "Selecione ou busque..."}
+                    <ChevronsUpDown className="h-4 w-4 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Buscar procedimento..." />
+                    <CommandList>
+                      <CommandEmpty>Nenhum procedimento. Cadastre em Cadastros.</CommandEmpty>
+                      <CommandGroup>
+                        {procedimentosOrdenados.map((p) => (
+                          <CommandItem key={p.id} value={p.nome}
+                            onSelect={(val) => { setV({ ...v, procedimento: val }); setProcOpen(false); }}>
+                            <Check className={cn("h-4 w-4", v.procedimento === p.nome ? "opacity-100" : "opacity-0")} />
+                            {p.nome}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="space-y-1.5">
               <Label>Data</Label>
