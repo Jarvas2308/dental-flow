@@ -46,10 +46,26 @@ export function AtendimentoForm({
 }) {
   const procedimentos = useTable<any>("procedimentos", "nome", true);
   const formas = useTable<any>("formas_pagamento", "nome", true);
+  const atendimentos = useTable<any>("atendimentos", "data");
   const create = useCreate("atendimentos");
   const update = useUpdate("atendimentos");
   const [open, setOpen] = useState(!!editing);
   const [v, setV] = useState<Atendimento>(editing ? { ...editing } : empty());
+  const [procOpen, setProcOpen] = useState(false);
+
+  // Procedimentos ordenados por frequência de uso, com fallback alfabético
+  const procedimentosOrdenados = useMemo(() => {
+    const freq = new Map<string, number>();
+    (atendimentos.data ?? []).forEach((a: any) => {
+      if (a.procedimento) freq.set(a.procedimento, (freq.get(a.procedimento) ?? 0) + 1);
+    });
+    return [...(procedimentos.data ?? [])].sort((a, b) => {
+      const fa = freq.get(a.nome) ?? 0;
+      const fb = freq.get(b.nome) ?? 0;
+      if (fb !== fa) return fb - fa;
+      return a.nome.localeCompare(b.nome, "pt-BR");
+    });
+  }, [procedimentos.data, atendimentos.data]);
 
   useEffect(() => {
     if (open) setV(editing ? { ...editing } : empty());
