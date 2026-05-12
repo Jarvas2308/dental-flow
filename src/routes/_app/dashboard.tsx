@@ -78,8 +78,8 @@ function Dashboard() {
         <StatCard label="Receita Bruta" value={brl(totBruto)} tone="primary" icon={<TrendingUp className="h-4 w-4" />} />
         <StatCard label="Receita Líquida" value={brl(totLiquido)} tone="success" icon={<CircleDollarSign className="h-4 w-4" />} hint="Após taxas de cartão" />
         <StatCard label="Lucro Líquido" value={brl(lucro)} tone={lucro >= 0 ? "success" : "destructive"} icon={<Wallet className="h-4 w-4" />} hint="Receita líq. − despesas − laboratório" />
-        <StatCard label="Gastos Fixos" value={brl(totFixos)} tone="warning" icon={<Receipt className="h-4 w-4" />} />
-        <StatCard label="Gastos Variáveis" value={brl(totVar)} tone="warning" icon={<TrendingDown className="h-4 w-4" />} />
+        <StatCard label="Despesas" value={brl(totDesp)} tone="warning" icon={<Receipt className="h-4 w-4" />} hint={`Pagas ${brl(totDespPagas)} · Pend. ${brl(totDespPendentes)}`} />
+        <StatCard label="Pendentes" value={brl(totDespPendentes)} tone={totDespPendentes > 0 ? "warning" : "success"} icon={<TrendingDown className="h-4 w-4" />} />
         <StatCard label="Laboratório" value={brl(totLab)} icon={<FlaskConical className="h-4 w-4" />} />
       </div>
 
