@@ -103,6 +103,48 @@ export type Database = {
           },
         ]
       }
+      despesas: {
+        Row: {
+          created_at: string
+          data_pagamento: string | null
+          id: string
+          nome: string
+          observacoes: string | null
+          origem_id: string | null
+          recorrente: boolean
+          status: string
+          user_id: string
+          valor: number
+          vencimento: string
+        }
+        Insert: {
+          created_at?: string
+          data_pagamento?: string | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          origem_id?: string | null
+          recorrente?: boolean
+          status?: string
+          user_id: string
+          valor: number
+          vencimento: string
+        }
+        Update: {
+          created_at?: string
+          data_pagamento?: string | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          origem_id?: string | null
+          recorrente?: boolean
+          status?: string
+          user_id?: string
+          valor?: number
+          vencimento?: string
+        }
+        Relationships: []
+      }
       formas_pagamento: {
         Row: {
           created_at: string
