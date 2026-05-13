@@ -84,13 +84,15 @@ function DespesaForm({
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!v.nome.trim()) return toast.error("Informe o nome");
-    if (!Number(v.valor)) return toast.error("Informe o valor");
+    const variavelSemValor = v.recorrente && v.tipo_recorrencia === "variavel" && !Number(v.valor);
+    if (!variavelSemValor && !Number(v.valor)) return toast.error("Informe o valor");
     const payload: any = {
       nome: v.nome.trim(),
-      valor: Number(v.valor),
+      valor: variavelSemValor ? null : Number(v.valor),
       vencimento: v.vencimento,
       status: v.status,
       recorrente: v.recorrente,
+      tipo_recorrencia: v.recorrente ? v.tipo_recorrencia : "fixo",
       data_pagamento: v.status === "pago" ? (v.data_pagamento || v.vencimento) : null,
       observacoes: v.observacoes?.toString().trim() || null,
     };
@@ -118,8 +120,13 @@ function DespesaForm({
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label>Valor (R$)</Label>
-              <Input type="number" step="0.01" required value={v.valor}
+              <Label>
+                Valor (R$)
+                {v.recorrente && v.tipo_recorrencia === "variavel" && (
+                  <span className="ml-1 text-xs text-muted-foreground">(opcional)</span>
+                )}
+              </Label>
+              <Input type="number" step="0.01" value={v.valor ?? ""}
                 onChange={(e) => setV({ ...v, valor: e.target.value })} />
             </div>
             <div className="space-y-1.5">
@@ -146,12 +153,32 @@ function DespesaForm({
               </div>
             )}
           </div>
-          <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40">
-            <div>
-              <Label className="cursor-pointer">Despesa recorrente</Label>
-              <p className="text-xs text-muted-foreground">Repete automaticamente todo mês</p>
+          <div className="space-y-3 p-3 rounded-lg bg-muted/40">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="cursor-pointer">Despesa recorrente</Label>
+                <p className="text-xs text-muted-foreground">Repete automaticamente todo mês</p>
+              </div>
+              <Switch checked={v.recorrente} onCheckedChange={(c) => setV({ ...v, recorrente: c })} />
             </div>
-            <Switch checked={v.recorrente} onCheckedChange={(c) => setV({ ...v, recorrente: c })} />
+            {v.recorrente && (
+              <div className="space-y-1.5">
+                <Label>Tipo de recorrência</Label>
+                <Select value={v.tipo_recorrencia}
+                  onValueChange={(s: any) => setV({ ...v, tipo_recorrencia: s })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fixo">Valor fixo (aluguel, internet…)</SelectItem>
+                    <SelectItem value="variavel">Valor variável (água, energia…)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-muted-foreground">
+                  {v.tipo_recorrencia === "variavel"
+                    ? "Próximos meses serão criados sem valor, aguardando preenchimento."
+                    : "Próximos meses serão criados com o mesmo valor."}
+                </p>
+              </div>
+            )}
           </div>
           <div className="space-y-1.5">
             <Label>Observações</Label>
