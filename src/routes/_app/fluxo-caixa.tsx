@@ -99,7 +99,7 @@ function FluxoCaixa() {
     const arr = Array.from({ length: diasNoMes }, (_, i) => {
       const d = i + 1;
       const isoDay = `${mes}-${String(d).padStart(2, "0")}`;
-      const e = ent.filter((r) => r.data === isoDay).reduce((s, r) => s + Number(r.valor_liquido || 0), 0);
+      const e = ent.filter((r) => r.data === isoDay).reduce((s, r) => s + Number(r.valor || 0), 0);
       const s = sai.filter((r) => r.data === isoDay).reduce((su, r) => su + Number(r.valor || 0), 0);
       return {
         dia: d,
