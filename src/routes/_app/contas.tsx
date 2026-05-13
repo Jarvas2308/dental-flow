@@ -33,28 +33,33 @@ export const Route = createFileRoute("/_app/contas")({
 type Despesa = {
   id?: string;
   nome: string;
-  valor: number | string;
+  valor: number | string | null;
   vencimento: string;
   data_pagamento?: string | null;
   status: "pago" | "pendente" | "atrasado";
   recorrente: boolean;
+  tipo_recorrencia: "fixo" | "variavel";
   observacoes?: string | null;
   origem_id?: string | null;
 };
 
 const empty = (): Despesa => ({
   nome: "", valor: "", vencimento: new Date().toISOString().slice(0, 10),
-  status: "pendente", recorrente: false, observacoes: "",
+  status: "pendente", recorrente: false, tipo_recorrencia: "fixo", observacoes: "",
 });
 
 function statusBadge(s: string) {
   if (s === "pago") return <Badge className="bg-success text-success-foreground hover:bg-success/90">Pago</Badge>;
   if (s === "atrasado") return <Badge variant="destructive">Atrasado</Badge>;
+  if (s === "aguardando") return <Badge className="bg-warning text-warning-foreground hover:bg-warning/90">Aguardando valor</Badge>;
   return <Badge variant="outline">Pendente</Badge>;
 }
 
-function computeStatus(d: Despesa): "pago" | "pendente" | "atrasado" {
+function computeStatus(d: any): "pago" | "pendente" | "atrasado" | "aguardando" {
   if (d.status === "pago") return "pago";
+  if (d.recorrente && d.tipo_recorrencia === "variavel" && (d.valor === null || Number(d.valor) === 0)) {
+    return "aguardando";
+  }
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const v = new Date(d.vencimento + "T00:00:00");
   return v < today ? "atrasado" : "pendente";
