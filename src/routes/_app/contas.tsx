@@ -211,7 +211,7 @@ function EditDespesa({ row }: { row: any }) {
 function Contas() {
   useEnsureRecurring();
   const [mes, setMes] = useState(currentMonthKey());
-  const [aba, setAba] = useState<"todas" | "pendente" | "atrasado" | "pago">("todas");
+  const [aba, setAba] = useState<"todas" | "pendente" | "aguardando" | "atrasado" | "pago">("todas");
   const [q, setQ] = useState("");
   const list = useTable<any>("despesas", "vencimento", true);
   const upd = useUpdate("despesas");
@@ -230,9 +230,10 @@ function Contas() {
     [enriched, mes, aba, q]);
 
   const totMes = enriched.filter((r) => monthKey(r.vencimento) === mes);
-  const totalPago = totMes.filter((r) => r.status === "pago").reduce((s, r) => s + Number(r.valor), 0);
-  const totalPendente = totMes.filter((r) => r.status === "pendente").reduce((s, r) => s + Number(r.valor), 0);
-  const totalAtrasado = totMes.filter((r) => r.status === "atrasado").reduce((s, r) => s + Number(r.valor), 0);
+  const totalPago = totMes.filter((r) => r.status === "pago").reduce((s, r) => s + Number(r.valor || 0), 0);
+  const totalPendente = totMes.filter((r) => r.status === "pendente").reduce((s, r) => s + Number(r.valor || 0), 0);
+  const totalAtrasado = totMes.filter((r) => r.status === "atrasado").reduce((s, r) => s + Number(r.valor || 0), 0);
+  const totalAguardando = totMes.filter((r) => r.status === "aguardando").length;
   const totalGeral = totalPago + totalPendente + totalAtrasado;
 
   const marcarPago = (r: any) => {
@@ -272,6 +273,9 @@ function Contas() {
         <TabsList>
           <TabsTrigger value="todas">Todas ({totMes.length})</TabsTrigger>
           <TabsTrigger value="pendente">Pendentes</TabsTrigger>
+          <TabsTrigger value="aguardando">
+            Aguardando{totalAguardando > 0 ? ` (${totalAguardando})` : ""}
+          </TabsTrigger>
           <TabsTrigger value="atrasado">Atrasadas</TabsTrigger>
           <TabsTrigger value="pago">Pagas</TabsTrigger>
         </TabsList>
@@ -308,10 +312,12 @@ function Contas() {
                       </div>
                     </TableCell>
                     <TableCell>{statusBadge(r.status)}</TableCell>
-                    <TableCell className="text-right font-medium">{brl(r.valor)}</TableCell>
+                    <TableCell className="text-right font-medium">
+                      {r.valor == null ? <span className="text-muted-foreground">—</span> : brl(r.valor)}
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                        {r.status !== "pago" && (
+                        {r.status !== "pago" && r.status !== "aguardando" && (
                           <Button variant="ghost" size="icon" aria-label="Marcar como pago"
                             onClick={() => marcarPago(r)}>
                             <Check className="h-4 w-4 text-success" />
@@ -332,7 +338,7 @@ function Contas() {
             <div className="flex justify-between items-center px-4 py-3 border-t bg-muted/30">
               <span className="text-sm text-muted-foreground">{rowsMes.length} despesa(s)</span>
               <span className="font-semibold">
-                Total: {brl(rowsMes.reduce((s, r) => s + Number(r.valor), 0))}
+                Total: {brl(rowsMes.reduce((s, r) => s + Number(r.valor || 0), 0))}
               </span>
             </div>
           </div>
