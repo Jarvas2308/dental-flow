@@ -59,10 +59,11 @@ export function useEnsureRecurring() {
             inserts.push({
               user_id: user.id,
               nome: base.nome,
-              valor: base.valor,
+              valor: base.tipo_recorrencia === "variavel" ? null : base.valor,
               vencimento: venc,
               status: "pendente",
               recorrente: true,
+              tipo_recorrencia: base.tipo_recorrencia ?? "fixo",
               origem_id: key,
               observacoes: base.observacoes,
             });

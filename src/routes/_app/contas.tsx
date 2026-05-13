@@ -33,28 +33,33 @@ export const Route = createFileRoute("/_app/contas")({
 type Despesa = {
   id?: string;
   nome: string;
-  valor: number | string;
+  valor: number | string | null;
   vencimento: string;
   data_pagamento?: string | null;
   status: "pago" | "pendente" | "atrasado";
   recorrente: boolean;
+  tipo_recorrencia: "fixo" | "variavel";
   observacoes?: string | null;
   origem_id?: string | null;
 };
 
 const empty = (): Despesa => ({
   nome: "", valor: "", vencimento: new Date().toISOString().slice(0, 10),
-  status: "pendente", recorrente: false, observacoes: "",
+  status: "pendente", recorrente: false, tipo_recorrencia: "fixo", observacoes: "",
 });
 
 function statusBadge(s: string) {
   if (s === "pago") return <Badge className="bg-success text-success-foreground hover:bg-success/90">Pago</Badge>;
   if (s === "atrasado") return <Badge variant="destructive">Atrasado</Badge>;
+  if (s === "aguardando") return <Badge className="bg-warning text-warning-foreground hover:bg-warning/90">Aguardando valor</Badge>;
   return <Badge variant="outline">Pendente</Badge>;
 }
 
-function computeStatus(d: Despesa): "pago" | "pendente" | "atrasado" {
+function computeStatus(d: any): "pago" | "pendente" | "atrasado" | "aguardando" {
   if (d.status === "pago") return "pago";
+  if (d.recorrente && d.tipo_recorrencia === "variavel" && (d.valor === null || Number(d.valor) === 0)) {
+    return "aguardando";
+  }
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const v = new Date(d.vencimento + "T00:00:00");
   return v < today ? "atrasado" : "pendente";
@@ -79,13 +84,15 @@ function DespesaForm({
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!v.nome.trim()) return toast.error("Informe o nome");
-    if (!Number(v.valor)) return toast.error("Informe o valor");
+    const variavelSemValor = v.recorrente && v.tipo_recorrencia === "variavel" && !Number(v.valor);
+    if (!variavelSemValor && !Number(v.valor)) return toast.error("Informe o valor");
     const payload: any = {
       nome: v.nome.trim(),
-      valor: Number(v.valor),
+      valor: variavelSemValor ? null : Number(v.valor),
       vencimento: v.vencimento,
       status: v.status,
       recorrente: v.recorrente,
+      tipo_recorrencia: v.recorrente ? v.tipo_recorrencia : "fixo",
       data_pagamento: v.status === "pago" ? (v.data_pagamento || v.vencimento) : null,
       observacoes: v.observacoes?.toString().trim() || null,
     };
@@ -113,8 +120,13 @@ function DespesaForm({
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label>Valor (R$)</Label>
-              <Input type="number" step="0.01" required value={v.valor}
+              <Label>
+                Valor (R$)
+                {v.recorrente && v.tipo_recorrencia === "variavel" && (
+                  <span className="ml-1 text-xs text-muted-foreground">(opcional)</span>
+                )}
+              </Label>
+              <Input type="number" step="0.01" value={v.valor ?? ""}
                 onChange={(e) => setV({ ...v, valor: e.target.value })} />
             </div>
             <div className="space-y-1.5">
@@ -141,12 +153,32 @@ function DespesaForm({
               </div>
             )}
           </div>
-          <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40">
-            <div>
-              <Label className="cursor-pointer">Despesa recorrente</Label>
-              <p className="text-xs text-muted-foreground">Repete automaticamente todo mês</p>
+          <div className="space-y-3 p-3 rounded-lg bg-muted/40">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="cursor-pointer">Despesa recorrente</Label>
+                <p className="text-xs text-muted-foreground">Repete automaticamente todo mês</p>
+              </div>
+              <Switch checked={v.recorrente} onCheckedChange={(c) => setV({ ...v, recorrente: c })} />
             </div>
-            <Switch checked={v.recorrente} onCheckedChange={(c) => setV({ ...v, recorrente: c })} />
+            {v.recorrente && (
+              <div className="space-y-1.5">
+                <Label>Tipo de recorrência</Label>
+                <Select value={v.tipo_recorrencia}
+                  onValueChange={(s: any) => setV({ ...v, tipo_recorrencia: s })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fixo">Valor fixo (aluguel, internet…)</SelectItem>
+                    <SelectItem value="variavel">Valor variável (água, energia…)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-muted-foreground">
+                  {v.tipo_recorrencia === "variavel"
+                    ? "Próximos meses serão criados sem valor, aguardando preenchimento."
+                    : "Próximos meses serão criados com o mesmo valor."}
+                </p>
+              </div>
+            )}
           </div>
           <div className="space-y-1.5">
             <Label>Observações</Label>
@@ -179,7 +211,7 @@ function EditDespesa({ row }: { row: any }) {
 function Contas() {
   useEnsureRecurring();
   const [mes, setMes] = useState(currentMonthKey());
-  const [aba, setAba] = useState<"todas" | "pendente" | "atrasado" | "pago">("todas");
+  const [aba, setAba] = useState<"todas" | "pendente" | "aguardando" | "atrasado" | "pago">("todas");
   const [q, setQ] = useState("");
   const list = useTable<any>("despesas", "vencimento", true);
   const upd = useUpdate("despesas");
@@ -198,9 +230,10 @@ function Contas() {
     [enriched, mes, aba, q]);
 
   const totMes = enriched.filter((r) => monthKey(r.vencimento) === mes);
-  const totalPago = totMes.filter((r) => r.status === "pago").reduce((s, r) => s + Number(r.valor), 0);
-  const totalPendente = totMes.filter((r) => r.status === "pendente").reduce((s, r) => s + Number(r.valor), 0);
-  const totalAtrasado = totMes.filter((r) => r.status === "atrasado").reduce((s, r) => s + Number(r.valor), 0);
+  const totalPago = totMes.filter((r) => r.status === "pago").reduce((s, r) => s + Number(r.valor || 0), 0);
+  const totalPendente = totMes.filter((r) => r.status === "pendente").reduce((s, r) => s + Number(r.valor || 0), 0);
+  const totalAtrasado = totMes.filter((r) => r.status === "atrasado").reduce((s, r) => s + Number(r.valor || 0), 0);
+  const totalAguardando = totMes.filter((r) => r.status === "aguardando").length;
   const totalGeral = totalPago + totalPendente + totalAtrasado;
 
   const marcarPago = (r: any) => {
@@ -240,6 +273,9 @@ function Contas() {
         <TabsList>
           <TabsTrigger value="todas">Todas ({totMes.length})</TabsTrigger>
           <TabsTrigger value="pendente">Pendentes</TabsTrigger>
+          <TabsTrigger value="aguardando">
+            Aguardando{totalAguardando > 0 ? ` (${totalAguardando})` : ""}
+          </TabsTrigger>
           <TabsTrigger value="atrasado">Atrasadas</TabsTrigger>
           <TabsTrigger value="pago">Pagas</TabsTrigger>
         </TabsList>
@@ -276,10 +312,12 @@ function Contas() {
                       </div>
                     </TableCell>
                     <TableCell>{statusBadge(r.status)}</TableCell>
-                    <TableCell className="text-right font-medium">{brl(r.valor)}</TableCell>
+                    <TableCell className="text-right font-medium">
+                      {r.valor == null ? <span className="text-muted-foreground">—</span> : brl(r.valor)}
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                        {r.status !== "pago" && (
+                        {r.status !== "pago" && r.status !== "aguardando" && (
                           <Button variant="ghost" size="icon" aria-label="Marcar como pago"
                             onClick={() => marcarPago(r)}>
                             <Check className="h-4 w-4 text-success" />
@@ -300,7 +338,7 @@ function Contas() {
             <div className="flex justify-between items-center px-4 py-3 border-t bg-muted/30">
               <span className="text-sm text-muted-foreground">{rowsMes.length} despesa(s)</span>
               <span className="font-semibold">
-                Total: {brl(rowsMes.reduce((s, r) => s + Number(r.valor), 0))}
+                Total: {brl(rowsMes.reduce((s, r) => s + Number(r.valor || 0), 0))}
               </span>
             </div>
           </div>

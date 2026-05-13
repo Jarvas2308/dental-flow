@@ -28,8 +28,9 @@ function FluxoCaixa() {
   const atendimentos = useTable<any>("atendimentos", "data");
   const despesas = useTable<any>("despesas", "vencimento");
   const lab = useTable<any>("custos_laboratorio", "data");
+  const ganhos = useTable<any>("receitas_extras", "data");
 
-  const isLoading = atendimentos.isLoading || despesas.isLoading || lab.isLoading;
+  const isLoading = atendimentos.isLoading || despesas.isLoading || lab.isLoading || ganhos.isLoading;
 
   const [year, monthNum] = mes.split("-").map(Number);
   const diasNoMes = new Date(year, monthNum, 0).getDate();
@@ -43,11 +44,19 @@ function FluxoCaixa() {
     return Array.from(set).sort();
   }, [atendimentos.data]);
 
-  // Filtrar por mês
-  const ent = useMemo(() => (atendimentos.data ?? [])
-    .filter((r) => monthKey(r.data) === mes)
-    .filter((r) => pagamento === "todas" || r.forma_pagamento === pagamento),
-    [atendimentos.data, mes, pagamento]);
+  // Entradas = atendimentos (líquido) + ganhos extras
+  const ent = useMemo(() => {
+    const a = (atendimentos.data ?? [])
+      .filter((r) => monthKey(r.data) === mes)
+      .filter((r) => pagamento === "todas" || r.forma_pagamento === pagamento)
+      .map((r) => ({ data: r.data, valor: Number(r.valor_liquido || 0), _origem: "Atendimento" }));
+    const g = pagamento === "todas"
+      ? (ganhos.data ?? [])
+          .filter((r) => monthKey(r.data) === mes)
+          .map((r) => ({ data: r.data, valor: Number(r.valor || 0), _origem: "Ganho extra" }))
+      : [];
+    return [...a, ...g];
+  }, [atendimentos.data, ganhos.data, mes, pagamento]);
 
   // Saídas: despesas (com data = vencimento) + lab (data)
   const sai = useMemo(() => {
@@ -58,39 +67,39 @@ function FluxoCaixa() {
     return all.filter((r) => monthKey(r.data) === mes);
   }, [despesas.data, lab.data, mes]);
 
-  const totalEntradas = ent.reduce((s, r) => s + Number(r.valor_liquido || 0), 0);
+  const totalEntradas = ent.reduce((s, r) => s + Number(r.valor || 0), 0);
   const totalSaidas = sai.reduce((s, r) => s + Number(r.valor || 0), 0);
   const lucroLiquido = totalEntradas - totalSaidas;
 
   // Saldo acumulado de TODOS os meses até o final do mês selecionado
   const saldoAcumulado = useMemo(() => {
     const limite = new Date(year, monthNum - 1, diasNoMes);
-    const ents = (atendimentos.data ?? [])
-      .filter((r) => new Date(r.data) <= limite)
-      .reduce((s, r) => s + Number(r.valor_liquido || 0), 0);
+    const ents =
+      (atendimentos.data ?? []).filter((r) => new Date(r.data) <= limite).reduce((s, r) => s + Number(r.valor_liquido || 0), 0)
+      + (ganhos.data ?? []).filter((r) => new Date(r.data) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0);
     const sds =
       (despesas.data ?? []).filter((r) => new Date(r.vencimento) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0) +
       (lab.data ?? []).filter((r) => new Date(r.data) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0);
     return ents - sds;
-  }, [atendimentos.data, despesas.data, lab.data, year, monthNum, diasNoMes]);
+  }, [atendimentos.data, despesas.data, lab.data, ganhos.data, year, monthNum, diasNoMes]);
 
   // Saldo atual (até hoje, considerando todos os meses)
   const saldoAtual = useMemo(() => {
-    const ents = (atendimentos.data ?? [])
-      .filter((r) => new Date(r.data) <= hoje)
-      .reduce((s, r) => s + Number(r.valor_liquido || 0), 0);
+    const ents =
+      (atendimentos.data ?? []).filter((r) => new Date(r.data) <= hoje).reduce((s, r) => s + Number(r.valor_liquido || 0), 0)
+      + (ganhos.data ?? []).filter((r) => new Date(r.data) <= hoje).reduce((s, r) => s + Number(r.valor || 0), 0);
     const sds =
       (despesas.data ?? []).filter((r) => new Date(r.vencimento) <= hoje).reduce((s, r) => s + Number(r.valor || 0), 0) +
       (lab.data ?? []).filter((r) => new Date(r.data) <= hoje).reduce((s, r) => s + Number(r.valor || 0), 0);
     return ents - sds;
-  }, [atendimentos.data, despesas.data, lab.data]);
+  }, [atendimentos.data, despesas.data, lab.data, ganhos.data]);
 
   // Dias do mês com agregados
   const diario = useMemo(() => {
     const arr = Array.from({ length: diasNoMes }, (_, i) => {
       const d = i + 1;
       const isoDay = `${mes}-${String(d).padStart(2, "0")}`;
-      const e = ent.filter((r) => r.data === isoDay).reduce((s, r) => s + Number(r.valor_liquido || 0), 0);
+      const e = ent.filter((r) => r.data === isoDay).reduce((s, r) => s + Number(r.valor || 0), 0);
       const s = sai.filter((r) => r.data === isoDay).reduce((su, r) => su + Number(r.valor || 0), 0);
       return {
         dia: d,

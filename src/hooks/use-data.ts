@@ -12,7 +12,8 @@ type TableName =
   | "gastos_variaveis"
   | "despesas"
   | "atendimentos"
-  | "custos_laboratorio";
+  | "custos_laboratorio"
+  | "receitas_extras";
 
 export function useTable<T = any>(table: TableName, orderBy = "created_at", asc = false) {
   const { user } = useAuth();
