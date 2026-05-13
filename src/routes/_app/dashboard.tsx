@@ -25,6 +25,7 @@ function Dashboard() {
   const atendimentos = useTable<any>("atendimentos", "data");
   const despesas = useTable<any>("despesas", "vencimento");
   const lab = useTable<any>("custos_laboratorio", "data");
+  const ganhos = useTable<any>("receitas_extras", "data");
 
   const filt = <T extends { data: string }>(rows: T[] = []) =>
     rows.filter((r) => monthKey(r.data) === mes);
@@ -33,7 +34,9 @@ function Dashboard() {
     rows.filter((r) => monthKey(r.vencimento) === mes);
 
   const totBruto = filt(atendimentos.data).reduce((s, r: any) => s + Number(r.valor_bruto || 0), 0);
-  const totLiquido = filt(atendimentos.data).reduce((s, r: any) => s + Number(r.valor_liquido || 0), 0);
+  const totLiquidoAtend = filt(atendimentos.data).reduce((s, r: any) => s + Number(r.valor_liquido || 0), 0);
+  const totGanhos = filt(ganhos.data).reduce((s, r: any) => s + Number(r.valor || 0), 0);
+  const totLiquido = totLiquidoAtend + totGanhos;
   const totDesp = filtDesp(despesas.data ?? []).reduce((s, r: any) => s + Number(r.valor || 0), 0);
   const totDespPagas = filtDesp(despesas.data ?? []).filter((r: any) => r.status === "pago").reduce((s, r: any) => s + Number(r.valor || 0), 0);
   const totDespPendentes = totDesp - totDespPagas;
@@ -44,7 +47,9 @@ function Dashboard() {
     const months = monthOptions(6).reverse();
     return months.map((m) => {
       const rec = (atendimentos.data ?? []).filter((r: any) => monthKey(r.data) === m)
-        .reduce((s, r: any) => s + Number(r.valor_liquido || 0), 0);
+        .reduce((s, r: any) => s + Number(r.valor_liquido || 0), 0)
+        + (ganhos.data ?? []).filter((r: any) => monthKey(r.data) === m)
+        .reduce((s, r: any) => s + Number(r.valor || 0), 0);
       const desp =
         (despesas.data ?? []).filter((r: any) => monthKey(r.vencimento) === m).reduce((s, r: any) => s + Number(r.valor || 0), 0) +
         (lab.data ?? []).filter((r: any) => monthKey(r.data) === m).reduce((s, r: any) => s + Number(r.valor || 0), 0);
@@ -55,7 +60,7 @@ function Dashboard() {
         Lucro: Number((rec - desp).toFixed(2)),
       };
     });
-  }, [atendimentos.data, despesas.data, lab.data]);
+  }, [atendimentos.data, despesas.data, lab.data, ganhos.data]);
 
   return (
     <>
