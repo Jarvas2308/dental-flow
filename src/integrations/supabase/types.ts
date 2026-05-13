@@ -113,8 +113,9 @@ export type Database = {
           origem_id: string | null
           recorrente: boolean
           status: string
+          tipo_recorrencia: string
           user_id: string
-          valor: number
+          valor: number | null
           vencimento: string
         }
         Insert: {
@@ -126,8 +127,9 @@ export type Database = {
           origem_id?: string | null
           recorrente?: boolean
           status?: string
+          tipo_recorrencia?: string
           user_id: string
-          valor: number
+          valor?: number | null
           vencimento: string
         }
         Update: {
@@ -139,8 +141,9 @@ export type Database = {
           origem_id?: string | null
           recorrente?: boolean
           status?: string
+          tipo_recorrencia?: string
           user_id?: string
-          valor?: number
+          valor?: number | null
           vencimento?: string
         }
         Relationships: []
@@ -274,6 +277,39 @@ export type Database = {
           id?: string
           nome?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      receitas_extras: {
+        Row: {
+          created_at: string
+          data: string
+          descricao: string
+          id: string
+          observacoes: string | null
+          tipo: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          data: string
+          descricao: string
+          id?: string
+          observacoes?: string | null
+          tipo?: string
+          user_id: string
+          valor: number
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          descricao?: string
+          id?: string
+          observacoes?: string | null
+          tipo?: string
+          user_id?: string
+          valor?: number
         }
         Relationships: []
       }
