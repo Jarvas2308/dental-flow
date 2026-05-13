@@ -19,6 +19,63 @@ import { cn } from "@/lib/utils";
 import { Check, ChevronsUpDown, Loader2, Pencil, Plus } from "lucide-react";
 import { toast } from "sonner";
 
+function QuickAdd({
+  table, label, onCreated,
+}: {
+  table: "procedimentos" | "formas_pagamento";
+  label: string;
+  onCreated: (nome: string) => void;
+}) {
+  const create = useCreate(table);
+  const [open, setOpen] = useState(false);
+  const [nome, setNome] = useState("");
+  const [taxa, setTaxa] = useState("0");
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nome.trim()) return toast.error("Informe o nome");
+    const values: any = { nome: nome.trim() };
+    if (table === "formas_pagamento") values.taxa = Number(taxa) || 0;
+    await create.mutateAsync(values);
+    onCreated(nome.trim());
+    setNome(""); setTaxa("0");
+    setOpen(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button type="button" variant="ghost" size="icon" className="h-6 w-6"
+          aria-label={`Adicionar ${label}`}>
+          <Plus className="h-3.5 w-3.5" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader><DialogTitle>Novo {label}</DialogTitle></DialogHeader>
+        <form onSubmit={submit} className="space-y-4">
+          <div className="space-y-1.5">
+            <Label>Nome</Label>
+            <Input autoFocus required value={nome} onChange={(e) => setNome(e.target.value)} />
+          </div>
+          {table === "formas_pagamento" && (
+            <div className="space-y-1.5">
+              <Label>Taxa (%)</Label>
+              <Input type="number" step="0.01" value={taxa} onChange={(e) => setTaxa(e.target.value)} />
+            </div>
+          )}
+          <DialogFooter>
+            <Button type="submit" disabled={create.isPending}>
+              {create.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              Salvar
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
 type Atendimento = {
   id?: string;
   paciente: string;
