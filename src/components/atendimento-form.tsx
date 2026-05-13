@@ -181,7 +181,11 @@ export function AtendimentoForm({
               <Input required value={v.paciente} onChange={(e) => setV({ ...v, paciente: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Procedimento</Label>
+              <div className="flex items-center justify-between">
+                <Label>Procedimento</Label>
+                <QuickAdd table="procedimentos" label="procedimento"
+                  onCreated={(nome) => setV((p) => ({ ...p, procedimento: nome }))} />
+              </div>
               <Popover open={procOpen} onOpenChange={setProcOpen}>
                 <PopoverTrigger asChild>
                   <Button type="button" variant="outline" role="combobox" aria-expanded={procOpen}
@@ -214,7 +218,14 @@ export function AtendimentoForm({
               <Input type="date" required value={v.data} onChange={(e) => setV({ ...v, data: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Forma de pagamento</Label>
+              <div className="flex items-center justify-between">
+                <Label>Forma de pagamento</Label>
+                <QuickAdd table="formas_pagamento" label="forma de pagamento"
+                  onCreated={(nome) => {
+                    // aguarda invalidação do cache; setForma após próximo render
+                    setTimeout(() => onForma(nome), 100);
+                  }} />
+              </div>
               <Select value={v.forma_pagamento} onValueChange={onForma}>
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
