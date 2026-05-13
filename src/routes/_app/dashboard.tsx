@@ -80,8 +80,8 @@ function Dashboard() {
       />
 
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
-        <StatCard label="Receita Bruta" value={brl(totBruto)} tone="primary" icon={<TrendingUp className="h-4 w-4" />} />
-        <StatCard label="Receita Líquida" value={brl(totLiquido)} tone="success" icon={<CircleDollarSign className="h-4 w-4" />} hint="Após taxas de cartão" />
+        <StatCard label="Receita Bruta" value={brl(totBruto)} tone="primary" icon={<TrendingUp className="h-4 w-4" />} hint="Atendimentos" />
+        <StatCard label="Receita Líquida" value={brl(totLiquido)} tone="success" icon={<CircleDollarSign className="h-4 w-4" />} hint={`Atend. ${brl(totLiquidoAtend)} · Extras ${brl(totGanhos)}`} />
         <StatCard label="Lucro Líquido" value={brl(lucro)} tone={lucro >= 0 ? "success" : "destructive"} icon={<Wallet className="h-4 w-4" />} hint="Receita líq. − despesas − laboratório" />
         <StatCard label="Despesas" value={brl(totDesp)} tone="warning" icon={<Receipt className="h-4 w-4" />} hint={`Pagas ${brl(totDespPagas)} · Pend. ${brl(totDespPendentes)}`} />
         <StatCard label="Pendentes" value={brl(totDespPendentes)} tone={totDespPendentes > 0 ? "warning" : "success"} icon={<TrendingDown className="h-4 w-4" />} />
