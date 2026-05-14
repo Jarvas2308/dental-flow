@@ -115,7 +115,7 @@ function Dashboard() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="font-semibold">Evolução financeira</h3>
-            <p className="text-xs text-muted-foreground">Últimos 6 meses</p>
+            <p className="text-xs text-muted-foreground">Atendimentos vs ganhos extras · últimos 6 meses</p>
           </div>
         </div>
         <div className="h-72">
