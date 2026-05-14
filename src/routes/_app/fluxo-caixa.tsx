@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import {
   Wallet, ArrowDownCircle, ArrowUpCircle, TrendingUp, Target, Activity,
+  Stethoscope, Layers,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -20,10 +21,13 @@ export const Route = createFileRoute("/_app/fluxo-caixa")({
 });
 
 type FiltroPag = "todas" | string;
+type Visao = "clinica" | "geral";
 
 function FluxoCaixa() {
   const [mes, setMes] = useState(currentMonthKey());
   const [pagamento, setPagamento] = useState<FiltroPag>("todas");
+  const [visao, setVisao] = useState<Visao>("geral");
+  const isClinica = visao === "clinica";
 
   const atendimentos = useTable<any>("atendimentos", "data");
   const despesas = useTable<any>("despesas", "vencimento");
@@ -44,28 +48,31 @@ function FluxoCaixa() {
     return Array.from(set).sort();
   }, [atendimentos.data]);
 
-  // Entradas = atendimentos (líquido) + ganhos extras
+  // Entradas: visão clínica = só atendimentos. Visão geral = atendimentos + ganhos extras.
   const ent = useMemo(() => {
     const a = (atendimentos.data ?? [])
       .filter((r) => monthKey(r.data) === mes)
       .filter((r) => pagamento === "todas" || r.forma_pagamento === pagamento)
       .map((r) => ({ data: r.data, valor: Number(r.valor_liquido || 0), _origem: "Atendimento" }));
+    if (isClinica) return a;
     const g = pagamento === "todas"
       ? (ganhos.data ?? [])
           .filter((r) => monthKey(r.data) === mes)
           .map((r) => ({ data: r.data, valor: Number(r.valor || 0), _origem: "Ganho extra" }))
       : [];
     return [...a, ...g];
-  }, [atendimentos.data, ganhos.data, mes, pagamento]);
+  }, [atendimentos.data, ganhos.data, mes, pagamento, isClinica]);
 
-  // Saídas: despesas (com data = vencimento) + lab (data)
+  // Saídas: clínica = apenas custos de laboratório. Geral = despesas + lab.
   const sai = useMemo(() => {
-    const all = [
-      ...(despesas.data ?? []).map((r) => ({ ...r, data: r.vencimento, _origem: "Despesa" })),
-      ...(lab.data ?? []).map((r) => ({ ...r, _origem: "Laboratório" })),
-    ];
+    const all = isClinica
+      ? (lab.data ?? []).map((r) => ({ ...r, _origem: "Laboratório" }))
+      : [
+          ...(despesas.data ?? []).map((r) => ({ ...r, data: r.vencimento, _origem: "Despesa" })),
+          ...(lab.data ?? []).map((r) => ({ ...r, _origem: "Laboratório" })),
+        ];
     return all.filter((r) => monthKey(r.data) === mes);
-  }, [despesas.data, lab.data, mes]);
+  }, [despesas.data, lab.data, mes, isClinica]);
 
   const totalEntradas = ent.reduce((s, r) => s + Number(r.valor || 0), 0);
   const totalSaidas = sai.reduce((s, r) => s + Number(r.valor || 0), 0);
@@ -76,23 +83,23 @@ function FluxoCaixa() {
     const limite = new Date(year, monthNum - 1, diasNoMes);
     const ents =
       (atendimentos.data ?? []).filter((r) => new Date(r.data) <= limite).reduce((s, r) => s + Number(r.valor_liquido || 0), 0)
-      + (ganhos.data ?? []).filter((r) => new Date(r.data) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0);
+      + (isClinica ? 0 : (ganhos.data ?? []).filter((r) => new Date(r.data) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0));
     const sds =
-      (despesas.data ?? []).filter((r) => new Date(r.vencimento) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0) +
+      (isClinica ? 0 : (despesas.data ?? []).filter((r) => new Date(r.vencimento) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0)) +
       (lab.data ?? []).filter((r) => new Date(r.data) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0);
     return ents - sds;
-  }, [atendimentos.data, despesas.data, lab.data, ganhos.data, year, monthNum, diasNoMes]);
+  }, [atendimentos.data, despesas.data, lab.data, ganhos.data, year, monthNum, diasNoMes, isClinica]);
 
   // Saldo atual (até hoje, considerando todos os meses)
   const saldoAtual = useMemo(() => {
     const ents =
       (atendimentos.data ?? []).filter((r) => new Date(r.data) <= hoje).reduce((s, r) => s + Number(r.valor_liquido || 0), 0)
-      + (ganhos.data ?? []).filter((r) => new Date(r.data) <= hoje).reduce((s, r) => s + Number(r.valor || 0), 0);
+      + (isClinica ? 0 : (ganhos.data ?? []).filter((r) => new Date(r.data) <= hoje).reduce((s, r) => s + Number(r.valor || 0), 0));
     const sds =
-      (despesas.data ?? []).filter((r) => new Date(r.vencimento) <= hoje).reduce((s, r) => s + Number(r.valor || 0), 0) +
+      (isClinica ? 0 : (despesas.data ?? []).filter((r) => new Date(r.vencimento) <= hoje).reduce((s, r) => s + Number(r.valor || 0), 0)) +
       (lab.data ?? []).filter((r) => new Date(r.data) <= hoje).reduce((s, r) => s + Number(r.valor || 0), 0);
     return ents - sds;
-  }, [atendimentos.data, despesas.data, lab.data, ganhos.data]);
+  }, [atendimentos.data, despesas.data, lab.data, ganhos.data, isClinica]);
 
   // Dias do mês com agregados
   const diario = useMemo(() => {
@@ -132,9 +139,33 @@ function FluxoCaixa() {
     <>
       <PageHeader
         title="Fluxo de Caixa"
-        description="Entradas, saídas, saldo diário e previsão financeira"
+        description={isClinica
+          ? "Apenas atendimentos e custos clínicos — performance do consultório"
+          : "Visão completa: atendimentos, ganhos extras e despesas"}
         actions={
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 items-center">
+            <div className="inline-flex rounded-lg border bg-card p-0.5">
+              <button
+                type="button"
+                onClick={() => setVisao("clinica")}
+                className={cn(
+                  "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md transition-colors",
+                  isClinica ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Stethoscope className="h-3.5 w-3.5" /> Clínica
+              </button>
+              <button
+                type="button"
+                onClick={() => setVisao("geral")}
+                className={cn(
+                  "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md transition-colors",
+                  !isClinica ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Layers className="h-3.5 w-3.5" /> Geral
+              </button>
+            </div>
             <Select value={mes} onValueChange={setMes}>
               <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -175,20 +206,21 @@ function FluxoCaixa() {
               value={brl(totalEntradas)}
               tone="primary"
               icon={<ArrowDownCircle className="h-4 w-4" />}
-              hint={`${ent.length} atendimentos`}
+              hint={isClinica ? `${ent.length} atendimentos` : `Atend. + ganhos extras (${ent.length})`}
             />
             <StatCard
               label={`Saídas · ${labelMes}`}
               value={brl(totalSaidas)}
               tone="warning"
               icon={<ArrowUpCircle className="h-4 w-4" />}
-              hint={`${sai.length} lançamentos`}
+              hint={isClinica ? "Apenas custos de laboratório" : "Despesas + laboratório"}
             />
             <StatCard
-              label="Lucro líquido do mês"
+              label={isClinica ? "Lucro operacional" : "Lucro geral do mês"}
               value={brl(lucroLiquido)}
               tone={lucroLiquido >= 0 ? "success" : "destructive"}
               icon={<Activity className="h-4 w-4" />}
+              hint={isClinica ? "Performance clínica pura" : "Inclui ganhos extras e despesas"}
             />
             <StatCard
               label="Saldo acumulado"

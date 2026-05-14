@@ -36,28 +36,33 @@ function Dashboard() {
   const totBruto = filt(atendimentos.data).reduce((s, r: any) => s + Number(r.valor_bruto || 0), 0);
   const totLiquidoAtend = filt(atendimentos.data).reduce((s, r: any) => s + Number(r.valor_liquido || 0), 0);
   const totGanhos = filt(ganhos.data).reduce((s, r: any) => s + Number(r.valor || 0), 0);
-  const totLiquido = totLiquidoAtend + totGanhos;
+  const totReceitaTotal = totLiquidoAtend + totGanhos;
   const totDesp = filtDesp(despesas.data ?? []).reduce((s, r: any) => s + Number(r.valor || 0), 0);
   const totDespPagas = filtDesp(despesas.data ?? []).filter((r: any) => r.status === "pago").reduce((s, r: any) => s + Number(r.valor || 0), 0);
   const totDespPendentes = totDesp - totDespPagas;
   const totLab = filt(lab.data).reduce((s, r: any) => s + Number(r.valor || 0), 0);
-  const lucro = totLiquido - totDesp - totLab;
+
+  // Lucro operacional = só consultório (receita atend - despesas - lab)
+  const lucroOperacional = totLiquidoAtend - totDesp - totLab;
+  // Lucro geral = inclui ganhos extras
+  const lucroGeral = totReceitaTotal - totDesp - totLab;
 
   const chartData = useMemo(() => {
     const months = monthOptions(6).reverse();
     return months.map((m) => {
-      const rec = (atendimentos.data ?? []).filter((r: any) => monthKey(r.data) === m)
-        .reduce((s, r: any) => s + Number(r.valor_liquido || 0), 0)
-        + (ganhos.data ?? []).filter((r: any) => monthKey(r.data) === m)
+      const recAtend = (atendimentos.data ?? []).filter((r: any) => monthKey(r.data) === m)
+        .reduce((s, r: any) => s + Number(r.valor_liquido || 0), 0);
+      const recExtra = (ganhos.data ?? []).filter((r: any) => monthKey(r.data) === m)
         .reduce((s, r: any) => s + Number(r.valor || 0), 0);
       const desp =
         (despesas.data ?? []).filter((r: any) => monthKey(r.vencimento) === m).reduce((s, r: any) => s + Number(r.valor || 0), 0) +
         (lab.data ?? []).filter((r: any) => monthKey(r.data) === m).reduce((s, r: any) => s + Number(r.valor || 0), 0);
       return {
         mes: monthLabel(m).replace(" de ", "/"),
-        Receita: Number(rec.toFixed(2)),
+        Atendimentos: Number(recAtend.toFixed(2)),
+        "Ganhos extras": Number(recExtra.toFixed(2)),
         Despesas: Number(desp.toFixed(2)),
-        Lucro: Number((rec - desp).toFixed(2)),
+        "Lucro geral": Number((recAtend + recExtra - desp).toFixed(2)),
       };
     });
   }, [atendimentos.data, despesas.data, lab.data, ganhos.data]);
@@ -79,10 +84,25 @@ function Dashboard() {
         }
       />
 
+      {/* Receitas */}
+      <div className="mb-2 flex items-center gap-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Receitas</h2>
+        <div className="h-px flex-1 bg-border" />
+      </div>
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
-        <StatCard label="Receita Bruta" value={brl(totBruto)} tone="primary" icon={<TrendingUp className="h-4 w-4" />} hint="Atendimentos" />
-        <StatCard label="Receita Líquida" value={brl(totLiquido)} tone="success" icon={<CircleDollarSign className="h-4 w-4" />} hint={`Atend. ${brl(totLiquidoAtend)} · Extras ${brl(totGanhos)}`} />
-        <StatCard label="Lucro Líquido" value={brl(lucro)} tone={lucro >= 0 ? "success" : "destructive"} icon={<Wallet className="h-4 w-4" />} hint="Receita líq. − despesas − laboratório" />
+        <StatCard label="Receita de Atendimentos" value={brl(totLiquidoAtend)} tone="primary" icon={<TrendingUp className="h-4 w-4" />} hint={`Bruto ${brl(totBruto)} · líquido após taxas`} />
+        <StatCard label="Receitas Extras" value={brl(totGanhos)} icon={<CircleDollarSign className="h-4 w-4" />} hint="Aluguel, rendimentos, etc." />
+        <StatCard label="Receita Total" value={brl(totReceitaTotal)} tone="success" icon={<CircleDollarSign className="h-4 w-4" />} hint="Atendimentos + extras" />
+      </div>
+
+      {/* Resultado */}
+      <div className="mt-6 mb-2 flex items-center gap-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Resultado</h2>
+        <div className="h-px flex-1 bg-border" />
+      </div>
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
+        <StatCard label="Lucro Operacional" value={brl(lucroOperacional)} tone={lucroOperacional >= 0 ? "success" : "destructive"} icon={<Wallet className="h-4 w-4" />} hint="Só consultório − despesas − lab" />
+        <StatCard label="Lucro Geral" value={brl(lucroGeral)} tone={lucroGeral >= 0 ? "success" : "destructive"} icon={<Wallet className="h-4 w-4" />} hint="Inclui receitas extras" />
         <StatCard label="Despesas" value={brl(totDesp)} tone="warning" icon={<Receipt className="h-4 w-4" />} hint={`Pagas ${brl(totDespPagas)} · Pend. ${brl(totDespPendentes)}`} />
         <StatCard label="Pendentes" value={brl(totDespPendentes)} tone={totDespPendentes > 0 ? "warning" : "success"} icon={<TrendingDown className="h-4 w-4" />} />
         <StatCard label="Laboratório" value={brl(totLab)} icon={<FlaskConical className="h-4 w-4" />} />
@@ -95,7 +115,7 @@ function Dashboard() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="font-semibold">Evolução financeira</h3>
-            <p className="text-xs text-muted-foreground">Últimos 6 meses</p>
+            <p className="text-xs text-muted-foreground">Atendimentos vs ganhos extras · últimos 6 meses</p>
           </div>
         </div>
         <div className="h-72">
@@ -111,9 +131,10 @@ function Dashboard() {
                 formatter={(v: any) => brl(Number(v))}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Bar dataKey="Receita" fill="var(--chart-1)" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="Atendimentos" stackId="rec" fill="var(--chart-1)" radius={[0, 0, 0, 0]} />
+              <Bar dataKey="Ganhos extras" stackId="rec" fill="var(--chart-3)" radius={[8, 8, 0, 0]} />
               <Bar dataKey="Despesas" fill="var(--chart-4)" radius={[8, 8, 0, 0]} />
-              <Bar dataKey="Lucro" fill="var(--chart-2)" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="Lucro geral" fill="var(--chart-2)" radius={[8, 8, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
