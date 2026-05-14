@@ -36,28 +36,33 @@ function Dashboard() {
   const totBruto = filt(atendimentos.data).reduce((s, r: any) => s + Number(r.valor_bruto || 0), 0);
   const totLiquidoAtend = filt(atendimentos.data).reduce((s, r: any) => s + Number(r.valor_liquido || 0), 0);
   const totGanhos = filt(ganhos.data).reduce((s, r: any) => s + Number(r.valor || 0), 0);
-  const totLiquido = totLiquidoAtend + totGanhos;
+  const totReceitaTotal = totLiquidoAtend + totGanhos;
   const totDesp = filtDesp(despesas.data ?? []).reduce((s, r: any) => s + Number(r.valor || 0), 0);
   const totDespPagas = filtDesp(despesas.data ?? []).filter((r: any) => r.status === "pago").reduce((s, r: any) => s + Number(r.valor || 0), 0);
   const totDespPendentes = totDesp - totDespPagas;
   const totLab = filt(lab.data).reduce((s, r: any) => s + Number(r.valor || 0), 0);
-  const lucro = totLiquido - totDesp - totLab;
+
+  // Lucro operacional = só consultório (receita atend - despesas - lab)
+  const lucroOperacional = totLiquidoAtend - totDesp - totLab;
+  // Lucro geral = inclui ganhos extras
+  const lucroGeral = totReceitaTotal - totDesp - totLab;
 
   const chartData = useMemo(() => {
     const months = monthOptions(6).reverse();
     return months.map((m) => {
-      const rec = (atendimentos.data ?? []).filter((r: any) => monthKey(r.data) === m)
-        .reduce((s, r: any) => s + Number(r.valor_liquido || 0), 0)
-        + (ganhos.data ?? []).filter((r: any) => monthKey(r.data) === m)
+      const recAtend = (atendimentos.data ?? []).filter((r: any) => monthKey(r.data) === m)
+        .reduce((s, r: any) => s + Number(r.valor_liquido || 0), 0);
+      const recExtra = (ganhos.data ?? []).filter((r: any) => monthKey(r.data) === m)
         .reduce((s, r: any) => s + Number(r.valor || 0), 0);
       const desp =
         (despesas.data ?? []).filter((r: any) => monthKey(r.vencimento) === m).reduce((s, r: any) => s + Number(r.valor || 0), 0) +
         (lab.data ?? []).filter((r: any) => monthKey(r.data) === m).reduce((s, r: any) => s + Number(r.valor || 0), 0);
       return {
         mes: monthLabel(m).replace(" de ", "/"),
-        Receita: Number(rec.toFixed(2)),
+        Atendimentos: Number(recAtend.toFixed(2)),
+        "Ganhos extras": Number(recExtra.toFixed(2)),
         Despesas: Number(desp.toFixed(2)),
-        Lucro: Number((rec - desp).toFixed(2)),
+        "Lucro geral": Number((recAtend + recExtra - desp).toFixed(2)),
       };
     });
   }, [atendimentos.data, despesas.data, lab.data, ganhos.data]);
