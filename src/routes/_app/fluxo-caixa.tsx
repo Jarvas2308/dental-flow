@@ -48,28 +48,31 @@ function FluxoCaixa() {
     return Array.from(set).sort();
   }, [atendimentos.data]);
 
-  // Entradas = atendimentos (líquido) + ganhos extras
+  // Entradas: visão clínica = só atendimentos. Visão geral = atendimentos + ganhos extras.
   const ent = useMemo(() => {
     const a = (atendimentos.data ?? [])
       .filter((r) => monthKey(r.data) === mes)
       .filter((r) => pagamento === "todas" || r.forma_pagamento === pagamento)
       .map((r) => ({ data: r.data, valor: Number(r.valor_liquido || 0), _origem: "Atendimento" }));
+    if (isClinica) return a;
     const g = pagamento === "todas"
       ? (ganhos.data ?? [])
           .filter((r) => monthKey(r.data) === mes)
           .map((r) => ({ data: r.data, valor: Number(r.valor || 0), _origem: "Ganho extra" }))
       : [];
     return [...a, ...g];
-  }, [atendimentos.data, ganhos.data, mes, pagamento]);
+  }, [atendimentos.data, ganhos.data, mes, pagamento, isClinica]);
 
-  // Saídas: despesas (com data = vencimento) + lab (data)
+  // Saídas: clínica = apenas custos de laboratório. Geral = despesas + lab.
   const sai = useMemo(() => {
-    const all = [
-      ...(despesas.data ?? []).map((r) => ({ ...r, data: r.vencimento, _origem: "Despesa" })),
-      ...(lab.data ?? []).map((r) => ({ ...r, _origem: "Laboratório" })),
-    ];
+    const all = isClinica
+      ? (lab.data ?? []).map((r) => ({ ...r, _origem: "Laboratório" }))
+      : [
+          ...(despesas.data ?? []).map((r) => ({ ...r, data: r.vencimento, _origem: "Despesa" })),
+          ...(lab.data ?? []).map((r) => ({ ...r, _origem: "Laboratório" })),
+        ];
     return all.filter((r) => monthKey(r.data) === mes);
-  }, [despesas.data, lab.data, mes]);
+  }, [despesas.data, lab.data, mes, isClinica]);
 
   const totalEntradas = ent.reduce((s, r) => s + Number(r.valor || 0), 0);
   const totalSaidas = sai.reduce((s, r) => s + Number(r.valor || 0), 0);
@@ -80,23 +83,23 @@ function FluxoCaixa() {
     const limite = new Date(year, monthNum - 1, diasNoMes);
     const ents =
       (atendimentos.data ?? []).filter((r) => new Date(r.data) <= limite).reduce((s, r) => s + Number(r.valor_liquido || 0), 0)
-      + (ganhos.data ?? []).filter((r) => new Date(r.data) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0);
+      + (isClinica ? 0 : (ganhos.data ?? []).filter((r) => new Date(r.data) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0));
     const sds =
-      (despesas.data ?? []).filter((r) => new Date(r.vencimento) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0) +
+      (isClinica ? 0 : (despesas.data ?? []).filter((r) => new Date(r.vencimento) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0)) +
       (lab.data ?? []).filter((r) => new Date(r.data) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0);
     return ents - sds;
-  }, [atendimentos.data, despesas.data, lab.data, ganhos.data, year, monthNum, diasNoMes]);
+  }, [atendimentos.data, despesas.data, lab.data, ganhos.data, year, monthNum, diasNoMes, isClinica]);
 
   // Saldo atual (até hoje, considerando todos os meses)
   const saldoAtual = useMemo(() => {
     const ents =
       (atendimentos.data ?? []).filter((r) => new Date(r.data) <= hoje).reduce((s, r) => s + Number(r.valor_liquido || 0), 0)
-      + (ganhos.data ?? []).filter((r) => new Date(r.data) <= hoje).reduce((s, r) => s + Number(r.valor || 0), 0);
+      + (isClinica ? 0 : (ganhos.data ?? []).filter((r) => new Date(r.data) <= hoje).reduce((s, r) => s + Number(r.valor || 0), 0));
     const sds =
-      (despesas.data ?? []).filter((r) => new Date(r.vencimento) <= hoje).reduce((s, r) => s + Number(r.valor || 0), 0) +
+      (isClinica ? 0 : (despesas.data ?? []).filter((r) => new Date(r.vencimento) <= hoje).reduce((s, r) => s + Number(r.valor || 0), 0)) +
       (lab.data ?? []).filter((r) => new Date(r.data) <= hoje).reduce((s, r) => s + Number(r.valor || 0), 0);
     return ents - sds;
-  }, [atendimentos.data, despesas.data, lab.data, ganhos.data]);
+  }, [atendimentos.data, despesas.data, lab.data, ganhos.data, isClinica]);
 
   // Dias do mês com agregados
   const diario = useMemo(() => {
