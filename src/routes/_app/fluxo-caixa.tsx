@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import {
   Wallet, ArrowDownCircle, ArrowUpCircle, TrendingUp, Target, Activity,
+  Stethoscope, Layers,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -20,10 +21,13 @@ export const Route = createFileRoute("/_app/fluxo-caixa")({
 });
 
 type FiltroPag = "todas" | string;
+type Visao = "clinica" | "geral";
 
 function FluxoCaixa() {
   const [mes, setMes] = useState(currentMonthKey());
   const [pagamento, setPagamento] = useState<FiltroPag>("todas");
+  const [visao, setVisao] = useState<Visao>("geral");
+  const isClinica = visao === "clinica";
 
   const atendimentos = useTable<any>("atendimentos", "data");
   const despesas = useTable<any>("despesas", "vencimento");
