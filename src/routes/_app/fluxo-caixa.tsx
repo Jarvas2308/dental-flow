@@ -139,9 +139,33 @@ function FluxoCaixa() {
     <>
       <PageHeader
         title="Fluxo de Caixa"
-        description="Entradas, saídas, saldo diário e previsão financeira"
+        description={isClinica
+          ? "Apenas atendimentos e custos clínicos — performance do consultório"
+          : "Visão completa: atendimentos, ganhos extras e despesas"}
         actions={
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 items-center">
+            <div className="inline-flex rounded-lg border bg-card p-0.5">
+              <button
+                type="button"
+                onClick={() => setVisao("clinica")}
+                className={cn(
+                  "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md transition-colors",
+                  isClinica ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Stethoscope className="h-3.5 w-3.5" /> Clínica
+              </button>
+              <button
+                type="button"
+                onClick={() => setVisao("geral")}
+                className={cn(
+                  "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md transition-colors",
+                  !isClinica ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Layers className="h-3.5 w-3.5" /> Geral
+              </button>
+            </div>
             <Select value={mes} onValueChange={setMes}>
               <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
               <SelectContent>
