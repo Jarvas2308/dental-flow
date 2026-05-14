@@ -206,20 +206,21 @@ function FluxoCaixa() {
               value={brl(totalEntradas)}
               tone="primary"
               icon={<ArrowDownCircle className="h-4 w-4" />}
-              hint={`${ent.length} atendimentos`}
+              hint={isClinica ? `${ent.length} atendimentos` : `Atend. + ganhos extras (${ent.length})`}
             />
             <StatCard
               label={`Saídas · ${labelMes}`}
               value={brl(totalSaidas)}
               tone="warning"
               icon={<ArrowUpCircle className="h-4 w-4" />}
-              hint={`${sai.length} lançamentos`}
+              hint={isClinica ? "Apenas custos de laboratório" : "Despesas + laboratório"}
             />
             <StatCard
-              label="Lucro líquido do mês"
+              label={isClinica ? "Lucro operacional" : "Lucro geral do mês"}
               value={brl(lucroLiquido)}
               tone={lucroLiquido >= 0 ? "success" : "destructive"}
               icon={<Activity className="h-4 w-4" />}
+              hint={isClinica ? "Performance clínica pura" : "Inclui ganhos extras e despesas"}
             />
             <StatCard
               label="Saldo acumulado"
