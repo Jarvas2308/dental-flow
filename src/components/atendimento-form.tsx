@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useCreate, useTable, useUpdate } from "@/hooks/use-data";
-import { brl } from "@/lib/format";
+import { brl, todayISO } from "@/lib/format";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
