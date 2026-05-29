@@ -90,7 +90,7 @@ type Atendimento = {
 
 const empty = (): Atendimento => ({
   paciente: "", procedimento: "", forma_pagamento: "",
-  valor_bruto: "", taxa: 0, data: new Date().toISOString().slice(0, 10),
+  valor_bruto: "", taxa: 0, data: todayISO(),
   nota_fiscal: false,
 });
 
