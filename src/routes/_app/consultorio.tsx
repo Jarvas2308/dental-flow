@@ -283,7 +283,7 @@ function Consultorio() {
             )}
             {rows.map((r) => (
               <TableRow key={r.id}>
-                <TableCell className="text-muted-foreground">{new Date(r.data).toLocaleDateString("pt-BR")}</TableCell>
+                <TableCell className="text-muted-foreground">{formatDateBR(r.data)}</TableCell>
                 <TableCell className="font-medium">{r.paciente}</TableCell>
                 <TableCell>{r.procedimento}</TableCell>
                 <TableCell className="text-muted-foreground text-sm">{r.forma_pagamento} · {r.taxa}%</TableCell>
