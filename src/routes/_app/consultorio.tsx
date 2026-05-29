@@ -131,8 +131,8 @@ function Consultorio() {
 
     const cmp = (a: any, b: any) => {
       switch (sort) {
-        case "data_desc": return +new Date(b.data) - +new Date(a.data);
-        case "data_asc": return +new Date(a.data) - +new Date(b.data);
+        case "data_desc": return +parseLocalDate(b.data)! - +parseLocalDate(a.data)!;
+        case "data_asc": return +parseLocalDate(a.data)! - +parseLocalDate(b.data)!;
         case "paciente_asc": return (a.paciente ?? "").localeCompare(b.paciente ?? "");
         case "paciente_desc": return (b.paciente ?? "").localeCompare(a.paciente ?? "");
         case "procedimento": return (a.procedimento ?? "").localeCompare(b.procedimento ?? "");
