@@ -100,9 +100,9 @@ function Consultorio() {
     const weekStart = startOfWeek(today);
 
     if (filter === "hoje") {
-      r = r.filter((x) => { const d = new Date(x.data); return d >= today && d < tomorrow; });
+      r = r.filter((x) => { const d = parseLocalDate(x.data); return !!d && d >= today && d < tomorrow; });
     } else if (filter === "semana") {
-      r = r.filter((x) => new Date(x.data) >= weekStart);
+      r = r.filter((x) => { const d = parseLocalDate(x.data); return !!d && d >= weekStart; });
     } else if (filter === "mes" || filter === "todos") {
       r = r.filter((x) => monthKey(x.data) === mes);
     } else if (filter === "emitidos") {
