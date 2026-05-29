@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTable, useUpdate, useDelete } from "@/hooks/use-data";
-import { brl, currentMonthKey, monthKey, monthLabel, monthOptions } from "@/lib/format";
+import { brl, currentMonthKey, formatDateBR, monthKey, monthLabel, monthOptions, parseLocalDate } from "@/lib/format";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -100,9 +100,9 @@ function Consultorio() {
     const weekStart = startOfWeek(today);
 
     if (filter === "hoje") {
-      r = r.filter((x) => { const d = new Date(x.data); return d >= today && d < tomorrow; });
+      r = r.filter((x) => { const d = parseLocalDate(x.data); return !!d && d >= today && d < tomorrow; });
     } else if (filter === "semana") {
-      r = r.filter((x) => new Date(x.data) >= weekStart);
+      r = r.filter((x) => { const d = parseLocalDate(x.data); return !!d && d >= weekStart; });
     } else if (filter === "mes" || filter === "todos") {
       r = r.filter((x) => monthKey(x.data) === mes);
     } else if (filter === "emitidos") {
@@ -131,8 +131,8 @@ function Consultorio() {
 
     const cmp = (a: any, b: any) => {
       switch (sort) {
-        case "data_desc": return +new Date(b.data) - +new Date(a.data);
-        case "data_asc": return +new Date(a.data) - +new Date(b.data);
+        case "data_desc": return +parseLocalDate(b.data)! - +parseLocalDate(a.data)!;
+        case "data_asc": return +parseLocalDate(a.data)! - +parseLocalDate(b.data)!;
         case "paciente_asc": return (a.paciente ?? "").localeCompare(b.paciente ?? "");
         case "paciente_desc": return (b.paciente ?? "").localeCompare(a.paciente ?? "");
         case "procedimento": return (a.procedimento ?? "").localeCompare(b.procedimento ?? "");
@@ -283,7 +283,7 @@ function Consultorio() {
             )}
             {rows.map((r) => (
               <TableRow key={r.id}>
-                <TableCell className="text-muted-foreground">{new Date(r.data).toLocaleDateString("pt-BR")}</TableCell>
+                <TableCell className="text-muted-foreground">{formatDateBR(r.data)}</TableCell>
                 <TableCell className="font-medium">{r.paciente}</TableCell>
                 <TableCell>{r.procedimento}</TableCell>
                 <TableCell className="text-muted-foreground text-sm">{r.forma_pagamento} · {r.taxa}%</TableCell>

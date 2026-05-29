@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useCreate, useTable, useUpdate } from "@/hooks/use-data";
-import { brl } from "@/lib/format";
+import { brl, todayISO } from "@/lib/format";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
@@ -90,7 +90,7 @@ type Atendimento = {
 
 const empty = (): Atendimento => ({
   paciente: "", procedimento: "", forma_pagamento: "",
-  valor_bruto: "", taxa: 0, data: new Date().toISOString().slice(0, 10),
+  valor_bruto: "", taxa: 0, data: todayISO(),
   nota_fiscal: false,
 });
 
