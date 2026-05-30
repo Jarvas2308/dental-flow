@@ -34,6 +34,14 @@ type SortKey =
 
 type QuickFilter = "todos" | "hoje" | "semana" | "mes" | "emitidos" | "pendentes" | "cartao" | "pix" | "dinheiro";
 
+type StatusPag = "todos" | "pagos" | "abertos";
+
+const STATUS_LABELS: Record<StatusPag, string> = {
+  todos: "Todos os pagamentos",
+  pagos: "Somente pagos",
+  abertos: "Somente pendentes",
+};
+
 const SORT_LABELS: Record<SortKey, string> = {
   data_desc: "Data (mais recente)",
   data_asc: "Data (mais antiga)",
