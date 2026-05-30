@@ -154,6 +154,7 @@ export function AtendimentoForm({
       valor_liquido: Number(valorLiquido.toFixed(2)),
       data: v.data,
       nota_fiscal: v.nota_fiscal,
+      status_pagamento: v.status_pagamento,
     };
 
     if (isEdit) await update.mutateAsync({ id: editing.id, values: payload });
