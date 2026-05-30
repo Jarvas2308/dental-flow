@@ -16,7 +16,8 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
   DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuRadioGroup, DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
-import { Search, FileCheck2, Loader2, ArrowUpDown, Filter, X } from "lucide-react";
+import { Search, FileCheck2, Loader2, ArrowUpDown, Filter, X, CheckCircle2, Clock } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { AtendimentoForm, EditAtendimentoButton } from "@/components/atendimento-form";
 
