@@ -63,10 +63,12 @@ function Dashboard() {
   const chartData = useMemo(() => {
     const months = monthOptions(6).reverse();
     return months.map((m) => {
-      const recAtend = (atendimentos.data ?? []).filter((r: any) => monthKey(r.data) === m)
+      const recAtend = (atendimentos.data ?? []).filter((r: any) => monthKey(r.data) === m && r.status_pagamento !== "pendente")
         .reduce((s, r: any) => s + Number(r.valor_liquido || 0), 0);
       const recExtra = (ganhos.data ?? []).filter((r: any) => monthKey(r.data) === m)
         .reduce((s, r: any) => s + Number(r.valor || 0), 0);
+      const pend = (atendimentos.data ?? []).filter((r: any) => monthKey(r.data) === m && r.status_pagamento === "pendente")
+        .reduce((s, r: any) => s + Number(r.valor_liquido || 0), 0);
       const desp =
         (despesas.data ?? []).filter((r: any) => monthKey(r.vencimento) === m).reduce((s, r: any) => s + Number(r.valor || 0), 0) +
         (lab.data ?? []).filter((r: any) => monthKey(r.data) === m).reduce((s, r: any) => s + Number(r.valor || 0), 0);
@@ -74,11 +76,13 @@ function Dashboard() {
         mes: monthLabel(m).replace(" de ", "/"),
         Atendimentos: Number(recAtend.toFixed(2)),
         "Ganhos extras": Number(recExtra.toFixed(2)),
+        "Em aberto": Number(pend.toFixed(2)),
         Despesas: Number(desp.toFixed(2)),
         "Lucro geral": Number((recAtend + recExtra - desp).toFixed(2)),
       };
     });
   }, [atendimentos.data, despesas.data, lab.data, ganhos.data]);
+
 
   return (
     <>
