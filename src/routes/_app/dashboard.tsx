@@ -108,10 +108,23 @@ function Dashboard() {
         <div className="h-px flex-1 bg-border" />
       </div>
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
-        <StatCard label="Receita de Atendimentos" value={brl(totLiquidoAtend)} tone="primary" icon={<TrendingUp className="h-4 w-4" />} hint={`Bruto ${brl(totBruto)} · líquido após taxas`} />
+        <StatCard label="Receita de Atendimentos" value={brl(totLiquidoAtend)} tone="primary" icon={<TrendingUp className="h-4 w-4" />} hint={`Bruto ${brl(totBruto)} · apenas pagos`} />
         <StatCard label="Receitas Extras" value={brl(totGanhos)} icon={<CircleDollarSign className="h-4 w-4" />} hint="Aluguel, rendimentos, etc." />
-        <StatCard label="Receita Total" value={brl(totReceitaTotal)} tone="success" icon={<CircleDollarSign className="h-4 w-4" />} hint="Atendimentos + extras" />
+        <StatCard label="Receita Total" value={brl(totReceitaTotal)} tone="success" icon={<CircleDollarSign className="h-4 w-4" />} hint="Atendimentos pagos + extras" />
       </div>
+
+      {/* Valores em Aberto */}
+      <div className="mt-6 mb-2 flex items-center gap-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Valores em Aberto</h2>
+        <div className="h-px flex-1 bg-border" />
+      </div>
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Total Pendente" value={brl(totPendente)} tone={totPendente > 0 ? "destructive" : "success"} icon={<Clock className="h-4 w-4" />} hint="Não contabilizado no faturamento" />
+        <StatCard label="Consultas Pendentes" value={String(qtdPendente)} tone={qtdPendente > 0 ? "warning" : "success"} icon={<Receipt className="h-4 w-4" />} hint="Aguardando pagamento" />
+        <StatCard label="Pacientes Pendentes" value={String(pacientesPendentes.length)} icon={<Users className="h-4 w-4" />} hint={pacientesPendentes.slice(0, 3).join(", ") || "Nenhum"} />
+        <StatCard label="Previsto após Receber" value={brl(totLiquidoAtend + totPendente)} tone="primary" icon={<TrendingUp className="h-4 w-4" />} hint="Recebido + a receber" />
+      </div>
+
 
       {/* Resultado */}
       <div className="mt-6 mb-2 flex items-center gap-2">
