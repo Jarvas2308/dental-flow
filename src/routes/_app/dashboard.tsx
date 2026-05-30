@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import {
   TrendingUp, TrendingDown, Wallet, Receipt, FlaskConical, CircleDollarSign,
+  Clock, Users,
 } from "lucide-react";
 import { ProceduresAnalytics } from "@/components/procedures-analytics";
 
