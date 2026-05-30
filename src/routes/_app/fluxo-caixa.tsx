@@ -51,6 +51,7 @@ function FluxoCaixa() {
   // Entradas: visão clínica = só atendimentos. Visão geral = atendimentos + ganhos extras.
   const ent = useMemo(() => {
     const a = (atendimentos.data ?? [])
+      .filter((r) => r.status_pagamento !== "pendente")
       .filter((r) => monthKey(r.data) === mes)
       .filter((r) => pagamento === "todas" || r.forma_pagamento === pagamento)
       .map((r) => ({ data: r.data, valor: Number(r.valor_liquido || 0), _origem: "Atendimento" }));
