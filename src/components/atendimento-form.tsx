@@ -251,6 +251,20 @@ export function AtendimentoForm({
             </div>
             <div className="sm:col-span-2 flex items-center justify-between p-3 rounded-lg bg-muted/40">
               <div>
+                <Label className="cursor-pointer">Pagamento recebido</Label>
+                <p className="text-xs text-muted-foreground">
+                  {v.status_pagamento === "pago"
+                    ? "Atendimento pago — entra nos totais"
+                    : "Pendente — não entra no faturamento até quitar"}
+                </p>
+              </div>
+              <Switch
+                checked={v.status_pagamento === "pago"}
+                onCheckedChange={(c) => setV({ ...v, status_pagamento: c ? "pago" : "pendente" })}
+              />
+            </div>
+            <div className="sm:col-span-2 flex items-center justify-between p-3 rounded-lg bg-muted/40">
+              <div>
                 <Label className="cursor-pointer">Nota fiscal emitida</Label>
                 <p className="text-xs text-muted-foreground">Marque se a NF já foi gerada</p>
               </div>
