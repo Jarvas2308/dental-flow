@@ -252,6 +252,14 @@ function Consultorio() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>Status de pagamento</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuRadioGroup value={statusPag} onValueChange={(v) => setStatusPag(v as StatusPag)}>
+              {(Object.keys(STATUS_LABELS) as StatusPag[]).map((k) => (
+                <DropdownMenuRadioItem key={k} value={k}>{STATUS_LABELS[k]}</DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+            <DropdownMenuSeparator />
             <DropdownMenuLabel>Filtros rápidos</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuRadioGroup value={filter} onValueChange={(v) => setFilter(v as QuickFilter)}>
@@ -275,7 +283,7 @@ function Consultorio() {
         </DropdownMenu>
 
         {hasActiveFilter && (
-          <Button variant="ghost" size="sm" className="gap-1" onClick={() => { setFilter("todos"); setProcFilter("__all__"); setQ(""); }}>
+          <Button variant="ghost" size="sm" className="gap-1" onClick={() => { setFilter("todos"); setProcFilter("__all__"); setQ(""); setStatusPag("todos"); }}>
             <X className="h-4 w-4" /> Limpar
           </Button>
         )}
@@ -284,6 +292,12 @@ function Consultorio() {
       {/* Active chips */}
       {hasActiveFilter && (
         <div className="flex flex-wrap gap-1.5 mb-3 text-xs">
+          {statusPag !== "todos" && (
+            <Badge variant="secondary" className="gap-1">
+              {STATUS_LABELS[statusPag]}
+              <button onClick={() => setStatusPag("todos")}><X className="h-3 w-3" /></button>
+            </Badge>
+          )}
           {filter !== "todos" && (
             <Badge variant="secondary" className="gap-1">
               {FILTER_LABELS[filter]}
@@ -298,6 +312,7 @@ function Consultorio() {
           )}
         </div>
       )}
+
 
       <div className="rounded-2xl border bg-card overflow-hidden" style={{ boxShadow: "var(--shadow-soft)" }}>
         <Table>
