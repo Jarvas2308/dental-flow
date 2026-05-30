@@ -94,7 +94,7 @@ function FluxoCaixa() {
   // Saldo atual (até hoje, considerando todos os meses)
   const saldoAtual = useMemo(() => {
     const ents =
-      (atendimentos.data ?? []).filter((r) => new Date(r.data) <= hoje).reduce((s, r) => s + Number(r.valor_liquido || 0), 0)
+      (atendimentos.data ?? []).filter((r) => r.status_pagamento !== "pendente" && new Date(r.data) <= hoje).reduce((s, r) => s + Number(r.valor_liquido || 0), 0)
       + (isClinica ? 0 : (ganhos.data ?? []).filter((r) => new Date(r.data) <= hoje).reduce((s, r) => s + Number(r.valor || 0), 0));
     const sds =
       (isClinica ? 0 : (despesas.data ?? []).filter((r) => new Date(r.vencimento) <= hoje).reduce((s, r) => s + Number(r.valor || 0), 0)) +
