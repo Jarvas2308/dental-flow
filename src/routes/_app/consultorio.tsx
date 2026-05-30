@@ -324,18 +324,19 @@ function Consultorio() {
               <TableHead>Pagamento</TableHead>
               <TableHead className="text-right">Bruto</TableHead>
               <TableHead className="text-right">Líquido</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead>NF</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {list.isLoading && (
-              <TableRow><TableCell colSpan={8} className="text-center py-12">
+              <TableRow><TableCell colSpan={9} className="text-center py-12">
                 <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
               </TableCell></TableRow>
             )}
             {!list.isLoading && rows.length === 0 && (
-              <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-12">Nenhum atendimento encontrado.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-12">Nenhum atendimento encontrado.</TableCell></TableRow>
             )}
             {rows.map((r) => (
               <TableRow key={r.id}>
