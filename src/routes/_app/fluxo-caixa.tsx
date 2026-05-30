@@ -83,7 +83,7 @@ function FluxoCaixa() {
   const saldoAcumulado = useMemo(() => {
     const limite = new Date(year, monthNum - 1, diasNoMes);
     const ents =
-      (atendimentos.data ?? []).filter((r) => new Date(r.data) <= limite).reduce((s, r) => s + Number(r.valor_liquido || 0), 0)
+      (atendimentos.data ?? []).filter((r) => r.status_pagamento !== "pendente" && new Date(r.data) <= limite).reduce((s, r) => s + Number(r.valor_liquido || 0), 0)
       + (isClinica ? 0 : (ganhos.data ?? []).filter((r) => new Date(r.data) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0));
     const sds =
       (isClinica ? 0 : (despesas.data ?? []).filter((r) => new Date(r.vencimento) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0)) +
