@@ -184,11 +184,15 @@ function Consultorio() {
   }, [allData, mes, q, sort, filter, procFilter, statusPag, freqMap]);
 
 
-  const totBruto = rows.reduce((s, r) => s + Number(r.valor_bruto || 0), 0);
-  const totLiq = rows.reduce((s, r) => s + Number(r.valor_liquido || 0), 0);
-  const totNF = rows.filter((r) => r.nota_fiscal).length;
+  // Faturamento real: apenas atendimentos pagos contam nos totais
+  const pagas = rows.filter((r) => !isPendente(r));
+  const abertas = rows.filter((r) => isPendente(r));
+  const totBruto = pagas.reduce((s, r) => s + Number(r.valor_bruto || 0), 0);
+  const totLiq = pagas.reduce((s, r) => s + Number(r.valor_liquido || 0), 0);
+  const totNF = pagas.filter((r) => r.nota_fiscal).length;
+  const totPendente = abertas.reduce((s, r) => s + Number(r.valor_liquido || 0), 0);
 
-  const hasActiveFilter = filter !== "todos" || procFilter !== "__all__" || q.length > 0;
+  const hasActiveFilter = filter !== "todos" || procFilter !== "__all__" || q.length > 0 || statusPag !== "todos";
 
   return (
     <>
@@ -196,11 +200,13 @@ function Consultorio() {
         actions={<AtendimentoForm />}
       />
 
-      <div className="grid gap-4 sm:grid-cols-3 mb-6">
-        <StatCard label="Bruto" value={brl(totBruto)} tone="primary" hint={`${rows.length} atendimentos`} />
-        <StatCard label="Líquido" value={brl(totLiq)} tone="success" hint="Após taxas" />
-        <StatCard label="NFs emitidas" value={`${totNF} de ${rows.length}`} icon={<FileCheck2 className="h-4 w-4" />} />
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-6">
+        <StatCard label="Recebido (líquido)" value={brl(totLiq)} tone="success" hint={`${pagas.length} pagos · bruto ${brl(totBruto)}`} />
+        <StatCard label="Em aberto" value={brl(totPendente)} tone={totPendente > 0 ? "destructive" : "success"} icon={<Clock className="h-4 w-4" />} hint={`${abertas.length} pendentes`} />
+        <StatCard label="Previsto após receber" value={brl(totLiq + totPendente)} tone="primary" hint="Recebido + pendente" />
+        <StatCard label="NFs emitidas" value={`${totNF} de ${pagas.length}`} icon={<FileCheck2 className="h-4 w-4" />} />
       </div>
+
 
       {/* Toolbar */}
       <div className="flex flex-wrap gap-2 mb-3">
