@@ -33,8 +33,21 @@ function Dashboard() {
   const filtDesp = (rows: any[] = []) =>
     rows.filter((r) => monthKey(r.vencimento) === mes);
 
-  const totBruto = filt(atendimentos.data).reduce((s, r: any) => s + Number(r.valor_bruto || 0), 0);
-  const totLiquidoAtend = filt(atendimentos.data).reduce((s, r: any) => s + Number(r.valor_liquido || 0), 0);
+  const isPago = (r: any) => r.status_pagamento !== "pendente";
+
+  const atendMes = filt(atendimentos.data);
+  const atendPagos = atendMes.filter(isPago);
+  const atendPendentes = atendMes.filter((r: any) => !isPago(r));
+
+  // Faturamento real: somente atendimentos pagos
+  const totBruto = atendPagos.reduce((s, r: any) => s + Number(r.valor_bruto || 0), 0);
+  const totLiquidoAtend = atendPagos.reduce((s, r: any) => s + Number(r.valor_liquido || 0), 0);
+
+  // Valores em aberto (não entram no faturamento)
+  const totPendente = atendPendentes.reduce((s, r: any) => s + Number(r.valor_liquido || 0), 0);
+  const qtdPendente = atendPendentes.length;
+  const pacientesPendentes = Array.from(new Set(atendPendentes.map((r: any) => r.paciente).filter(Boolean)));
+
   const totGanhos = filt(ganhos.data).reduce((s, r: any) => s + Number(r.valor || 0), 0);
   const totReceitaTotal = totLiquidoAtend + totGanhos;
   const totDesp = filtDesp(despesas.data ?? []).reduce((s, r: any) => s + Number(r.valor || 0), 0);
