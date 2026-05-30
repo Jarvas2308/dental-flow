@@ -164,8 +164,10 @@ function Dashboard() {
               <Legend wrapperStyle={{ fontSize: 12 }} />
               <Bar dataKey="Atendimentos" stackId="rec" fill="var(--chart-1)" radius={[0, 0, 0, 0]} />
               <Bar dataKey="Ganhos extras" stackId="rec" fill="var(--chart-3)" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="Em aberto" fill="var(--destructive)" radius={[8, 8, 0, 0]} />
               <Bar dataKey="Despesas" fill="var(--chart-4)" radius={[8, 8, 0, 0]} />
               <Bar dataKey="Lucro geral" fill="var(--chart-2)" radius={[8, 8, 0, 0]} />
+
             </BarChart>
           </ResponsiveContainer>
         </div>
