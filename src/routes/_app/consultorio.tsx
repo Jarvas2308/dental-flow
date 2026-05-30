@@ -338,14 +338,27 @@ function Consultorio() {
             {!list.isLoading && rows.length === 0 && (
               <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-12">Nenhum atendimento encontrado.</TableCell></TableRow>
             )}
-            {rows.map((r) => (
-              <TableRow key={r.id}>
-                <TableCell className="text-muted-foreground">{formatDateBR(r.data)}</TableCell>
-                <TableCell className="font-medium">{r.paciente}</TableCell>
-                <TableCell>{r.procedimento}</TableCell>
-                <TableCell className="text-muted-foreground text-sm">{r.forma_pagamento} · {r.taxa}%</TableCell>
-                <TableCell className="text-right">{brl(r.valor_bruto)}</TableCell>
-                <TableCell className="text-right font-medium">{brl(r.valor_liquido)}</TableCell>
+            {rows.map((r) => {
+              const pend = isPendente(r);
+              return (
+              <TableRow key={r.id} className={cn(pend && "bg-destructive/5 hover:bg-destructive/10")}>
+                <TableCell className={cn("text-muted-foreground", pend && "text-destructive/80")}>{formatDateBR(r.data)}</TableCell>
+                <TableCell className={cn("font-medium", pend && "text-destructive")}>{r.paciente}</TableCell>
+                <TableCell className={cn(pend && "text-destructive/90")}>{r.procedimento}</TableCell>
+                <TableCell className={cn("text-muted-foreground text-sm", pend && "text-destructive/70")}>{r.forma_pagamento} · {r.taxa}%</TableCell>
+                <TableCell className={cn("text-right", pend && "text-destructive/80")}>{brl(r.valor_bruto)}</TableCell>
+                <TableCell className={cn("text-right font-medium", pend && "text-destructive")}>{brl(r.valor_liquido)}</TableCell>
+                <TableCell>
+                  {pend ? (
+                    <Badge variant="outline" className="border-destructive/40 bg-destructive/10 text-destructive gap-1">
+                      <Clock className="h-3 w-3" /> Pendente
+                    </Badge>
+                  ) : (
+                    <Badge className="bg-success text-success-foreground hover:bg-success/90 gap-1">
+                      <CheckCircle2 className="h-3 w-3" /> Pago
+                    </Badge>
+                  )}
+                </TableCell>
                 <TableCell>
                   <button onClick={() => upd.mutate({ id: r.id, values: { nota_fiscal: !r.nota_fiscal } })}>
                     {r.nota_fiscal
@@ -355,6 +368,16 @@ function Consultorio() {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
+                    {pend && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 gap-1 border-success/40 text-success hover:bg-success/10"
+                        onClick={() => upd.mutate({ id: r.id, values: { status_pagamento: "pago" } })}
+                      >
+                        <CheckCircle2 className="h-4 w-4" /> Marcar pago
+                      </Button>
+                    )}
                     <EditAtendimentoButton row={r} />
                     <ConfirmDelete
                       title="Excluir atendimento?"
@@ -364,7 +387,8 @@ function Consultorio() {
                   </div>
                 </TableCell>
               </TableRow>
-            ))}
+              );
+            })}
           </TableBody>
         </Table>
       </div>
