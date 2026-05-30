@@ -76,12 +76,17 @@ function startOfWeek(d: Date) {
   return dt;
 }
 
+function isPendente(r: any) {
+  return r.status_pagamento === "pendente";
+}
+
 function Consultorio() {
   const [mes, setMes] = useState(currentMonthKey());
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<SortKey>("data_desc");
   const [filter, setFilter] = useState<QuickFilter>("todos");
   const [procFilter, setProcFilter] = useState<string>("__all__");
+  const [statusPag, setStatusPag] = useState<StatusPag>("todos");
 
   const list = useTable<any>("atendimentos", "data");
   const upd = useUpdate("atendimentos");
@@ -108,23 +113,37 @@ function Consultorio() {
     const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
     const weekStart = startOfWeek(today);
 
+    // Fim do mês selecionado — pendentes persistem até a data limite
+    const [yy, mm] = mes.split("-").map(Number);
+    const monthEnd = new Date(yy, mm, 0); monthEnd.setHours(23, 59, 59, 999);
+
+    // Inclui registros do mês OU pendentes que continuam em aberto até o mês selecionado
+    const inMonth = (x: any) => {
+      if (monthKey(x.data) === mes) return true;
+      const d = parseLocalDate(x.data);
+      return isPendente(x) && !!d && d <= monthEnd;
+    };
+
     if (filter === "hoje") {
-      r = r.filter((x) => { const d = parseLocalDate(x.data); return !!d && d >= today && d < tomorrow; });
+      r = r.filter((x) => { const d = parseLocalDate(x.data); return (!!d && d >= today && d < tomorrow) || isPendente(x); });
     } else if (filter === "semana") {
-      r = r.filter((x) => { const d = parseLocalDate(x.data); return !!d && d >= weekStart; });
+      r = r.filter((x) => { const d = parseLocalDate(x.data); return (!!d && d >= weekStart) || isPendente(x); });
     } else if (filter === "mes" || filter === "todos") {
-      r = r.filter((x) => monthKey(x.data) === mes);
+      r = r.filter(inMonth);
     } else if (filter === "emitidos") {
-      r = r.filter((x) => monthKey(x.data) === mes && x.nota_fiscal);
+      r = r.filter((x) => inMonth(x) && x.nota_fiscal);
     } else if (filter === "pendentes") {
-      r = r.filter((x) => monthKey(x.data) === mes && !x.nota_fiscal);
+      r = r.filter((x) => inMonth(x) && !x.nota_fiscal);
     } else if (filter === "cartao") {
-      r = r.filter((x) => monthKey(x.data) === mes && /cart[ãa]o|cr[eé]dito|d[eé]bito/i.test(x.forma_pagamento ?? ""));
+      r = r.filter((x) => inMonth(x) && /cart[ãa]o|cr[eé]dito|d[eé]bito/i.test(x.forma_pagamento ?? ""));
     } else if (filter === "pix") {
-      r = r.filter((x) => monthKey(x.data) === mes && /pix/i.test(x.forma_pagamento ?? ""));
+      r = r.filter((x) => inMonth(x) && /pix/i.test(x.forma_pagamento ?? ""));
     } else if (filter === "dinheiro") {
-      r = r.filter((x) => monthKey(x.data) === mes && /dinheiro|esp[eé]cie/i.test(x.forma_pagamento ?? ""));
+      r = r.filter((x) => inMonth(x) && /dinheiro|esp[eé]cie/i.test(x.forma_pagamento ?? ""));
     }
+
+    if (statusPag === "pagos") r = r.filter((x) => !isPendente(x));
+    else if (statusPag === "abertos") r = r.filter((x) => isPendente(x));
 
     if (procFilter !== "__all__") {
       r = r.filter((x) => x.procedimento === procFilter);
@@ -154,9 +173,16 @@ function Consultorio() {
         default: return 0;
       }
     };
-    r.sort(cmp);
+    // Prioridade máxima: pendentes sempre primeiro, depois ordenação normal
+    r.sort((a, b) => {
+      const pa = isPendente(a) ? 0 : 1;
+      const pb = isPendente(b) ? 0 : 1;
+      if (pa !== pb) return pa - pb;
+      return cmp(a, b);
+    });
     return r;
-  }, [allData, mes, q, sort, filter, procFilter, freqMap]);
+  }, [allData, mes, q, sort, filter, procFilter, statusPag, freqMap]);
+
 
   const totBruto = rows.reduce((s, r) => s + Number(r.valor_bruto || 0), 0);
   const totLiq = rows.reduce((s, r) => s + Number(r.valor_liquido || 0), 0);
