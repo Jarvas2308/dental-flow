@@ -86,12 +86,13 @@ type Atendimento = {
   valor_liquido?: number;
   data: string;
   nota_fiscal: boolean;
+  status_pagamento: string;
 };
 
 const empty = (): Atendimento => ({
   paciente: "", procedimento: "", forma_pagamento: "",
   valor_bruto: "", taxa: 0, data: todayISO(),
-  nota_fiscal: false,
+  nota_fiscal: false, status_pagamento: "pago",
 });
 
 export function AtendimentoForm({
