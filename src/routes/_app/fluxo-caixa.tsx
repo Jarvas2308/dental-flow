@@ -51,6 +51,7 @@ function FluxoCaixa() {
   // Entradas: visão clínica = só atendimentos. Visão geral = atendimentos + ganhos extras.
   const ent = useMemo(() => {
     const a = (atendimentos.data ?? [])
+      .filter((r) => r.status_pagamento !== "pendente")
       .filter((r) => monthKey(r.data) === mes)
       .filter((r) => pagamento === "todas" || r.forma_pagamento === pagamento)
       .map((r) => ({ data: r.data, valor: Number(r.valor_liquido || 0), _origem: "Atendimento" }));
@@ -82,7 +83,7 @@ function FluxoCaixa() {
   const saldoAcumulado = useMemo(() => {
     const limite = new Date(year, monthNum - 1, diasNoMes);
     const ents =
-      (atendimentos.data ?? []).filter((r) => new Date(r.data) <= limite).reduce((s, r) => s + Number(r.valor_liquido || 0), 0)
+      (atendimentos.data ?? []).filter((r) => r.status_pagamento !== "pendente" && new Date(r.data) <= limite).reduce((s, r) => s + Number(r.valor_liquido || 0), 0)
       + (isClinica ? 0 : (ganhos.data ?? []).filter((r) => new Date(r.data) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0));
     const sds =
       (isClinica ? 0 : (despesas.data ?? []).filter((r) => new Date(r.vencimento) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0)) +
@@ -93,7 +94,7 @@ function FluxoCaixa() {
   // Saldo atual (até hoje, considerando todos os meses)
   const saldoAtual = useMemo(() => {
     const ents =
-      (atendimentos.data ?? []).filter((r) => new Date(r.data) <= hoje).reduce((s, r) => s + Number(r.valor_liquido || 0), 0)
+      (atendimentos.data ?? []).filter((r) => r.status_pagamento !== "pendente" && new Date(r.data) <= hoje).reduce((s, r) => s + Number(r.valor_liquido || 0), 0)
       + (isClinica ? 0 : (ganhos.data ?? []).filter((r) => new Date(r.data) <= hoje).reduce((s, r) => s + Number(r.valor || 0), 0));
     const sds =
       (isClinica ? 0 : (despesas.data ?? []).filter((r) => new Date(r.vencimento) <= hoje).reduce((s, r) => s + Number(r.valor || 0), 0)) +

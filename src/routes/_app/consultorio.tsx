@@ -16,7 +16,8 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
   DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuRadioGroup, DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
-import { Search, FileCheck2, Loader2, ArrowUpDown, Filter, X } from "lucide-react";
+import { Search, FileCheck2, Loader2, ArrowUpDown, Filter, X, CheckCircle2, Clock } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { AtendimentoForm, EditAtendimentoButton } from "@/components/atendimento-form";
 
@@ -32,6 +33,14 @@ type SortKey =
   | "nf" | "lucrativos" | "frequentes";
 
 type QuickFilter = "todos" | "hoje" | "semana" | "mes" | "emitidos" | "pendentes" | "cartao" | "pix" | "dinheiro";
+
+type StatusPag = "todos" | "pagos" | "abertos";
+
+const STATUS_LABELS: Record<StatusPag, string> = {
+  todos: "Todos os pagamentos",
+  pagos: "Somente pagos",
+  abertos: "Somente pendentes",
+};
 
 const SORT_LABELS: Record<SortKey, string> = {
   data_desc: "Data (mais recente)",
@@ -67,12 +76,17 @@ function startOfWeek(d: Date) {
   return dt;
 }
 
+function isPendente(r: any) {
+  return r.status_pagamento === "pendente";
+}
+
 function Consultorio() {
   const [mes, setMes] = useState(currentMonthKey());
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<SortKey>("data_desc");
   const [filter, setFilter] = useState<QuickFilter>("todos");
   const [procFilter, setProcFilter] = useState<string>("__all__");
+  const [statusPag, setStatusPag] = useState<StatusPag>("todos");
 
   const list = useTable<any>("atendimentos", "data");
   const upd = useUpdate("atendimentos");
@@ -99,23 +113,37 @@ function Consultorio() {
     const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
     const weekStart = startOfWeek(today);
 
+    // Fim do mês selecionado — pendentes persistem até a data limite
+    const [yy, mm] = mes.split("-").map(Number);
+    const monthEnd = new Date(yy, mm, 0); monthEnd.setHours(23, 59, 59, 999);
+
+    // Inclui registros do mês OU pendentes que continuam em aberto até o mês selecionado
+    const inMonth = (x: any) => {
+      if (monthKey(x.data) === mes) return true;
+      const d = parseLocalDate(x.data);
+      return isPendente(x) && !!d && d <= monthEnd;
+    };
+
     if (filter === "hoje") {
-      r = r.filter((x) => { const d = parseLocalDate(x.data); return !!d && d >= today && d < tomorrow; });
+      r = r.filter((x) => { const d = parseLocalDate(x.data); return (!!d && d >= today && d < tomorrow) || isPendente(x); });
     } else if (filter === "semana") {
-      r = r.filter((x) => { const d = parseLocalDate(x.data); return !!d && d >= weekStart; });
+      r = r.filter((x) => { const d = parseLocalDate(x.data); return (!!d && d >= weekStart) || isPendente(x); });
     } else if (filter === "mes" || filter === "todos") {
-      r = r.filter((x) => monthKey(x.data) === mes);
+      r = r.filter(inMonth);
     } else if (filter === "emitidos") {
-      r = r.filter((x) => monthKey(x.data) === mes && x.nota_fiscal);
+      r = r.filter((x) => inMonth(x) && x.nota_fiscal);
     } else if (filter === "pendentes") {
-      r = r.filter((x) => monthKey(x.data) === mes && !x.nota_fiscal);
+      r = r.filter((x) => inMonth(x) && !x.nota_fiscal);
     } else if (filter === "cartao") {
-      r = r.filter((x) => monthKey(x.data) === mes && /cart[ãa]o|cr[eé]dito|d[eé]bito/i.test(x.forma_pagamento ?? ""));
+      r = r.filter((x) => inMonth(x) && /cart[ãa]o|cr[eé]dito|d[eé]bito/i.test(x.forma_pagamento ?? ""));
     } else if (filter === "pix") {
-      r = r.filter((x) => monthKey(x.data) === mes && /pix/i.test(x.forma_pagamento ?? ""));
+      r = r.filter((x) => inMonth(x) && /pix/i.test(x.forma_pagamento ?? ""));
     } else if (filter === "dinheiro") {
-      r = r.filter((x) => monthKey(x.data) === mes && /dinheiro|esp[eé]cie/i.test(x.forma_pagamento ?? ""));
+      r = r.filter((x) => inMonth(x) && /dinheiro|esp[eé]cie/i.test(x.forma_pagamento ?? ""));
     }
+
+    if (statusPag === "pagos") r = r.filter((x) => !isPendente(x));
+    else if (statusPag === "abertos") r = r.filter((x) => isPendente(x));
 
     if (procFilter !== "__all__") {
       r = r.filter((x) => x.procedimento === procFilter);
@@ -145,15 +173,26 @@ function Consultorio() {
         default: return 0;
       }
     };
-    r.sort(cmp);
+    // Prioridade máxima: pendentes sempre primeiro, depois ordenação normal
+    r.sort((a, b) => {
+      const pa = isPendente(a) ? 0 : 1;
+      const pb = isPendente(b) ? 0 : 1;
+      if (pa !== pb) return pa - pb;
+      return cmp(a, b);
+    });
     return r;
-  }, [allData, mes, q, sort, filter, procFilter, freqMap]);
+  }, [allData, mes, q, sort, filter, procFilter, statusPag, freqMap]);
 
-  const totBruto = rows.reduce((s, r) => s + Number(r.valor_bruto || 0), 0);
-  const totLiq = rows.reduce((s, r) => s + Number(r.valor_liquido || 0), 0);
-  const totNF = rows.filter((r) => r.nota_fiscal).length;
 
-  const hasActiveFilter = filter !== "todos" || procFilter !== "__all__" || q.length > 0;
+  // Faturamento real: apenas atendimentos pagos contam nos totais
+  const pagas = rows.filter((r) => !isPendente(r));
+  const abertas = rows.filter((r) => isPendente(r));
+  const totBruto = pagas.reduce((s, r) => s + Number(r.valor_bruto || 0), 0);
+  const totLiq = pagas.reduce((s, r) => s + Number(r.valor_liquido || 0), 0);
+  const totNF = pagas.filter((r) => r.nota_fiscal).length;
+  const totPendente = abertas.reduce((s, r) => s + Number(r.valor_liquido || 0), 0);
+
+  const hasActiveFilter = filter !== "todos" || procFilter !== "__all__" || q.length > 0 || statusPag !== "todos";
 
   return (
     <>
@@ -161,11 +200,13 @@ function Consultorio() {
         actions={<AtendimentoForm />}
       />
 
-      <div className="grid gap-4 sm:grid-cols-3 mb-6">
-        <StatCard label="Bruto" value={brl(totBruto)} tone="primary" hint={`${rows.length} atendimentos`} />
-        <StatCard label="Líquido" value={brl(totLiq)} tone="success" hint="Após taxas" />
-        <StatCard label="NFs emitidas" value={`${totNF} de ${rows.length}`} icon={<FileCheck2 className="h-4 w-4" />} />
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-6">
+        <StatCard label="Recebido (líquido)" value={brl(totLiq)} tone="success" hint={`${pagas.length} pagos · bruto ${brl(totBruto)}`} />
+        <StatCard label="Em aberto" value={brl(totPendente)} tone={totPendente > 0 ? "destructive" : "success"} icon={<Clock className="h-4 w-4" />} hint={`${abertas.length} pendentes`} />
+        <StatCard label="Previsto após receber" value={brl(totLiq + totPendente)} tone="primary" hint="Recebido + pendente" />
+        <StatCard label="NFs emitidas" value={`${totNF} de ${pagas.length}`} icon={<FileCheck2 className="h-4 w-4" />} />
       </div>
+
 
       {/* Toolbar */}
       <div className="flex flex-wrap gap-2 mb-3">
@@ -211,6 +252,14 @@ function Consultorio() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>Status de pagamento</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuRadioGroup value={statusPag} onValueChange={(v) => setStatusPag(v as StatusPag)}>
+              {(Object.keys(STATUS_LABELS) as StatusPag[]).map((k) => (
+                <DropdownMenuRadioItem key={k} value={k}>{STATUS_LABELS[k]}</DropdownMenuRadioItem>
+              ))}
+            </DropdownMenuRadioGroup>
+            <DropdownMenuSeparator />
             <DropdownMenuLabel>Filtros rápidos</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuRadioGroup value={filter} onValueChange={(v) => setFilter(v as QuickFilter)}>
@@ -234,7 +283,7 @@ function Consultorio() {
         </DropdownMenu>
 
         {hasActiveFilter && (
-          <Button variant="ghost" size="sm" className="gap-1" onClick={() => { setFilter("todos"); setProcFilter("__all__"); setQ(""); }}>
+          <Button variant="ghost" size="sm" className="gap-1" onClick={() => { setFilter("todos"); setProcFilter("__all__"); setQ(""); setStatusPag("todos"); }}>
             <X className="h-4 w-4" /> Limpar
           </Button>
         )}
@@ -243,6 +292,12 @@ function Consultorio() {
       {/* Active chips */}
       {hasActiveFilter && (
         <div className="flex flex-wrap gap-1.5 mb-3 text-xs">
+          {statusPag !== "todos" && (
+            <Badge variant="secondary" className="gap-1">
+              {STATUS_LABELS[statusPag]}
+              <button onClick={() => setStatusPag("todos")}><X className="h-3 w-3" /></button>
+            </Badge>
+          )}
           {filter !== "todos" && (
             <Badge variant="secondary" className="gap-1">
               {FILTER_LABELS[filter]}
@@ -258,6 +313,7 @@ function Consultorio() {
         </div>
       )}
 
+
       <div className="rounded-2xl border bg-card overflow-hidden" style={{ boxShadow: "var(--shadow-soft)" }}>
         <Table>
           <TableHeader>
@@ -268,27 +324,41 @@ function Consultorio() {
               <TableHead>Pagamento</TableHead>
               <TableHead className="text-right">Bruto</TableHead>
               <TableHead className="text-right">Líquido</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead>NF</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {list.isLoading && (
-              <TableRow><TableCell colSpan={8} className="text-center py-12">
+              <TableRow><TableCell colSpan={9} className="text-center py-12">
                 <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
               </TableCell></TableRow>
             )}
             {!list.isLoading && rows.length === 0 && (
-              <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-12">Nenhum atendimento encontrado.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-12">Nenhum atendimento encontrado.</TableCell></TableRow>
             )}
-            {rows.map((r) => (
-              <TableRow key={r.id}>
-                <TableCell className="text-muted-foreground">{formatDateBR(r.data)}</TableCell>
-                <TableCell className="font-medium">{r.paciente}</TableCell>
-                <TableCell>{r.procedimento}</TableCell>
-                <TableCell className="text-muted-foreground text-sm">{r.forma_pagamento} · {r.taxa}%</TableCell>
-                <TableCell className="text-right">{brl(r.valor_bruto)}</TableCell>
-                <TableCell className="text-right font-medium">{brl(r.valor_liquido)}</TableCell>
+            {rows.map((r) => {
+              const pend = isPendente(r);
+              return (
+              <TableRow key={r.id} className={cn(pend && "bg-destructive/5 hover:bg-destructive/10")}>
+                <TableCell className={cn("text-muted-foreground", pend && "text-destructive/80")}>{formatDateBR(r.data)}</TableCell>
+                <TableCell className={cn("font-medium", pend && "text-destructive")}>{r.paciente}</TableCell>
+                <TableCell className={cn(pend && "text-destructive/90")}>{r.procedimento}</TableCell>
+                <TableCell className={cn("text-muted-foreground text-sm", pend && "text-destructive/70")}>{r.forma_pagamento} · {r.taxa}%</TableCell>
+                <TableCell className={cn("text-right", pend && "text-destructive/80")}>{brl(r.valor_bruto)}</TableCell>
+                <TableCell className={cn("text-right font-medium", pend && "text-destructive")}>{brl(r.valor_liquido)}</TableCell>
+                <TableCell>
+                  {pend ? (
+                    <Badge variant="outline" className="border-destructive/40 bg-destructive/10 text-destructive gap-1">
+                      <Clock className="h-3 w-3" /> Pendente
+                    </Badge>
+                  ) : (
+                    <Badge className="bg-success text-success-foreground hover:bg-success/90 gap-1">
+                      <CheckCircle2 className="h-3 w-3" /> Pago
+                    </Badge>
+                  )}
+                </TableCell>
                 <TableCell>
                   <button onClick={() => upd.mutate({ id: r.id, values: { nota_fiscal: !r.nota_fiscal } })}>
                     {r.nota_fiscal
@@ -298,6 +368,16 @@ function Consultorio() {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
+                    {pend && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 gap-1 border-success/40 text-success hover:bg-success/10"
+                        onClick={() => upd.mutate({ id: r.id, values: { status_pagamento: "pago" } })}
+                      >
+                        <CheckCircle2 className="h-4 w-4" /> Marcar pago
+                      </Button>
+                    )}
                     <EditAtendimentoButton row={r} />
                     <ConfirmDelete
                       title="Excluir atendimento?"
@@ -307,7 +387,8 @@ function Consultorio() {
                   </div>
                 </TableCell>
               </TableRow>
-            ))}
+              );
+            })}
           </TableBody>
         </Table>
       </div>

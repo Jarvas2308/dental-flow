@@ -86,12 +86,13 @@ type Atendimento = {
   valor_liquido?: number;
   data: string;
   nota_fiscal: boolean;
+  status_pagamento: string;
 };
 
 const empty = (): Atendimento => ({
   paciente: "", procedimento: "", forma_pagamento: "",
   valor_bruto: "", taxa: 0, data: todayISO(),
-  nota_fiscal: false,
+  nota_fiscal: false, status_pagamento: "pago",
 });
 
 export function AtendimentoForm({
@@ -153,6 +154,7 @@ export function AtendimentoForm({
       valor_liquido: Number(valorLiquido.toFixed(2)),
       data: v.data,
       nota_fiscal: v.nota_fiscal,
+      status_pagamento: v.status_pagamento,
     };
 
     if (isEdit) await update.mutateAsync({ id: editing.id, values: payload });
@@ -246,6 +248,20 @@ export function AtendimentoForm({
             <div className="space-y-1.5">
               <Label>Valor líquido</Label>
               <div className="h-9 px-3 rounded-md border bg-muted/30 flex items-center text-sm font-medium">{brl(valorLiquido)}</div>
+            </div>
+            <div className="sm:col-span-2 flex items-center justify-between p-3 rounded-lg bg-muted/40">
+              <div>
+                <Label className="cursor-pointer">Pagamento recebido</Label>
+                <p className="text-xs text-muted-foreground">
+                  {v.status_pagamento === "pago"
+                    ? "Atendimento pago — entra nos totais"
+                    : "Pendente — não entra no faturamento até quitar"}
+                </p>
+              </div>
+              <Switch
+                checked={v.status_pagamento === "pago"}
+                onCheckedChange={(c) => setV({ ...v, status_pagamento: c ? "pago" : "pendente" })}
+              />
             </div>
             <div className="sm:col-span-2 flex items-center justify-between p-3 rounded-lg bg-muted/40">
               <div>

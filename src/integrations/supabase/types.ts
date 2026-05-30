@@ -23,6 +23,7 @@ export type Database = {
           nota_fiscal: boolean
           paciente: string
           procedimento: string
+          status_pagamento: string
           taxa: number
           user_id: string
           valor_bruto: number
@@ -36,6 +37,7 @@ export type Database = {
           nota_fiscal?: boolean
           paciente: string
           procedimento: string
+          status_pagamento?: string
           taxa?: number
           user_id: string
           valor_bruto: number
@@ -49,6 +51,7 @@ export type Database = {
           nota_fiscal?: boolean
           paciente?: string
           procedimento?: string
+          status_pagamento?: string
           taxa?: number
           user_id?: string
           valor_bruto?: number
