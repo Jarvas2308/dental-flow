@@ -132,9 +132,14 @@ export function AtendimentoForm({
   const atendimentos = useTable<any>("atendimentos", "data");
   const create = useCreate("atendimentos");
   const update = useUpdate("atendimentos");
+  const qc = useQueryClient();
+  const { user } = useAuth();
   const [open, setOpen] = useState(!!editing);
   const [v, setV] = useState<Atendimento>(editing ? { ...editing } : empty());
   const [procOpen, setProcOpen] = useState(false);
+  const [parcelado, setParcelado] = useState<boolean>(!!editing?.parcelado);
+  const [parcelasN, setParcelasN] = useState<number>(editing?.parcelas_total > 1 ? editing.parcelas_total : 2);
+  const [savingParcelas, setSavingParcelas] = useState(false);
 
   // Procedimentos ordenados por frequência de uso, com fallback alfabético
   const procedimentosOrdenados = useMemo(() => {
