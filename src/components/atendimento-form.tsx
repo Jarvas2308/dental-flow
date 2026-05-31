@@ -156,11 +156,15 @@ export function AtendimentoForm({
   }, [procedimentos.data, atendimentos.data]);
 
   useEffect(() => {
-    if (open) setV(editing ? { ...editing } : empty());
+    if (open) {
+      setV(editing ? { ...editing } : empty());
+      setParcelado(!!editing?.parcelado);
+      setParcelasN(editing?.parcelas_total > 1 ? editing.parcelas_total : 2);
+    }
   }, [open, editing]);
 
   const isEdit = !!editing;
-  const busy = create.isPending || update.isPending;
+  const busy = create.isPending || update.isPending || savingParcelas;
 
   const onForma = (val: string) => {
     const f = (formas.data ?? []).find((x) => x.nome === val);
