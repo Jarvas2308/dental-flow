@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useCreate, useTable, useUpdate } from "@/hooks/use-data";
-import { brl, todayISO } from "@/lib/format";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
+import { brl, todayISO, parseLocalDate, toISODate } from "@/lib/format";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
@@ -16,8 +19,30 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { Check, ChevronsUpDown, Loader2, Pencil, Plus } from "lucide-react";
+import { Check, ChevronsUpDown, Loader2, Pencil, Plus, CalendarClock } from "lucide-react";
 import { toast } from "sonner";
+
+// Gera parcelas dividindo bruto/líquido em N vezes, com vencimentos mensais.
+function gerarParcelas(
+  n: number, totalBruto: number, totalLiquido: number, dataBase: string,
+) {
+  const base = (x: number) => Math.floor((x / n) * 100) / 100;
+  const baseB = base(totalBruto);
+  const baseL = base(totalLiquido);
+  const start = parseLocalDate(dataBase) ?? new Date();
+  return Array.from({ length: n }, (_, i) => {
+    const venc = new Date(start.getFullYear(), start.getMonth() + i, start.getDate());
+    const isLast = i === n - 1;
+    return {
+      numero: i + 1,
+      total: n,
+      vencimento: toISODate(venc),
+      valor_bruto: isLast ? Number((totalBruto - baseB * (n - 1)).toFixed(2)) : baseB,
+      valor_liquido: isLast ? Number((totalLiquido - baseL * (n - 1)).toFixed(2)) : baseL,
+      status: "pendente",
+    };
+  });
+}
 
 function QuickAdd({
   table, label, onCreated,
