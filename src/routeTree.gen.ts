@@ -16,6 +16,7 @@ import { Route as AppLaboratorioRouteImport } from './routes/_app/laboratorio'
 import { Route as AppGanhosRouteImport } from './routes/_app/ganhos'
 import { Route as AppFluxoCaixaRouteImport } from './routes/_app/fluxo-caixa'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
+import { Route as AppContasReceberRouteImport } from './routes/_app/contas-receber'
 import { Route as AppContasRouteImport } from './routes/_app/contas'
 import { Route as AppConsultorioRouteImport } from './routes/_app/consultorio'
 import { Route as AppCadastrosRouteImport } from './routes/_app/cadastros'
@@ -54,6 +55,11 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
+const AppContasReceberRoute = AppContasReceberRouteImport.update({
+  id: '/contas-receber',
+  path: '/contas-receber',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppContasRoute = AppContasRouteImport.update({
   id: '/contas',
   path: '/contas',
@@ -76,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/cadastros': typeof AppCadastrosRoute
   '/consultorio': typeof AppConsultorioRoute
   '/contas': typeof AppContasRoute
+  '/contas-receber': typeof AppContasReceberRoute
   '/dashboard': typeof AppDashboardRoute
   '/fluxo-caixa': typeof AppFluxoCaixaRoute
   '/ganhos': typeof AppGanhosRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByTo {
   '/cadastros': typeof AppCadastrosRoute
   '/consultorio': typeof AppConsultorioRoute
   '/contas': typeof AppContasRoute
+  '/contas-receber': typeof AppContasReceberRoute
   '/dashboard': typeof AppDashboardRoute
   '/fluxo-caixa': typeof AppFluxoCaixaRoute
   '/ganhos': typeof AppGanhosRoute
@@ -100,6 +108,7 @@ export interface FileRoutesById {
   '/_app/cadastros': typeof AppCadastrosRoute
   '/_app/consultorio': typeof AppConsultorioRoute
   '/_app/contas': typeof AppContasRoute
+  '/_app/contas-receber': typeof AppContasReceberRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/fluxo-caixa': typeof AppFluxoCaixaRoute
   '/_app/ganhos': typeof AppGanhosRoute
@@ -113,6 +122,7 @@ export interface FileRouteTypes {
     | '/cadastros'
     | '/consultorio'
     | '/contas'
+    | '/contas-receber'
     | '/dashboard'
     | '/fluxo-caixa'
     | '/ganhos'
@@ -124,6 +134,7 @@ export interface FileRouteTypes {
     | '/cadastros'
     | '/consultorio'
     | '/contas'
+    | '/contas-receber'
     | '/dashboard'
     | '/fluxo-caixa'
     | '/ganhos'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
     | '/_app/cadastros'
     | '/_app/consultorio'
     | '/_app/contas'
+    | '/_app/contas-receber'
     | '/_app/dashboard'
     | '/_app/fluxo-caixa'
     | '/_app/ganhos'
@@ -199,6 +211,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/contas-receber': {
+      id: '/_app/contas-receber'
+      path: '/contas-receber'
+      fullPath: '/contas-receber'
+      preLoaderRoute: typeof AppContasReceberRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/contas': {
       id: '/_app/contas'
       path: '/contas'
@@ -227,6 +246,7 @@ interface AppRouteChildren {
   AppCadastrosRoute: typeof AppCadastrosRoute
   AppConsultorioRoute: typeof AppConsultorioRoute
   AppContasRoute: typeof AppContasRoute
+  AppContasReceberRoute: typeof AppContasReceberRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppFluxoCaixaRoute: typeof AppFluxoCaixaRoute
   AppGanhosRoute: typeof AppGanhosRoute
@@ -237,6 +257,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCadastrosRoute: AppCadastrosRoute,
   AppConsultorioRoute: AppConsultorioRoute,
   AppContasRoute: AppContasRoute,
+  AppContasReceberRoute: AppContasReceberRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppFluxoCaixaRoute: AppFluxoCaixaRoute,
   AppGanhosRoute: AppGanhosRoute,
@@ -253,3 +274,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
