@@ -340,20 +340,71 @@ export function AtendimentoForm({
               <Label>Valor líquido</Label>
               <div className="h-9 px-3 rounded-md border bg-muted/30 flex items-center text-sm font-medium">{brl(valorLiquido)}</div>
             </div>
-            <div className="sm:col-span-2 flex items-center justify-between p-3 rounded-lg bg-muted/40">
-              <div>
-                <Label className="cursor-pointer">Pagamento recebido</Label>
-                <p className="text-xs text-muted-foreground">
-                  {v.status_pagamento === "pago"
-                    ? "Atendimento pago — entra nos totais"
-                    : "Pendente — não entra no faturamento até quitar"}
-                </p>
+            {/* Parcelamento */}
+            <div className="sm:col-span-2 rounded-lg bg-muted/40 p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="cursor-pointer flex items-center gap-1.5">
+                    <CalendarClock className="h-3.5 w-3.5" /> Pagamento parcelado
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Gera contas a receber — só parcelas pagas entram no caixa
+                  </p>
+                </div>
+                <Switch
+                  checked={parcelado}
+                  disabled={isEdit && !!editing?.parcelado}
+                  onCheckedChange={(c) => setParcelado(c)}
+                />
               </div>
-              <Switch
-                checked={v.status_pagamento === "pago"}
-                onCheckedChange={(c) => setV({ ...v, status_pagamento: c ? "pago" : "pendente" })}
-              />
+
+              {parcelado && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <Label className="shrink-0">Parcelas</Label>
+                    <Select
+                      value={String(parcelasN)}
+                      onValueChange={(s) => setParcelasN(Number(s))}
+                      disabled={isEdit && !!editing?.parcelado}
+                    >
+                      <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
+                          <SelectItem key={n} value={String(n)}>{n}x</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {previewParcelas.length > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        {parcelasN}x de {brl(previewParcelas[0].valor_liquido)} (líquido)
+                      </span>
+                    )}
+                  </div>
+                  {isEdit && editing?.parcelado && (
+                    <p className="text-xs text-muted-foreground">
+                      Gerencie os recebimentos na aba Contas a Receber.
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
+
+            {!parcelado && (
+              <div className="sm:col-span-2 flex items-center justify-between p-3 rounded-lg bg-muted/40">
+                <div>
+                  <Label className="cursor-pointer">Pagamento recebido</Label>
+                  <p className="text-xs text-muted-foreground">
+                    {v.status_pagamento === "pago"
+                      ? "Atendimento pago — entra nos totais"
+                      : "Pendente — não entra no faturamento até quitar"}
+                  </p>
+                </div>
+                <Switch
+                  checked={v.status_pagamento === "pago"}
+                  onCheckedChange={(c) => setV({ ...v, status_pagamento: c ? "pago" : "pendente" })}
+                />
+              </div>
+            )}
             <div className="sm:col-span-2 flex items-center justify-between p-3 rounded-lg bg-muted/40">
               <div>
                 <Label className="cursor-pointer">Nota fiscal emitida</Label>
