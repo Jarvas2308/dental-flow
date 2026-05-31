@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTable } from "@/hooks/use-data";
 import { brl, monthOptions, monthLabel, currentMonthKey, monthKey } from "@/lib/format";
+import { receitasRecebidas, valoresEmAberto } from "@/lib/finance";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -11,7 +12,7 @@ import {
 } from "recharts";
 import {
   TrendingUp, TrendingDown, Wallet, Receipt, FlaskConical, CircleDollarSign,
-  Clock, Users,
+  Clock, Users, HandCoins, FileSignature,
 } from "lucide-react";
 import { ProceduresAnalytics } from "@/components/procedures-analytics";
 
@@ -24,6 +25,7 @@ function Dashboard() {
   const opts = monthOptions(12);
 
   const atendimentos = useTable<any>("atendimentos", "data");
+  const parcelas = useTable<any>("parcelas", "vencimento", true);
   const despesas = useTable<any>("despesas", "vencimento");
   const lab = useTable<any>("custos_laboratorio", "data");
   const ganhos = useTable<any>("receitas_extras", "data");
@@ -34,20 +36,26 @@ function Dashboard() {
   const filtDesp = (rows: any[] = []) =>
     rows.filter((r) => monthKey(r.vencimento) === mes);
 
-  const isPago = (r: any) => r.status_pagamento !== "pendente";
+  // Receita recebida (caixa): atendimentos pagos + parcelas pagas
+  const recebidas = useMemo(
+    () => receitasRecebidas(atendimentos.data ?? [], parcelas.data ?? []),
+    [atendimentos.data, parcelas.data],
+  );
+  const recebidasMes = recebidas.filter((r) => monthKey(r.data) === mes);
+  const totBruto = recebidasMes.reduce((s, r) => s + r.valor_bruto, 0);
+  const totLiquidoAtend = recebidasMes.reduce((s, r) => s + r.valor_liquido, 0);
 
-  const atendMes = filt(atendimentos.data);
-  const atendPagos = atendMes.filter(isPago);
-  const atendPendentes = atendMes.filter((r: any) => !isPago(r));
-
-  // Faturamento real: somente atendimentos pagos
-  const totBruto = atendPagos.reduce((s, r: any) => s + Number(r.valor_bruto || 0), 0);
-  const totLiquidoAtend = atendPagos.reduce((s, r: any) => s + Number(r.valor_liquido || 0), 0);
-
-  // Valores em aberto (não entram no faturamento)
-  const totPendente = atendPendentes.reduce((s, r: any) => s + Number(r.valor_liquido || 0), 0);
-  const qtdPendente = atendPendentes.length;
-  const pacientesPendentes = Array.from(new Set(atendPendentes.map((r: any) => r.paciente).filter(Boolean)));
+  // Valores em aberto / contas a receber (todos os meses, persistem até quitar)
+  const aberto = useMemo(
+    () => valoresEmAberto(atendimentos.data ?? [], parcelas.data ?? []),
+    [atendimentos.data, parcelas.data],
+  );
+  const totPendente = aberto.reduce((s, r) => s + r.valor_liquido, 0);
+  const qtdPendente = aberto.length;
+  const pacientesPendentes = Array.from(new Set(aberto.map((r) => r.paciente).filter(Boolean)));
+  // Receita contratada total = já recebido (todos os meses) + a receber
+  const totRecebidoGeral = recebidas.reduce((s, r) => s + r.valor_liquido, 0);
+  const totContratado = totRecebidoGeral + totPendente;
 
   const totGanhos = filt(ganhos.data).reduce((s, r: any) => s + Number(r.valor || 0), 0);
   const totReceitaTotal = totLiquidoAtend + totGanhos;
@@ -64,12 +72,12 @@ function Dashboard() {
   const chartData = useMemo(() => {
     const months = monthOptions(6).reverse();
     return months.map((m) => {
-      const recAtend = (atendimentos.data ?? []).filter((r: any) => monthKey(r.data) === m && r.status_pagamento !== "pendente")
-        .reduce((s, r: any) => s + Number(r.valor_liquido || 0), 0);
+      const recAtend = recebidas.filter((r) => monthKey(r.data) === m)
+        .reduce((s, r) => s + r.valor_liquido, 0);
       const recExtra = (ganhos.data ?? []).filter((r: any) => monthKey(r.data) === m)
         .reduce((s, r: any) => s + Number(r.valor || 0), 0);
-      const pend = (atendimentos.data ?? []).filter((r: any) => monthKey(r.data) === m && r.status_pagamento === "pendente")
-        .reduce((s, r: any) => s + Number(r.valor_liquido || 0), 0);
+      const pend = aberto.filter((r) => monthKey(r.vencimento) === m)
+        .reduce((s, r) => s + r.valor_liquido, 0);
       const desp =
         (despesas.data ?? []).filter((r: any) => monthKey(r.vencimento) === m).reduce((s, r: any) => s + Number(r.valor || 0), 0) +
         (lab.data ?? []).filter((r: any) => monthKey(r.data) === m).reduce((s, r: any) => s + Number(r.valor || 0), 0);
@@ -82,7 +90,7 @@ function Dashboard() {
         "Lucro geral": Number((recAtend + recExtra - desp).toFixed(2)),
       };
     });
-  }, [atendimentos.data, despesas.data, lab.data, ganhos.data]);
+  }, [recebidas, aberto, despesas.data, lab.data, ganhos.data]);
 
 
   return (
@@ -113,16 +121,16 @@ function Dashboard() {
         <StatCard label="Receita Total" value={brl(totReceitaTotal)} tone="success" icon={<CircleDollarSign className="h-4 w-4" />} hint="Atendimentos pagos + extras" />
       </div>
 
-      {/* Valores em Aberto */}
+      {/* Contas a Receber */}
       <div className="mt-6 mb-2 flex items-center gap-2">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Valores em Aberto</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Contas a Receber</h2>
         <div className="h-px flex-1 bg-border" />
       </div>
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Total Pendente" value={brl(totPendente)} tone={totPendente > 0 ? "destructive" : "success"} icon={<Clock className="h-4 w-4" />} hint="Não contabilizado no faturamento" />
-        <StatCard label="Consultas Pendentes" value={String(qtdPendente)} tone={qtdPendente > 0 ? "warning" : "success"} icon={<Receipt className="h-4 w-4" />} hint="Aguardando pagamento" />
-        <StatCard label="Pacientes Pendentes" value={String(pacientesPendentes.length)} icon={<Users className="h-4 w-4" />} hint={pacientesPendentes.slice(0, 3).join(", ") || "Nenhum"} />
-        <StatCard label="Previsto após Receber" value={brl(totLiquidoAtend + totPendente)} tone="primary" icon={<TrendingUp className="h-4 w-4" />} hint="Recebido + a receber" />
+        <StatCard label="Receita Recebida" value={brl(totLiquidoAtend)} tone="success" icon={<HandCoins className="h-4 w-4" />} hint={`${monthLabel(mes)} · caixa`} />
+        <StatCard label="Valores em Aberto" value={brl(totPendente)} tone={totPendente > 0 ? "warning" : "success"} icon={<Clock className="h-4 w-4" />} hint={`${qtdPendente} parcela(s) · todos os meses`} />
+        <StatCard label="Receita Contratada" value={brl(totContratado)} tone="primary" icon={<FileSignature className="h-4 w-4" />} hint="Recebido + a receber" />
+        <StatCard label="Pacientes a Receber" value={String(pacientesPendentes.length)} icon={<Users className="h-4 w-4" />} hint={pacientesPendentes.slice(0, 3).join(", ") || "Nenhum"} />
       </div>
 
 

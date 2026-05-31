@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useCreate, useTable, useUpdate } from "@/hooks/use-data";
-import { brl, todayISO } from "@/lib/format";
+import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
+import { brl, todayISO, parseLocalDate, toISODate } from "@/lib/format";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
@@ -16,8 +19,30 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { Check, ChevronsUpDown, Loader2, Pencil, Plus } from "lucide-react";
+import { Check, ChevronsUpDown, Loader2, Pencil, Plus, CalendarClock } from "lucide-react";
 import { toast } from "sonner";
+
+// Gera parcelas dividindo bruto/líquido em N vezes, com vencimentos mensais.
+function gerarParcelas(
+  n: number, totalBruto: number, totalLiquido: number, dataBase: string,
+) {
+  const base = (x: number) => Math.floor((x / n) * 100) / 100;
+  const baseB = base(totalBruto);
+  const baseL = base(totalLiquido);
+  const start = parseLocalDate(dataBase) ?? new Date();
+  return Array.from({ length: n }, (_, i) => {
+    const venc = new Date(start.getFullYear(), start.getMonth() + i, start.getDate());
+    const isLast = i === n - 1;
+    return {
+      numero: i + 1,
+      total: n,
+      vencimento: toISODate(venc),
+      valor_bruto: isLast ? Number((totalBruto - baseB * (n - 1)).toFixed(2)) : baseB,
+      valor_liquido: isLast ? Number((totalLiquido - baseL * (n - 1)).toFixed(2)) : baseL,
+      status: "pendente",
+    };
+  });
+}
 
 function QuickAdd({
   table, label, onCreated,
@@ -107,9 +132,14 @@ export function AtendimentoForm({
   const atendimentos = useTable<any>("atendimentos", "data");
   const create = useCreate("atendimentos");
   const update = useUpdate("atendimentos");
+  const qc = useQueryClient();
+  const { user } = useAuth();
   const [open, setOpen] = useState(!!editing);
   const [v, setV] = useState<Atendimento>(editing ? { ...editing } : empty());
   const [procOpen, setProcOpen] = useState(false);
+  const [parcelado, setParcelado] = useState<boolean>(!!editing?.parcelado);
+  const [parcelasN, setParcelasN] = useState<number>(editing?.parcelas_total > 1 ? editing.parcelas_total : 2);
+  const [savingParcelas, setSavingParcelas] = useState(false);
 
   // Procedimentos ordenados por frequência de uso, com fallback alfabético
   const procedimentosOrdenados = useMemo(() => {
@@ -126,11 +156,15 @@ export function AtendimentoForm({
   }, [procedimentos.data, atendimentos.data]);
 
   useEffect(() => {
-    if (open) setV(editing ? { ...editing } : empty());
+    if (open) {
+      setV(editing ? { ...editing } : empty());
+      setParcelado(!!editing?.parcelado);
+      setParcelasN(editing?.parcelas_total > 1 ? editing.parcelas_total : 2);
+    }
   }, [open, editing]);
 
   const isEdit = !!editing;
-  const busy = create.isPending || update.isPending;
+  const busy = create.isPending || update.isPending || savingParcelas;
 
   const onForma = (val: string) => {
     const f = (formas.data ?? []).find((x) => x.nome === val);
@@ -139,11 +173,21 @@ export function AtendimentoForm({
 
   const valorLiquido = Math.max(0, Number(v.valor_bruto || 0) * (1 - Number(v.taxa || 0) / 100));
 
+  // Prévia das parcelas (mesma divisão usada na gravação)
+  const previewParcelas = useMemo(() => {
+    if (!parcelado) return [];
+    const tb = Number(v.valor_bruto || 0);
+    if (!tb || parcelasN < 1) return [];
+    return gerarParcelas(parcelasN, tb, Number(valorLiquido.toFixed(2)), v.data);
+  }, [parcelado, parcelasN, v.valor_bruto, v.data, valorLiquido]);
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!v.procedimento) return toast.error("Selecione o procedimento");
     if (!v.forma_pagamento) return toast.error("Selecione a forma de pagamento");
     if (!Number(v.valor_bruto)) return toast.error("Informe o valor bruto");
+
+    const usarParcelas = parcelado && parcelasN > 1;
 
     const payload = {
       paciente: v.paciente.trim(),
@@ -154,14 +198,61 @@ export function AtendimentoForm({
       valor_liquido: Number(valorLiquido.toFixed(2)),
       data: v.data,
       nota_fiscal: v.nota_fiscal,
-      status_pagamento: v.status_pagamento,
+      // Atendimento parcelado é "contas a receber": fica pendente no atendimento,
+      // o caixa é alimentado pelas parcelas pagas.
+      status_pagamento: usarParcelas ? "pendente" : v.status_pagamento,
+      parcelado: usarParcelas,
+      parcelas_total: usarParcelas ? parcelasN : 1,
     };
 
-    if (isEdit) await update.mutateAsync({ id: editing.id, values: payload });
-    else await create.mutateAsync(payload);
+    if (isEdit) {
+      await update.mutateAsync({ id: editing.id, values: payload });
+      // Regenera parcelas apenas se for um novo parcelamento (atendimento não tinha parcelas)
+      if (usarParcelas && !editing.parcelado) {
+        await criarParcelas(editing.id, payload);
+      }
+    } else {
+      if (usarParcelas) {
+        setSavingParcelas(true);
+        try {
+          const { data: novo, error } = await (supabase.from("atendimentos") as any)
+            .insert({ ...payload, user_id: user!.id })
+            .select("id")
+            .single();
+          if (error) throw error;
+          await criarParcelas(novo.id, payload);
+          qc.invalidateQueries({ queryKey: ["atendimentos"] });
+          toast.success("Atendimento parcelado criado");
+        } catch (err: any) {
+          toast.error(err.message ?? "Erro ao salvar parcelamento");
+          setSavingParcelas(false);
+          return;
+        }
+        setSavingParcelas(false);
+      } else {
+        await create.mutateAsync(payload);
+      }
+    }
 
     setOpen(false);
     onClose?.();
+  };
+
+  // Cria as parcelas no banco vinculadas ao atendimento.
+  const criarParcelas = async (atendimentoId: string, payload: any) => {
+    const linhas = gerarParcelas(parcelasN, payload.valor_bruto, payload.valor_liquido, payload.data)
+      .map((p) => ({
+        ...p,
+        user_id: user!.id,
+        atendimento_id: atendimentoId,
+        paciente: payload.paciente,
+        procedimento: payload.procedimento,
+        forma_pagamento: payload.forma_pagamento,
+      }));
+    const { error } = await (supabase.from("parcelas") as any).insert(linhas);
+    if (error) throw error;
+    qc.invalidateQueries({ queryKey: ["parcelas"] });
+
   };
 
   return (
@@ -249,20 +340,71 @@ export function AtendimentoForm({
               <Label>Valor líquido</Label>
               <div className="h-9 px-3 rounded-md border bg-muted/30 flex items-center text-sm font-medium">{brl(valorLiquido)}</div>
             </div>
-            <div className="sm:col-span-2 flex items-center justify-between p-3 rounded-lg bg-muted/40">
-              <div>
-                <Label className="cursor-pointer">Pagamento recebido</Label>
-                <p className="text-xs text-muted-foreground">
-                  {v.status_pagamento === "pago"
-                    ? "Atendimento pago — entra nos totais"
-                    : "Pendente — não entra no faturamento até quitar"}
-                </p>
+            {/* Parcelamento */}
+            <div className="sm:col-span-2 rounded-lg bg-muted/40 p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="cursor-pointer flex items-center gap-1.5">
+                    <CalendarClock className="h-3.5 w-3.5" /> Pagamento parcelado
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Gera contas a receber — só parcelas pagas entram no caixa
+                  </p>
+                </div>
+                <Switch
+                  checked={parcelado}
+                  disabled={isEdit && !!editing?.parcelado}
+                  onCheckedChange={(c) => setParcelado(c)}
+                />
               </div>
-              <Switch
-                checked={v.status_pagamento === "pago"}
-                onCheckedChange={(c) => setV({ ...v, status_pagamento: c ? "pago" : "pendente" })}
-              />
+
+              {parcelado && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <Label className="shrink-0">Parcelas</Label>
+                    <Select
+                      value={String(parcelasN)}
+                      onValueChange={(s) => setParcelasN(Number(s))}
+                      disabled={isEdit && !!editing?.parcelado}
+                    >
+                      <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
+                          <SelectItem key={n} value={String(n)}>{n}x</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {previewParcelas.length > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        {parcelasN}x de {brl(previewParcelas[0].valor_liquido)} (líquido)
+                      </span>
+                    )}
+                  </div>
+                  {isEdit && editing?.parcelado && (
+                    <p className="text-xs text-muted-foreground">
+                      Gerencie os recebimentos na aba Contas a Receber.
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
+
+            {!parcelado && (
+              <div className="sm:col-span-2 flex items-center justify-between p-3 rounded-lg bg-muted/40">
+                <div>
+                  <Label className="cursor-pointer">Pagamento recebido</Label>
+                  <p className="text-xs text-muted-foreground">
+                    {v.status_pagamento === "pago"
+                      ? "Atendimento pago — entra nos totais"
+                      : "Pendente — não entra no faturamento até quitar"}
+                  </p>
+                </div>
+                <Switch
+                  checked={v.status_pagamento === "pago"}
+                  onCheckedChange={(c) => setV({ ...v, status_pagamento: c ? "pago" : "pendente" })}
+                />
+              </div>
+            )}
             <div className="sm:col-span-2 flex items-center justify-between p-3 rounded-lg bg-muted/40">
               <div>
                 <Label className="cursor-pointer">Nota fiscal emitida</Label>

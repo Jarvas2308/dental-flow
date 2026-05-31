@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTable } from "@/hooks/use-data";
-import { brl, currentMonthKey, monthKey, monthLabel, monthOptions } from "@/lib/format";
+import { brl, currentMonthKey, monthKey, monthLabel, monthOptions, parseLocalDate } from "@/lib/format";
+import { receitasRecebidas } from "@/lib/finance";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -30,11 +31,12 @@ function FluxoCaixa() {
   const isClinica = visao === "clinica";
 
   const atendimentos = useTable<any>("atendimentos", "data");
+  const parcelas = useTable<any>("parcelas", "vencimento", true);
   const despesas = useTable<any>("despesas", "vencimento");
   const lab = useTable<any>("custos_laboratorio", "data");
   const ganhos = useTable<any>("receitas_extras", "data");
 
-  const isLoading = atendimentos.isLoading || despesas.isLoading || lab.isLoading || ganhos.isLoading;
+  const isLoading = atendimentos.isLoading || parcelas.isLoading || despesas.isLoading || lab.isLoading || ganhos.isLoading;
 
   const [year, monthNum] = mes.split("-").map(Number);
   const diasNoMes = new Date(year, monthNum, 0).getDate();
@@ -42,19 +44,24 @@ function FluxoCaixa() {
   const ehMesAtual = currentMonthKey() === mes;
   const diaAtual = ehMesAtual ? Math.min(hoje.getDate(), diasNoMes) : diasNoMes;
 
+  // Receita recebida (caixa): atendimentos pagos + parcelas pagas
+  const recebidas = useMemo(
+    () => receitasRecebidas(atendimentos.data ?? [], parcelas.data ?? []),
+    [atendimentos.data, parcelas.data],
+  );
+
   const formasPag = useMemo(() => {
     const set = new Set<string>();
-    (atendimentos.data ?? []).forEach((r) => r.forma_pagamento && set.add(r.forma_pagamento));
+    recebidas.forEach((r) => r.forma_pagamento && set.add(r.forma_pagamento));
     return Array.from(set).sort();
-  }, [atendimentos.data]);
+  }, [recebidas]);
 
   // Entradas: visão clínica = só atendimentos. Visão geral = atendimentos + ganhos extras.
   const ent = useMemo(() => {
-    const a = (atendimentos.data ?? [])
-      .filter((r) => r.status_pagamento !== "pendente")
+    const a = recebidas
       .filter((r) => monthKey(r.data) === mes)
       .filter((r) => pagamento === "todas" || r.forma_pagamento === pagamento)
-      .map((r) => ({ data: r.data, valor: Number(r.valor_liquido || 0), _origem: "Atendimento" }));
+      .map((r) => ({ data: r.data, valor: r.valor_liquido, _origem: "Atendimento" }));
     if (isClinica) return a;
     const g = pagamento === "todas"
       ? (ganhos.data ?? [])
@@ -62,7 +69,7 @@ function FluxoCaixa() {
           .map((r) => ({ data: r.data, valor: Number(r.valor || 0), _origem: "Ganho extra" }))
       : [];
     return [...a, ...g];
-  }, [atendimentos.data, ganhos.data, mes, pagamento, isClinica]);
+  }, [recebidas, ganhos.data, mes, pagamento, isClinica]);
 
   // Saídas: clínica = apenas custos de laboratório. Geral = despesas + lab.
   const sai = useMemo(() => {
@@ -83,24 +90,24 @@ function FluxoCaixa() {
   const saldoAcumulado = useMemo(() => {
     const limite = new Date(year, monthNum - 1, diasNoMes);
     const ents =
-      (atendimentos.data ?? []).filter((r) => r.status_pagamento !== "pendente" && new Date(r.data) <= limite).reduce((s, r) => s + Number(r.valor_liquido || 0), 0)
+      recebidas.filter((r) => (parseLocalDate(r.data) ?? new Date(0)) <= limite).reduce((s, r) => s + r.valor_liquido, 0)
       + (isClinica ? 0 : (ganhos.data ?? []).filter((r) => new Date(r.data) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0));
     const sds =
       (isClinica ? 0 : (despesas.data ?? []).filter((r) => new Date(r.vencimento) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0)) +
       (lab.data ?? []).filter((r) => new Date(r.data) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0);
     return ents - sds;
-  }, [atendimentos.data, despesas.data, lab.data, ganhos.data, year, monthNum, diasNoMes, isClinica]);
+  }, [recebidas, despesas.data, lab.data, ganhos.data, year, monthNum, diasNoMes, isClinica]);
 
   // Saldo atual (até hoje, considerando todos os meses)
   const saldoAtual = useMemo(() => {
     const ents =
-      (atendimentos.data ?? []).filter((r) => r.status_pagamento !== "pendente" && new Date(r.data) <= hoje).reduce((s, r) => s + Number(r.valor_liquido || 0), 0)
+      recebidas.filter((r) => (parseLocalDate(r.data) ?? new Date(0)) <= hoje).reduce((s, r) => s + r.valor_liquido, 0)
       + (isClinica ? 0 : (ganhos.data ?? []).filter((r) => new Date(r.data) <= hoje).reduce((s, r) => s + Number(r.valor || 0), 0));
     const sds =
       (isClinica ? 0 : (despesas.data ?? []).filter((r) => new Date(r.vencimento) <= hoje).reduce((s, r) => s + Number(r.valor || 0), 0)) +
       (lab.data ?? []).filter((r) => new Date(r.data) <= hoje).reduce((s, r) => s + Number(r.valor || 0), 0);
     return ents - sds;
-  }, [atendimentos.data, despesas.data, lab.data, ganhos.data, isClinica]);
+  }, [recebidas, despesas.data, lab.data, ganhos.data, isClinica]);
 
   // Dias do mês com agregados
   const diario = useMemo(() => {
