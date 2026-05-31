@@ -173,11 +173,21 @@ export function AtendimentoForm({
 
   const valorLiquido = Math.max(0, Number(v.valor_bruto || 0) * (1 - Number(v.taxa || 0) / 100));
 
+  // Prévia das parcelas (mesma divisão usada na gravação)
+  const previewParcelas = useMemo(() => {
+    if (!parcelado) return [];
+    const tb = Number(v.valor_bruto || 0);
+    if (!tb || parcelasN < 1) return [];
+    return gerarParcelas(parcelasN, tb, Number(valorLiquido.toFixed(2)), v.data);
+  }, [parcelado, parcelasN, v.valor_bruto, v.data, valorLiquido]);
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!v.procedimento) return toast.error("Selecione o procedimento");
     if (!v.forma_pagamento) return toast.error("Selecione a forma de pagamento");
     if (!Number(v.valor_bruto)) return toast.error("Informe o valor bruto");
+
+    const usarParcelas = parcelado && parcelasN > 1;
 
     const payload = {
       paciente: v.paciente.trim(),
@@ -188,14 +198,61 @@ export function AtendimentoForm({
       valor_liquido: Number(valorLiquido.toFixed(2)),
       data: v.data,
       nota_fiscal: v.nota_fiscal,
-      status_pagamento: v.status_pagamento,
+      // Atendimento parcelado é "contas a receber": fica pendente no atendimento,
+      // o caixa é alimentado pelas parcelas pagas.
+      status_pagamento: usarParcelas ? "pendente" : v.status_pagamento,
+      parcelado: usarParcelas,
+      parcelas_total: usarParcelas ? parcelasN : 1,
     };
 
-    if (isEdit) await update.mutateAsync({ id: editing.id, values: payload });
-    else await create.mutateAsync(payload);
+    if (isEdit) {
+      await update.mutateAsync({ id: editing.id, values: payload });
+      // Regenera parcelas apenas se for um novo parcelamento (atendimento não tinha parcelas)
+      if (usarParcelas && !editing.parcelado) {
+        await criarParcelas(editing.id, payload);
+      }
+    } else {
+      if (usarParcelas) {
+        setSavingParcelas(true);
+        try {
+          const { data: novo, error } = await (supabase.from("atendimentos") as any)
+            .insert({ ...payload, user_id: user!.id })
+            .select("id")
+            .single();
+          if (error) throw error;
+          await criarParcelas(novo.id, payload);
+          qc.invalidateQueries({ queryKey: ["atendimentos"] });
+          toast.success("Atendimento parcelado criado");
+        } catch (err: any) {
+          toast.error(err.message ?? "Erro ao salvar parcelamento");
+          setSavingParcelas(false);
+          return;
+        }
+        setSavingParcelas(false);
+      } else {
+        await create.mutateAsync(payload);
+      }
+    }
 
     setOpen(false);
     onClose?.();
+  };
+
+  // Cria as parcelas no banco vinculadas ao atendimento.
+  const criarParcelas = async (atendimentoId: string, payload: any) => {
+    const linhas = gerarParcelas(parcelasN, payload.valor_bruto, payload.valor_liquido, payload.data)
+      .map((p) => ({
+        ...p,
+        user_id: user!.id,
+        atendimento_id: atendimentoId,
+        paciente: payload.paciente,
+        procedimento: payload.procedimento,
+        forma_pagamento: payload.forma_pagamento,
+      }));
+    const { error } = await (supabase.from("parcelas") as any).insert(linhas);
+    if (error) throw error;
+    qc.invalidateQueries({ queryKey: ["parcelas"] });
+
   };
 
   return (
