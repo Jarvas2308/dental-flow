@@ -22,6 +22,8 @@ export type Database = {
           id: string
           nota_fiscal: boolean
           paciente: string
+          parcelado: boolean
+          parcelas_total: number
           procedimento: string
           status_pagamento: string
           taxa: number
@@ -36,6 +38,8 @@ export type Database = {
           id?: string
           nota_fiscal?: boolean
           paciente: string
+          parcelado?: boolean
+          parcelas_total?: number
           procedimento: string
           status_pagamento?: string
           taxa?: number
@@ -50,6 +54,8 @@ export type Database = {
           id?: string
           nota_fiscal?: boolean
           paciente?: string
+          parcelado?: boolean
+          parcelas_total?: number
           procedimento?: string
           status_pagamento?: string
           taxa?: number
@@ -261,6 +267,65 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      parcelas: {
+        Row: {
+          atendimento_id: string
+          created_at: string
+          data_pagamento: string | null
+          forma_pagamento: string | null
+          id: string
+          numero: number
+          paciente: string | null
+          procedimento: string | null
+          status: string
+          total: number
+          user_id: string
+          valor_bruto: number
+          valor_liquido: number
+          vencimento: string
+        }
+        Insert: {
+          atendimento_id: string
+          created_at?: string
+          data_pagamento?: string | null
+          forma_pagamento?: string | null
+          id?: string
+          numero: number
+          paciente?: string | null
+          procedimento?: string | null
+          status?: string
+          total: number
+          user_id: string
+          valor_bruto?: number
+          valor_liquido?: number
+          vencimento: string
+        }
+        Update: {
+          atendimento_id?: string
+          created_at?: string
+          data_pagamento?: string | null
+          forma_pagamento?: string | null
+          id?: string
+          numero?: number
+          paciente?: string | null
+          procedimento?: string | null
+          status?: string
+          total?: number
+          user_id?: string
+          valor_bruto?: number
+          valor_liquido?: number
+          vencimento?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parcelas_atendimento_id_fkey"
+            columns: ["atendimento_id"]
+            isOneToOne: false
+            referencedRelation: "atendimentos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       procedimentos: {
         Row: {
