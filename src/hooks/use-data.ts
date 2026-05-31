@@ -13,7 +13,8 @@ type TableName =
   | "despesas"
   | "atendimentos"
   | "custos_laboratorio"
-  | "receitas_extras";
+  | "receitas_extras"
+  | "parcelas";
 
 export function useTable<T = any>(table: TableName, orderBy = "created_at", asc = false) {
   const { user } = useAuth();
