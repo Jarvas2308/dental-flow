@@ -361,15 +361,37 @@ function Consultorio() {
                 <TableCell className={cn("text-right", pend && "text-destructive/80")}>{brl(r.valor_bruto)}</TableCell>
                 <TableCell className={cn("text-right font-medium", pend && "text-destructive")}>{brl(r.valor_liquido)}</TableCell>
                 <TableCell>
-                  {pend ? (
-                    <Badge variant="outline" className="border-destructive/40 bg-destructive/10 text-destructive gap-1">
-                      <Clock className="h-3 w-3" /> Pendente
-                    </Badge>
-                  ) : (
-                    <Badge className="bg-success text-success-foreground hover:bg-success/90 gap-1">
-                      <CheckCircle2 className="h-3 w-3" /> Pago
-                    </Badge>
-                  )}
+                  {(() => {
+                    const rs = resumoMap.get(r.id);
+                    if (r.parcelado && rs) {
+                      const pct = rs.total > 0 ? Math.min(100, (rs.recebido / rs.total) * 100) : 0;
+                      return (
+                        <div className="min-w-[140px] space-y-1">
+                          <Badge variant="outline" className={cn(
+                            rs.status === "quitado" ? "border-success/40 bg-success/10 text-success"
+                              : rs.status === "parcial" ? "border-primary/40 bg-primary/10 text-primary"
+                              : "border-warning/40 bg-warning/10 text-warning",
+                          )}>
+                            {STATUS_LABEL[rs.status]}
+                          </Badge>
+                          <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                            <span>{rs.qtd}/{rs.parcelasCombinadas}</span>
+                            <span>Saldo {brl(rs.saldo)}</span>
+                          </div>
+                          <Progress value={pct} className="h-1.5" />
+                        </div>
+                      );
+                    }
+                    return pend ? (
+                      <Badge variant="outline" className="border-destructive/40 bg-destructive/10 text-destructive gap-1">
+                        <Clock className="h-3 w-3" /> Pendente
+                      </Badge>
+                    ) : (
+                      <Badge className="bg-success text-success-foreground hover:bg-success/90 gap-1">
+                        <CheckCircle2 className="h-3 w-3" /> Pago
+                      </Badge>
+                    );
+                  })()}
                 </TableCell>
                 <TableCell>
                   <button onClick={() => upd.mutate({ id: r.id, values: { nota_fiscal: !r.nota_fiscal } })}>
@@ -380,7 +402,9 @@ function Consultorio() {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
-                    {pend && (
+                    {r.parcelado ? (
+                      <RegistrarRecebimento atendimento={r} />
+                    ) : pend && (
                       <Button
                         size="sm"
                         variant="outline"
@@ -390,6 +414,7 @@ function Consultorio() {
                         <CheckCircle2 className="h-4 w-4" /> Marcar pago
                       </Button>
                     )}
+
                     <EditAtendimentoButton row={r} />
                     <ConfirmDelete
                       title="Excluir atendimento?"
