@@ -47,8 +47,8 @@ function FluxoCaixa() {
 
   // Receita recebida (caixa): atendimentos pagos + parcelas pagas
   const recebidas = useMemo(
-    () => receitasRecebidas(atendimentos.data ?? [], parcelas.data ?? []),
-    [atendimentos.data, parcelas.data],
+    () => receitasRecebidas(atendimentos.data ?? [], recebimentos.data ?? [], parcelas.data ?? []),
+    [atendimentos.data, recebimentos.data, parcelas.data],
   );
 
   const formasPag = useMemo(() => {
