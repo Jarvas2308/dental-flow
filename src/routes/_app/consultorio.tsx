@@ -195,13 +195,14 @@ function Consultorio() {
   }, [allData, mes, q, sort, filter, procFilter, statusPag, freqMap]);
 
 
-  // Faturamento real: apenas atendimentos pagos contam nos totais
+  // Faturamento real: apenas valores efetivamente recebidos contam.
+  const totLiq = rows.reduce((s, r) => s + (resumoMap.get(r.id)?.recebidoLiquido ?? 0), 0);
+  const totBruto = rows.reduce((s, r) => s + (resumoMap.get(r.id)?.recebido ?? 0), 0);
+  const totPendente = rows.reduce((s, r) => s + (resumoMap.get(r.id)?.saldoLiquido ?? 0), 0);
   const pagas = rows.filter((r) => !isPendente(r));
   const abertas = rows.filter((r) => isPendente(r));
-  const totBruto = pagas.reduce((s, r) => s + Number(r.valor_bruto || 0), 0);
-  const totLiq = pagas.reduce((s, r) => s + Number(r.valor_liquido || 0), 0);
   const totNF = pagas.filter((r) => r.nota_fiscal).length;
-  const totPendente = abertas.reduce((s, r) => s + Number(r.valor_liquido || 0), 0);
+
 
   const hasActiveFilter = filter !== "todos" || procFilter !== "__all__" || q.length > 0 || statusPag !== "todos";
 
