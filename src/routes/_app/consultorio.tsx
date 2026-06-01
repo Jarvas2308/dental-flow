@@ -20,6 +20,9 @@ import { Search, FileCheck2, Loader2, ArrowUpDown, Filter, X, CheckCircle2, Cloc
 import { cn } from "@/lib/utils";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { AtendimentoForm, EditAtendimentoButton } from "@/components/atendimento-form";
+import { RegistrarRecebimento } from "@/components/recebimento-form";
+import { resumoAtendimento, STATUS_LABEL } from "@/lib/finance";
+import { Progress } from "@/components/ui/progress";
 
 export const Route = createFileRoute("/_app/consultorio")({
   component: Consultorio,
