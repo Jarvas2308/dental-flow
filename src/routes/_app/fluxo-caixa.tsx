@@ -31,6 +31,7 @@ function FluxoCaixa() {
   const isClinica = visao === "clinica";
 
   const atendimentos = useTable<any>("atendimentos", "data");
+  const recebimentos = useTable<any>("recebimentos", "data", true);
   const parcelas = useTable<any>("parcelas", "vencimento", true);
   const despesas = useTable<any>("despesas", "vencimento");
   const lab = useTable<any>("custos_laboratorio", "data");
