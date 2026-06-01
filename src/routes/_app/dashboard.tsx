@@ -147,6 +147,19 @@ function Dashboard() {
         <StatCard label="Pacientes a Receber" value={String(pacientesPendentes.length)} icon={<Users className="h-4 w-4" />} hint={pacientesPendentes.slice(0, 3).join(", ") || "Nenhum"} />
       </div>
 
+      {/* Tratamentos parcelados */}
+      <div className="mt-6 mb-2 flex items-center gap-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Tratamentos Parcelados</h2>
+        <div className="h-px flex-1 bg-border" />
+      </div>
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Total Recebido" value={brl(totRecebidoGeral)} tone="success" icon={<HandCoins className="h-4 w-4" />} hint="Todos os meses · caixa" />
+        <StatCard label="Total em Aberto" value={brl(totPendente)} tone={totPendente > 0 ? "warning" : "success"} icon={<Clock className="h-4 w-4" />} />
+        <StatCard label="Parcelados / Quitados" value={`${tratamentos.total} / ${tratamentos.quitados}`} tone="primary" icon={<Layers className="h-4 w-4" />} hint={`${tratamentos.parciais} parcial(is)`} />
+        <StatCard label="Parcialmente Recebidos" value={String(tratamentos.parciais)} icon={<FileSignature className="h-4 w-4" />} hint={`${tratamentos.abertos} sem recebimentos`} />
+      </div>
+
+
 
       {/* Resultado */}
       <div className="mt-6 mb-2 flex items-center gap-2">
