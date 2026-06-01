@@ -39,8 +39,8 @@ function Dashboard() {
 
   // Receita recebida (caixa): atendimentos pagos + parcelas pagas
   const recebidas = useMemo(
-    () => receitasRecebidas(atendimentos.data ?? [], parcelas.data ?? []),
-    [atendimentos.data, parcelas.data],
+    () => receitasRecebidas(atendimentos.data ?? [], recebimentos.data ?? [], parcelas.data ?? []),
+    [atendimentos.data, recebimentos.data, parcelas.data],
   );
   const recebidasMes = recebidas.filter((r) => monthKey(r.data) === mes);
   const totBruto = recebidasMes.reduce((s, r) => s + r.valor_bruto, 0);
@@ -48,8 +48,8 @@ function Dashboard() {
 
   // Valores em aberto / contas a receber (todos os meses, persistem até quitar)
   const aberto = useMemo(
-    () => valoresEmAberto(atendimentos.data ?? [], parcelas.data ?? []),
-    [atendimentos.data, parcelas.data],
+    () => valoresEmAberto(atendimentos.data ?? [], recebimentos.data ?? [], parcelas.data ?? []),
+    [atendimentos.data, recebimentos.data, parcelas.data],
   );
   const totPendente = aberto.reduce((s, r) => s + r.valor_liquido, 0);
   const qtdPendente = aberto.length;
