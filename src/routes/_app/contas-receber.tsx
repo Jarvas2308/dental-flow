@@ -1,18 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useTable, useUpdate } from "@/hooks/use-data";
+import { useTable } from "@/hooks/use-data";
 import { brl, formatDateBR } from "@/lib/format";
-import { contasAReceber, valoresEmAberto } from "@/lib/finance";
+import { contasAReceber, STATUS_LABEL } from "@/lib/finance";
+import { RegistrarRecebimento } from "@/components/recebimento-form";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
-  Search, Loader2, CheckCircle2, Clock, HandCoins, CalendarClock, Layers,
+  Search, Loader2, CheckCircle2, Clock, HandCoins, CalendarClock, Layers, Users,
 } from "lucide-react";
-import { todayISO } from "@/lib/format";
-import { toast } from "sonner";
 
 export const Route = createFileRoute("/_app/contas-receber")({
   component: ContasReceber,
@@ -21,20 +19,14 @@ export const Route = createFileRoute("/_app/contas-receber")({
 function ContasReceber() {
   const [q, setQ] = useState("");
   const atendimentos = useTable<any>("atendimentos", "data");
+  const recebimentos = useTable<any>("recebimentos", "data", true);
   const parcelas = useTable<any>("parcelas", "vencimento", true);
-  const updParcela = useUpdate("parcelas");
-  const updAtend = useUpdate("atendimentos");
 
-  const loading = atendimentos.isLoading || parcelas.isLoading;
+  const loading = atendimentos.isLoading || recebimentos.isLoading || parcelas.isLoading;
 
   const contas = useMemo(
-    () => contasAReceber(atendimentos.data ?? [], parcelas.data ?? []),
-    [atendimentos.data, parcelas.data],
-  );
-
-  const aberto = useMemo(
-    () => valoresEmAberto(atendimentos.data ?? [], parcelas.data ?? []),
-    [atendimentos.data, parcelas.data],
+    () => contasAReceber(atendimentos.data ?? [], recebimentos.data ?? [], parcelas.data ?? []),
+    [atendimentos.data, recebimentos.data, parcelas.data],
   );
 
   const rows = useMemo(() => {
@@ -45,34 +37,22 @@ function ContasReceber() {
     );
   }, [contas, q]);
 
-  const totalReceber = aberto.reduce((s, p) => s + p.valor_liquido, 0);
-  const parcelasRestantes = aberto.length;
+  const totalSaldo = contas.reduce((s, c) => s + c.saldo, 0);
+  const totalRecebido = contas.reduce((s, c) => s + c.recebido, 0);
   const pacientes = new Set(contas.map((c) => c.paciente)).size;
-
-  const pagarParcela = (pid: string) =>
-    updParcela.mutate(
-      { id: pid, values: { status: "pago", data_pagamento: todayISO() } },
-      { onSuccess: () => toast.success("Parcela recebida") },
-    );
-
-  const pagarAtendimento = (aid: string) =>
-    updAtend.mutate(
-      { id: aid, values: { status_pagamento: "pago" } },
-      { onSuccess: () => toast.success("Pagamento registrado") },
-    );
 
   return (
     <>
       <PageHeader
-        title="Contas a Receber"
-        description="Parcelas e atendimentos pendentes — só entram no caixa quando recebidos"
+        title="Valores em Aberto"
+        description="Tratamentos com saldo pendente — só entram no caixa quando recebidos"
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-6">
-        <StatCard label="Total a receber" value={brl(totalReceber)} tone={totalReceber > 0 ? "warning" : "success"} icon={<HandCoins className="h-4 w-4" />} hint="Líquido em aberto" />
-        <StatCard label="Parcelas em aberto" value={String(parcelasRestantes)} tone="primary" icon={<CalendarClock className="h-4 w-4" />} />
-        <StatCard label="Contratos abertos" value={String(rows.length)} icon={<Layers className="h-4 w-4" />} hint="Atendimentos com saldo" />
-        <StatCard label="Pacientes" value={String(pacientes)} icon={<Clock className="h-4 w-4" />} />
+        <StatCard label="Total a receber" value={brl(totalSaldo)} tone={totalSaldo > 0 ? "warning" : "success"} icon={<HandCoins className="h-4 w-4" />} hint="Saldo pendente" />
+        <StatCard label="Já recebido (nestes)" value={brl(totalRecebido)} tone="success" icon={<CheckCircle2 className="h-4 w-4" />} />
+        <StatCard label="Tratamentos abertos" value={String(rows.length)} icon={<Layers className="h-4 w-4" />} />
+        <StatCard label="Pacientes" value={String(pacientes)} icon={<Users className="h-4 w-4" />} />
       </div>
 
       <div className="relative max-w-md mb-4">
@@ -92,83 +72,54 @@ function ContasReceber() {
       ) : (
         <div className="space-y-3">
           {rows.map((c) => {
-            const pct = c.total > 0 ? (c.pagas / c.total) * 100 : 0;
-            const proxParcela = c.parcelas.find((p) => p.status !== "pago");
+            const pct = c.total > 0 ? Math.min(100, (c.recebido / c.total) * 100) : 0;
+            const atend = (atendimentos.data ?? []).find((a) => a.id === c.atendimento_id);
             return (
               <div key={c.atendimento_id} className="rounded-2xl border bg-card p-4 sm:p-5" style={{ boxShadow: "var(--shadow-soft)" }}>
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-semibold truncate">{c.paciente || "—"}</h3>
-                      {c.total > 1 && (
+                      {c.parcelasCombinadas > 1 && (
                         <Badge variant="outline" className="gap-1">
-                          <CalendarClock className="h-3 w-3" /> Parcelado
+                          <CalendarClock className="h-3 w-3" /> {c.parcelasCombinadas} parcelas combinadas
                         </Badge>
                       )}
+                      <Badge
+                        variant="outline"
+                        className={
+                          c.status === "parcial"
+                            ? "border-primary/40 bg-primary/10 text-primary"
+                            : "border-warning/40 bg-warning/10 text-warning"
+                        }
+                      >
+                        {STATUS_LABEL[c.status]}
+                      </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">{c.procedimento} · {c.forma_pagamento}</p>
                   </div>
                   <div className="text-right">
-                    <div className="text-lg font-semibold text-warning">{brl(c.valorRestante)}</div>
-                    <div className="text-xs text-muted-foreground">de {brl(c.valorTotal)}</div>
+                    <div className="text-lg font-semibold text-warning">{brl(c.saldo)}</div>
+                    <div className="text-xs text-muted-foreground">saldo de {brl(c.total)}</div>
                   </div>
                 </div>
 
-                {c.total > 1 && (
-                  <div className="mt-3">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                      <span>{c.pagas}/{c.total} parcelas pagas</span>
-                      {c.proximoVencimento && <span>Próx. venc. {formatDateBR(c.proximoVencimento)}</span>}
-                    </div>
-                    <Progress value={pct} className="h-2" />
+                <div className="mt-3">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                    <span>Recebido {brl(c.recebido)} · {c.qtd} recebimento(s)</span>
+                    <span>Início {formatDateBR(c.data)}</span>
                   </div>
-                )}
+                  <Progress value={pct} className="h-2" />
+                </div>
 
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                  {c.total > 1 ? (
-                    <div className="flex flex-wrap gap-1.5">
-                      {c.parcelas.map((p) => (
-                        <span
-                          key={p.id}
-                          title={`Parcela ${p.numero} · ${brl(p.valor_liquido)} · vence ${formatDateBR(p.vencimento)}`}
-                          className={
-                            "inline-flex h-6 min-w-6 items-center justify-center rounded-md px-1.5 text-[11px] font-medium " +
-                            (p.status === "pago"
-                              ? "bg-success/15 text-success"
-                              : "bg-warning/15 text-warning")
-                          }
-                        >
-                          {p.numero}
-                        </span>
-                      ))}
-                    </div>
+                <div className="mt-3 flex items-center justify-end gap-2">
+                  {atend && atend.parcelado ? (
+                    <RegistrarRecebimento atendimento={atend} />
                   ) : (
-                    <span className="text-xs text-muted-foreground">
-                      Venc. {formatDateBR(c.proximoVencimento)}
+                    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                      <Clock className="h-3 w-3" /> Pendente
                     </span>
                   )}
-
-                  {c.total > 1 && proxParcela ? (
-                    <Button
-                      size="sm"
-                      className="gap-1.5 bg-success text-success-foreground hover:bg-success/90"
-                      disabled={updParcela.isPending}
-                      onClick={() => pagarParcela(proxParcela.id)}
-                    >
-                      <CheckCircle2 className="h-4 w-4" />
-                      Receber parcela {proxParcela.numero}
-                    </Button>
-                  ) : c.total === 1 ? (
-                    <Button
-                      size="sm"
-                      className="gap-1.5 bg-success text-success-foreground hover:bg-success/90"
-                      disabled={updAtend.isPending}
-                      onClick={() => pagarAtendimento(c.atendimento_id)}
-                    >
-                      <CheckCircle2 className="h-4 w-4" />
-                      Marcar como pago
-                    </Button>
-                  ) : null}
                 </div>
               </div>
             );
