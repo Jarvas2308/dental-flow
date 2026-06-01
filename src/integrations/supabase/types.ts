@@ -348,6 +348,39 @@ export type Database = {
         }
         Relationships: []
       }
+      recebimentos: {
+        Row: {
+          atendimento_id: string
+          created_at: string
+          data: string
+          forma_pagamento: string | null
+          id: string
+          observacao: string | null
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          atendimento_id: string
+          created_at?: string
+          data: string
+          forma_pagamento?: string | null
+          id?: string
+          observacao?: string | null
+          user_id: string
+          valor?: number
+        }
+        Update: {
+          atendimento_id?: string
+          created_at?: string
+          data?: string
+          forma_pagamento?: string | null
+          id?: string
+          observacao?: string | null
+          user_id?: string
+          valor?: number
+        }
+        Relationships: []
+      }
       receitas_extras: {
         Row: {
           created_at: string
