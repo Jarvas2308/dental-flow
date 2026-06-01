@@ -58,6 +58,19 @@ function Dashboard() {
   const totRecebidoGeral = recebidas.reduce((s, r) => s + r.valor_liquido, 0);
   const totContratado = totRecebidoGeral + totPendente;
 
+  // Tratamentos parcelados por status
+  const tratamentos = useMemo(() => {
+    const ps = (atendimentos.data ?? []).filter((a) => a.parcelado);
+    let quitados = 0, parciais = 0, abertos = 0;
+    for (const a of ps) {
+      const r = resumoAtendimento(a, recebimentos.data ?? [], parcelas.data ?? []);
+      if (r.status === "quitado") quitados++;
+      else if (r.status === "parcial") parciais++;
+      else abertos++;
+    }
+    return { total: ps.length, quitados, parciais, abertos };
+  }, [atendimentos.data, recebimentos.data, parcelas.data]);
+
   const totGanhos = filt(ganhos.data).reduce((s, r: any) => s + Number(r.valor || 0), 0);
   const totReceitaTotal = totLiquidoAtend + totGanhos;
   const totDesp = filtDesp(despesas.data ?? []).reduce((s, r: any) => s + Number(r.valor || 0), 0);
