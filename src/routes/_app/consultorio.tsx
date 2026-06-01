@@ -76,10 +76,6 @@ function startOfWeek(d: Date) {
   return dt;
 }
 
-function isPendente(r: any) {
-  return r.status_pagamento === "pendente";
-}
-
 function Consultorio() {
   const [mes, setMes] = useState(currentMonthKey());
   const [q, setQ] = useState("");
@@ -89,10 +85,22 @@ function Consultorio() {
   const [statusPag, setStatusPag] = useState<StatusPag>("todos");
 
   const list = useTable<any>("atendimentos", "data");
+  const recebimentos = useTable<any>("recebimentos", "data", true);
+  const parcelas = useTable<any>("parcelas", "vencimento", true);
   const upd = useUpdate("atendimentos");
   const del = useDelete("atendimentos");
 
   const allData = list.data ?? [];
+
+  const resumoMap = useMemo(() => {
+    const m = new Map<string, ReturnType<typeof resumoAtendimento>>();
+    allData.forEach((a) => m.set(a.id, resumoAtendimento(a, recebimentos.data ?? [], parcelas.data ?? [])));
+    return m;
+  }, [allData, recebimentos.data, parcelas.data]);
+
+  const isPendente = (r: any) => (resumoMap.get(r.id)?.status ?? (r.status_pagamento === "pendente" ? "aberto" : "quitado")) !== "quitado";
+
+
 
   const procedimentosUnicos = useMemo(
     () => Array.from(new Set(allData.map((r) => r.procedimento).filter(Boolean))).sort(),
