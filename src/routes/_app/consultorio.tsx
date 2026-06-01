@@ -20,6 +20,9 @@ import { Search, FileCheck2, Loader2, ArrowUpDown, Filter, X, CheckCircle2, Cloc
 import { cn } from "@/lib/utils";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { AtendimentoForm, EditAtendimentoButton } from "@/components/atendimento-form";
+import { RegistrarRecebimento } from "@/components/recebimento-form";
+import { resumoAtendimento, STATUS_LABEL } from "@/lib/finance";
+import { Progress } from "@/components/ui/progress";
 
 export const Route = createFileRoute("/_app/consultorio")({
   component: Consultorio,
@@ -76,10 +79,6 @@ function startOfWeek(d: Date) {
   return dt;
 }
 
-function isPendente(r: any) {
-  return r.status_pagamento === "pendente";
-}
-
 function Consultorio() {
   const [mes, setMes] = useState(currentMonthKey());
   const [q, setQ] = useState("");
@@ -89,10 +88,22 @@ function Consultorio() {
   const [statusPag, setStatusPag] = useState<StatusPag>("todos");
 
   const list = useTable<any>("atendimentos", "data");
+  const recebimentos = useTable<any>("recebimentos", "data", true);
+  const parcelas = useTable<any>("parcelas", "vencimento", true);
   const upd = useUpdate("atendimentos");
   const del = useDelete("atendimentos");
 
   const allData = list.data ?? [];
+
+  const resumoMap = useMemo(() => {
+    const m = new Map<string, ReturnType<typeof resumoAtendimento>>();
+    allData.forEach((a) => m.set(a.id, resumoAtendimento(a, recebimentos.data ?? [], parcelas.data ?? [])));
+    return m;
+  }, [allData, recebimentos.data, parcelas.data]);
+
+  const isPendente = (r: any) => (resumoMap.get(r.id)?.status ?? (r.status_pagamento === "pendente" ? "aberto" : "quitado")) !== "quitado";
+
+
 
   const procedimentosUnicos = useMemo(
     () => Array.from(new Set(allData.map((r) => r.procedimento).filter(Boolean))).sort(),
@@ -184,13 +195,14 @@ function Consultorio() {
   }, [allData, mes, q, sort, filter, procFilter, statusPag, freqMap]);
 
 
-  // Faturamento real: apenas atendimentos pagos contam nos totais
+  // Faturamento real: apenas valores efetivamente recebidos contam.
+  const totLiq = rows.reduce((s, r) => s + (resumoMap.get(r.id)?.recebidoLiquido ?? 0), 0);
+  const totBruto = rows.reduce((s, r) => s + (resumoMap.get(r.id)?.recebido ?? 0), 0);
+  const totPendente = rows.reduce((s, r) => s + (resumoMap.get(r.id)?.saldoLiquido ?? 0), 0);
   const pagas = rows.filter((r) => !isPendente(r));
   const abertas = rows.filter((r) => isPendente(r));
-  const totBruto = pagas.reduce((s, r) => s + Number(r.valor_bruto || 0), 0);
-  const totLiq = pagas.reduce((s, r) => s + Number(r.valor_liquido || 0), 0);
   const totNF = pagas.filter((r) => r.nota_fiscal).length;
-  const totPendente = abertas.reduce((s, r) => s + Number(r.valor_liquido || 0), 0);
+
 
   const hasActiveFilter = filter !== "todos" || procFilter !== "__all__" || q.length > 0 || statusPag !== "todos";
 
@@ -349,15 +361,37 @@ function Consultorio() {
                 <TableCell className={cn("text-right", pend && "text-destructive/80")}>{brl(r.valor_bruto)}</TableCell>
                 <TableCell className={cn("text-right font-medium", pend && "text-destructive")}>{brl(r.valor_liquido)}</TableCell>
                 <TableCell>
-                  {pend ? (
-                    <Badge variant="outline" className="border-destructive/40 bg-destructive/10 text-destructive gap-1">
-                      <Clock className="h-3 w-3" /> Pendente
-                    </Badge>
-                  ) : (
-                    <Badge className="bg-success text-success-foreground hover:bg-success/90 gap-1">
-                      <CheckCircle2 className="h-3 w-3" /> Pago
-                    </Badge>
-                  )}
+                  {(() => {
+                    const rs = resumoMap.get(r.id);
+                    if (r.parcelado && rs) {
+                      const pct = rs.total > 0 ? Math.min(100, (rs.recebido / rs.total) * 100) : 0;
+                      return (
+                        <div className="min-w-[140px] space-y-1">
+                          <Badge variant="outline" className={cn(
+                            rs.status === "quitado" ? "border-success/40 bg-success/10 text-success"
+                              : rs.status === "parcial" ? "border-primary/40 bg-primary/10 text-primary"
+                              : "border-warning/40 bg-warning/10 text-warning",
+                          )}>
+                            {STATUS_LABEL[rs.status]}
+                          </Badge>
+                          <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                            <span>{rs.qtd}/{rs.parcelasCombinadas}</span>
+                            <span>Saldo {brl(rs.saldo)}</span>
+                          </div>
+                          <Progress value={pct} className="h-1.5" />
+                        </div>
+                      );
+                    }
+                    return pend ? (
+                      <Badge variant="outline" className="border-destructive/40 bg-destructive/10 text-destructive gap-1">
+                        <Clock className="h-3 w-3" /> Pendente
+                      </Badge>
+                    ) : (
+                      <Badge className="bg-success text-success-foreground hover:bg-success/90 gap-1">
+                        <CheckCircle2 className="h-3 w-3" /> Pago
+                      </Badge>
+                    );
+                  })()}
                 </TableCell>
                 <TableCell>
                   <button onClick={() => upd.mutate({ id: r.id, values: { nota_fiscal: !r.nota_fiscal } })}>
@@ -368,7 +402,9 @@ function Consultorio() {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
-                    {pend && (
+                    {r.parcelado ? (
+                      <RegistrarRecebimento atendimento={r} />
+                    ) : pend && (
                       <Button
                         size="sm"
                         variant="outline"
@@ -378,6 +414,7 @@ function Consultorio() {
                         <CheckCircle2 className="h-4 w-4" /> Marcar pago
                       </Button>
                     )}
+
                     <EditAtendimentoButton row={r} />
                     <ConfirmDelete
                       title="Excluir atendimento?"

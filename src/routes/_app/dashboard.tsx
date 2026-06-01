@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTable } from "@/hooks/use-data";
 import { brl, monthOptions, monthLabel, currentMonthKey, monthKey } from "@/lib/format";
-import { receitasRecebidas, valoresEmAberto } from "@/lib/finance";
+import { receitasRecebidas, valoresEmAberto, resumoAtendimento } from "@/lib/finance";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -12,7 +12,7 @@ import {
 } from "recharts";
 import {
   TrendingUp, TrendingDown, Wallet, Receipt, FlaskConical, CircleDollarSign,
-  Clock, Users, HandCoins, FileSignature,
+  Clock, Users, HandCoins, FileSignature, Layers,
 } from "lucide-react";
 import { ProceduresAnalytics } from "@/components/procedures-analytics";
 
@@ -25,6 +25,7 @@ function Dashboard() {
   const opts = monthOptions(12);
 
   const atendimentos = useTable<any>("atendimentos", "data");
+  const recebimentos = useTable<any>("recebimentos", "data", true);
   const parcelas = useTable<any>("parcelas", "vencimento", true);
   const despesas = useTable<any>("despesas", "vencimento");
   const lab = useTable<any>("custos_laboratorio", "data");
@@ -38,8 +39,8 @@ function Dashboard() {
 
   // Receita recebida (caixa): atendimentos pagos + parcelas pagas
   const recebidas = useMemo(
-    () => receitasRecebidas(atendimentos.data ?? [], parcelas.data ?? []),
-    [atendimentos.data, parcelas.data],
+    () => receitasRecebidas(atendimentos.data ?? [], recebimentos.data ?? [], parcelas.data ?? []),
+    [atendimentos.data, recebimentos.data, parcelas.data],
   );
   const recebidasMes = recebidas.filter((r) => monthKey(r.data) === mes);
   const totBruto = recebidasMes.reduce((s, r) => s + r.valor_bruto, 0);
@@ -47,8 +48,8 @@ function Dashboard() {
 
   // Valores em aberto / contas a receber (todos os meses, persistem até quitar)
   const aberto = useMemo(
-    () => valoresEmAberto(atendimentos.data ?? [], parcelas.data ?? []),
-    [atendimentos.data, parcelas.data],
+    () => valoresEmAberto(atendimentos.data ?? [], recebimentos.data ?? [], parcelas.data ?? []),
+    [atendimentos.data, recebimentos.data, parcelas.data],
   );
   const totPendente = aberto.reduce((s, r) => s + r.valor_liquido, 0);
   const qtdPendente = aberto.length;
@@ -56,6 +57,19 @@ function Dashboard() {
   // Receita contratada total = já recebido (todos os meses) + a receber
   const totRecebidoGeral = recebidas.reduce((s, r) => s + r.valor_liquido, 0);
   const totContratado = totRecebidoGeral + totPendente;
+
+  // Tratamentos parcelados por status
+  const tratamentos = useMemo(() => {
+    const ps = (atendimentos.data ?? []).filter((a) => a.parcelado);
+    let quitados = 0, parciais = 0, abertos = 0;
+    for (const a of ps) {
+      const r = resumoAtendimento(a, recebimentos.data ?? [], parcelas.data ?? []);
+      if (r.status === "quitado") quitados++;
+      else if (r.status === "parcial") parciais++;
+      else abertos++;
+    }
+    return { total: ps.length, quitados, parciais, abertos };
+  }, [atendimentos.data, recebimentos.data, parcelas.data]);
 
   const totGanhos = filt(ganhos.data).reduce((s, r: any) => s + Number(r.valor || 0), 0);
   const totReceitaTotal = totLiquidoAtend + totGanhos;
@@ -132,6 +146,19 @@ function Dashboard() {
         <StatCard label="Receita Contratada" value={brl(totContratado)} tone="primary" icon={<FileSignature className="h-4 w-4" />} hint="Recebido + a receber" />
         <StatCard label="Pacientes a Receber" value={String(pacientesPendentes.length)} icon={<Users className="h-4 w-4" />} hint={pacientesPendentes.slice(0, 3).join(", ") || "Nenhum"} />
       </div>
+
+      {/* Tratamentos parcelados */}
+      <div className="mt-6 mb-2 flex items-center gap-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Tratamentos Parcelados</h2>
+        <div className="h-px flex-1 bg-border" />
+      </div>
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Total Recebido" value={brl(totRecebidoGeral)} tone="success" icon={<HandCoins className="h-4 w-4" />} hint="Todos os meses · caixa" />
+        <StatCard label="Total em Aberto" value={brl(totPendente)} tone={totPendente > 0 ? "warning" : "success"} icon={<Clock className="h-4 w-4" />} />
+        <StatCard label="Parcelados / Quitados" value={`${tratamentos.total} / ${tratamentos.quitados}`} tone="primary" icon={<Layers className="h-4 w-4" />} hint={`${tratamentos.parciais} parcial(is)`} />
+        <StatCard label="Parcialmente Recebidos" value={String(tratamentos.parciais)} icon={<FileSignature className="h-4 w-4" />} hint={`${tratamentos.abertos} sem recebimentos`} />
+      </div>
+
 
 
       {/* Resultado */}
