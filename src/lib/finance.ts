@@ -66,7 +66,12 @@ export function resumoAtendimento(
   const total = bru(a);
   const f = fatorLiquido(a);
 
-  if (!a?.parcelado) {
+  const recs = recebimentos.filter((r) => r.atendimento_id === a.id);
+  const legacy = parcelas.filter((p) => p.atendimento_id === a.id && p.status === "pago");
+
+  // Atendimento sem recebimentos registrados nem parcelas legadas:
+  // usa o status de pagamento (regime à vista).
+  if (!a?.parcelado && recs.length === 0 && legacy.length === 0) {
     const pago = a?.status_pagamento !== "pendente";
     return {
       total,
@@ -80,8 +85,6 @@ export function resumoAtendimento(
     };
   }
 
-  const recs = recebimentos.filter((r) => r.atendimento_id === a.id);
-  const legacy = parcelas.filter((p) => p.atendimento_id === a.id && p.status === "pago");
   const recebido =
     recs.reduce((s, r) => s + Number(r.valor || 0), 0) +
     legacy.reduce((s, p) => s + bru(p), 0);
@@ -111,8 +114,28 @@ export function receitasRecebidas(
   const legacyIds = new Set(parcelas.map((p) => p.atendimento_id));
 
   for (const a of atend) {
-    if (!a.parcelado) {
-      if (a.status_pagamento === "pendente") continue;
+    if (legacyIds.has(a.id)) continue; // tratado via parcelas legadas
+    const recs = recebimentos.filter((x) => x.atendimento_id === a.id);
+
+    // Se há recebimentos registrados, cada um conta na SUA data (regime de caixa).
+    if (recs.length > 0) {
+      const f = fatorLiquido(a);
+      for (const r of recs) {
+        const vb = Number(r.valor || 0);
+        out.push({
+          data: r.data,
+          valor_bruto: vb,
+          valor_liquido: Number((vb * f).toFixed(2)),
+          forma_pagamento: r.forma_pagamento || a.forma_pagamento || "",
+          paciente: a.paciente ?? "",
+          procedimento: a.procedimento ?? "",
+        });
+      }
+      continue;
+    }
+
+    // Sem recebimentos: atendimento à vista pago conta na data do atendimento.
+    if (!a.parcelado && a.status_pagamento !== "pendente") {
       out.push({
         data: a.data,
         valor_liquido: liq(a),
@@ -121,22 +144,9 @@ export function receitasRecebidas(
         paciente: a.paciente ?? "",
         procedimento: a.procedimento ?? "",
       });
-      continue;
-    }
-    if (legacyIds.has(a.id)) continue; // tratado via parcelas legadas
-    const f = fatorLiquido(a);
-    for (const r of recebimentos.filter((x) => x.atendimento_id === a.id)) {
-      const vb = Number(r.valor || 0);
-      out.push({
-        data: r.data,
-        valor_bruto: vb,
-        valor_liquido: Number((vb * f).toFixed(2)),
-        forma_pagamento: r.forma_pagamento || a.forma_pagamento || "",
-        paciente: a.paciente ?? "",
-        procedimento: a.procedimento ?? "",
-      });
     }
   }
+
 
   // Parcelas legadas pagas.
   for (const p of parcelas) {
@@ -164,7 +174,11 @@ export function valoresEmAberto(
   const legacyIds = new Set(parcelas.map((p) => p.atendimento_id));
 
   for (const a of atend) {
-    if (!a.parcelado) {
+    if (legacyIds.has(a.id)) continue;
+    const recs = recebimentos.filter((r) => r.atendimento_id === a.id);
+
+    // Atendimento à vista, sem recebimentos: aberto apenas se pendente.
+    if (!a.parcelado && recs.length === 0) {
       if (a.status_pagamento !== "pendente") continue;
       out.push({
         id: a.id,
@@ -181,11 +195,10 @@ export function valoresEmAberto(
       });
       continue;
     }
-    if (legacyIds.has(a.id)) continue;
+
+    // Atendimentos com recebimentos (parcelados ou à vista): saldo pendente.
     const f = fatorLiquido(a);
-    const recebido = recebimentos
-      .filter((r) => r.atendimento_id === a.id)
-      .reduce((s, r) => s + Number(r.valor || 0), 0);
+    const recebido = recs.reduce((s, r) => s + Number(r.valor || 0), 0);
     const saldoBruto = Math.max(0, bru(a) - recebido);
     if (saldoBruto <= 0.005) continue;
     out.push({
@@ -202,6 +215,7 @@ export function valoresEmAberto(
       parcela: true,
     });
   }
+
 
   // Parcelas legadas em aberto.
   for (const p of parcelas) {
@@ -250,10 +264,13 @@ export function contasAReceber(
 
   for (const a of atend) {
     if (legacyIds.has(a.id)) continue; // legado tratado abaixo
-    if (!a.parcelado && a.status_pagamento !== "pendente") continue;
+    const temRecs = recebimentos.some((x) => x.atendimento_id === a.id);
+    // À vista, quitado e sem recebimentos parciais: não é conta a receber.
+    if (!a.parcelado && a.status_pagamento !== "pendente" && !temRecs) continue;
 
     const r = resumoAtendimento(a, recebimentos, parcelas);
     if (r.saldo <= 0.005) continue; // quitado
+
 
     const recs = recebimentos
       .filter((x) => x.atendimento_id === a.id)
