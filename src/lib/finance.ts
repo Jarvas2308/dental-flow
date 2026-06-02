@@ -66,7 +66,12 @@ export function resumoAtendimento(
   const total = bru(a);
   const f = fatorLiquido(a);
 
-  if (!a?.parcelado) {
+  const recs = recebimentos.filter((r) => r.atendimento_id === a.id);
+  const legacy = parcelas.filter((p) => p.atendimento_id === a.id && p.status === "pago");
+
+  // Atendimento sem recebimentos registrados nem parcelas legadas:
+  // usa o status de pagamento (regime à vista).
+  if (!a?.parcelado && recs.length === 0 && legacy.length === 0) {
     const pago = a?.status_pagamento !== "pendente";
     return {
       total,
@@ -80,8 +85,6 @@ export function resumoAtendimento(
     };
   }
 
-  const recs = recebimentos.filter((r) => r.atendimento_id === a.id);
-  const legacy = parcelas.filter((p) => p.atendimento_id === a.id && p.status === "pago");
   const recebido =
     recs.reduce((s, r) => s + Number(r.valor || 0), 0) +
     legacy.reduce((s, p) => s + bru(p), 0);
