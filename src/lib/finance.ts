@@ -264,10 +264,13 @@ export function contasAReceber(
 
   for (const a of atend) {
     if (legacyIds.has(a.id)) continue; // legado tratado abaixo
-    if (!a.parcelado && a.status_pagamento !== "pendente") continue;
+    const temRecs = recebimentos.some((x) => x.atendimento_id === a.id);
+    // À vista, quitado e sem recebimentos parciais: não é conta a receber.
+    if (!a.parcelado && a.status_pagamento !== "pendente" && !temRecs) continue;
 
     const r = resumoAtendimento(a, recebimentos, parcelas);
     if (r.saldo <= 0.005) continue; // quitado
+
 
     const recs = recebimentos
       .filter((x) => x.atendimento_id === a.id)
