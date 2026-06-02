@@ -174,7 +174,11 @@ export function valoresEmAberto(
   const legacyIds = new Set(parcelas.map((p) => p.atendimento_id));
 
   for (const a of atend) {
-    if (!a.parcelado) {
+    if (legacyIds.has(a.id)) continue;
+    const recs = recebimentos.filter((r) => r.atendimento_id === a.id);
+
+    // Atendimento à vista, sem recebimentos: aberto apenas se pendente.
+    if (!a.parcelado && recs.length === 0) {
       if (a.status_pagamento !== "pendente") continue;
       out.push({
         id: a.id,
@@ -191,11 +195,10 @@ export function valoresEmAberto(
       });
       continue;
     }
-    if (legacyIds.has(a.id)) continue;
+
+    // Atendimentos com recebimentos (parcelados ou à vista): saldo pendente.
     const f = fatorLiquido(a);
-    const recebido = recebimentos
-      .filter((r) => r.atendimento_id === a.id)
-      .reduce((s, r) => s + Number(r.valor || 0), 0);
+    const recebido = recs.reduce((s, r) => s + Number(r.valor || 0), 0);
     const saldoBruto = Math.max(0, bru(a) - recebido);
     if (saldoBruto <= 0.005) continue;
     out.push({
@@ -212,6 +215,7 @@ export function valoresEmAberto(
       parcela: true,
     });
   }
+
 
   // Parcelas legadas em aberto.
   for (const p of parcelas) {
