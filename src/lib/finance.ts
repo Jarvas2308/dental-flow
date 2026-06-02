@@ -114,8 +114,28 @@ export function receitasRecebidas(
   const legacyIds = new Set(parcelas.map((p) => p.atendimento_id));
 
   for (const a of atend) {
-    if (!a.parcelado) {
-      if (a.status_pagamento === "pendente") continue;
+    if (legacyIds.has(a.id)) continue; // tratado via parcelas legadas
+    const recs = recebimentos.filter((x) => x.atendimento_id === a.id);
+
+    // Se há recebimentos registrados, cada um conta na SUA data (regime de caixa).
+    if (recs.length > 0) {
+      const f = fatorLiquido(a);
+      for (const r of recs) {
+        const vb = Number(r.valor || 0);
+        out.push({
+          data: r.data,
+          valor_bruto: vb,
+          valor_liquido: Number((vb * f).toFixed(2)),
+          forma_pagamento: r.forma_pagamento || a.forma_pagamento || "",
+          paciente: a.paciente ?? "",
+          procedimento: a.procedimento ?? "",
+        });
+      }
+      continue;
+    }
+
+    // Sem recebimentos: atendimento à vista pago conta na data do atendimento.
+    if (!a.parcelado && a.status_pagamento !== "pendente") {
       out.push({
         data: a.data,
         valor_liquido: liq(a),
@@ -124,22 +144,9 @@ export function receitasRecebidas(
         paciente: a.paciente ?? "",
         procedimento: a.procedimento ?? "",
       });
-      continue;
-    }
-    if (legacyIds.has(a.id)) continue; // tratado via parcelas legadas
-    const f = fatorLiquido(a);
-    for (const r of recebimentos.filter((x) => x.atendimento_id === a.id)) {
-      const vb = Number(r.valor || 0);
-      out.push({
-        data: r.data,
-        valor_bruto: vb,
-        valor_liquido: Number((vb * f).toFixed(2)),
-        forma_pagamento: r.forma_pagamento || a.forma_pagamento || "",
-        paciente: a.paciente ?? "",
-        procedimento: a.procedimento ?? "",
-      });
     }
   }
+
 
   // Parcelas legadas pagas.
   for (const p of parcelas) {
