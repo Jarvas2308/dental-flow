@@ -109,8 +109,8 @@ export function ProceduresAnalytics({ mes }: { mes: string }) {
       const k = r.procedimento || "—";
       const cur = map.get(k) ?? { nome: k, qtd: 0, bruto: 0, liquido: 0, lab: 0 };
       cur.qtd += 1;
-      cur.bruto += Number(r.valor_bruto || 0);
-      cur.liquido += Number(r.valor_liquido || 0);
+      cur.bruto += Number(r.bruto || 0);
+      cur.liquido += Number(r.liquido || 0);
       map.set(k, cur);
     });
     labFiltrado.forEach((r) => {
