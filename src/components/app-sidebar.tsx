@@ -9,6 +9,7 @@ import {
   TrendingUp,
   PiggyBank,
   HandCoins,
+  CalendarClock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
@@ -20,6 +21,7 @@ const items = [
   { to: "/contas-receber", label: "A Receber", icon: HandCoins },
   { to: "/ganhos", label: "Ganhos", icon: PiggyBank },
   { to: "/consultorio", label: "Consultório", icon: Stethoscope },
+  { to: "/consultas", label: "Consultas", icon: CalendarClock },
   { to: "/laboratorio", label: "Laboratório", icon: FlaskConical },
   { to: "/cadastros", label: "Cadastros", icon: Settings },
 ] as const;
