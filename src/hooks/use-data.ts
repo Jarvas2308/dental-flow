@@ -15,7 +15,10 @@ type TableName =
   | "custos_laboratorio"
   | "receitas_extras"
   | "parcelas"
-  | "recebimentos";
+  | "recebimentos"
+  | "pacientes"
+  | "atendimento_procedimentos"
+  | "consultas_previstas";
 
 export function useTable<T = any>(table: TableName, orderBy = "created_at", asc = false) {
   const { user } = useAuth();
