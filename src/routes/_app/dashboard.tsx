@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTable } from "@/hooks/use-data";
-import { brl, monthOptions, monthLabel, currentMonthKey, monthKey } from "@/lib/format";
+import { brl, monthOptions, monthLabel, currentMonthKey, monthKey, parseLocalDate, todayISO } from "@/lib/format";
 import { receitasRecebidas, valoresEmAberto, resumoAtendimento } from "@/lib/finance";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import {
@@ -12,7 +12,7 @@ import {
 } from "recharts";
 import {
   TrendingUp, TrendingDown, Wallet, Receipt, FlaskConical, CircleDollarSign,
-  Clock, Users, HandCoins, FileSignature, Layers,
+  Clock, Users, HandCoins, FileSignature, Layers, CalendarDays, CalendarClock,
 } from "lucide-react";
 import { ProceduresAnalytics } from "@/components/procedures-analytics";
 
