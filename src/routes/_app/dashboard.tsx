@@ -141,6 +141,19 @@ function Dashboard() {
         }
       />
 
+      {/* Próximas consultas */}
+      <div className="mb-2 flex items-center gap-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Próximas Consultas</h2>
+        <div className="h-px flex-1 bg-border" />
+      </div>
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-3 mb-6">
+        <StatCard label="Consultas hoje" value={String(previsao.hoje)} tone="primary" icon={<CalendarDays className="h-4 w-4" />} />
+        <StatCard label="Consultas na semana" value={String(previsao.semana)} icon={<CalendarClock className="h-4 w-4" />} />
+        <StatCard label="Valor previsto da semana" value={brl(previsao.valorSemana)} tone="success" icon={<CircleDollarSign className="h-4 w-4" />} hint="Estimado" />
+      </div>
+
+
+
       {/* Receitas */}
       <div className="mb-2 flex items-center gap-2">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Receitas</h2>
