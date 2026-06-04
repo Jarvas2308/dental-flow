@@ -31,7 +31,8 @@ export function ProceduresAnalytics({ mes }: { mes: string }) {
   const [procFiltro, setProcFiltro] = useState<string>("todos");
   const [mesLocal, setMesLocal] = useState<string>(mes);
 
-  const atendimentos = useTable<Atendimento>("atendimentos", "data");
+  const atendimentos = useTable<Atendimento & { id: string }>("atendimentos", "data");
+  const itens = useTable<any>("atendimento_procedimentos", "created_at", true);
   const lab = useTable<CustoLab>("custos_laboratorio", "data");
 
   const mesesPeriodo = useMemo(() => {
@@ -40,11 +41,50 @@ export function ProceduresAnalytics({ mes }: { mes: string }) {
     return monthOptions(n);
   }, [periodo, mesLocal]);
 
-  const filtrados = useMemo(() => {
-    const all = atendimentos.data ?? [];
-    return all.filter((r) => mesesPeriodo.includes(monthKey(r.data)))
-      .filter((r) => procFiltro === "todos" || r.procedimento === procFiltro);
-  }, [atendimentos.data, mesesPeriodo, procFiltro]);
+  // Linhas de procedimento: usa itens detalhados quando existirem,
+  // com fallback para o campo de texto dos atendimentos antigos.
+  const lineItems = useMemo(() => {
+    const itensPorAtend = new Map<string, any[]>();
+    (itens.data ?? []).forEach((it) => {
+      const arr = itensPorAtend.get(it.atendimento_id) ?? [];
+      arr.push(it);
+      itensPorAtend.set(it.atendimento_id, arr);
+    });
+
+    const out: { procedimento: string; bruto: number; liquido: number; data: string }[] = [];
+    (atendimentos.data ?? []).forEach((a: any) => {
+      if (!mesesPeriodo.includes(monthKey(a.data))) return;
+      const its = itensPorAtend.get(a.id);
+      const liqTotal = Number(a.valor_liquido || 0);
+      const bruTotal = Number(a.valor_bruto || 0);
+      if (its && its.length > 0) {
+        const somaItens = its.reduce((s, it) => s + Number(it.valor || 0), 0) || bruTotal || 1;
+        its.forEach((it) => {
+          const bruto = Number(it.valor || 0);
+          const ratio = somaItens > 0 ? bruto / somaItens : 0;
+          out.push({
+            procedimento: it.procedimento || "—",
+            bruto,
+            liquido: liqTotal * ratio,
+            data: a.data,
+          });
+        });
+      } else {
+        out.push({
+          procedimento: a.procedimento || "—",
+          bruto: bruTotal,
+          liquido: liqTotal,
+          data: a.data,
+        });
+      }
+    });
+    return out;
+  }, [atendimentos.data, itens.data, mesesPeriodo]);
+
+  const filtrados = useMemo(
+    () => lineItems.filter((r) => procFiltro === "todos" || r.procedimento === procFiltro),
+    [lineItems, procFiltro],
+  );
 
   const labFiltrado = useMemo(() => {
     return (lab.data ?? []).filter((r) => mesesPeriodo.includes(monthKey(r.data)));
@@ -52,9 +92,10 @@ export function ProceduresAnalytics({ mes }: { mes: string }) {
 
   const procedimentosUnicos = useMemo(() => {
     const set = new Set<string>();
-    (atendimentos.data ?? []).forEach((r) => r.procedimento && set.add(r.procedimento));
+    (itens.data ?? []).forEach((r) => r.procedimento && set.add(r.procedimento));
+    (atendimentos.data ?? []).forEach((r: any) => r.procedimento && set.add(r.procedimento));
     return Array.from(set).sort();
-  }, [atendimentos.data]);
+  }, [atendimentos.data, itens.data]);
 
   // KPIs
   const totalProc = filtrados.length;
