@@ -30,6 +30,23 @@ function Dashboard() {
   const despesas = useTable<any>("despesas", "vencimento");
   const lab = useTable<any>("custos_laboratorio", "data");
   const ganhos = useTable<any>("receitas_extras", "data");
+  const consultas = useTable<any>("consultas_previstas", "data_prevista", true);
+
+  // Previsão de consultas futuras (hoje / semana)
+  const previsao = useMemo(() => {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const ws = new Date(today); ws.setDate(today.getDate() - today.getDay()); ws.setHours(0, 0, 0, 0);
+    const we = new Date(ws); we.setDate(ws.getDate() + 6); we.setHours(23, 59, 59, 999);
+    const todayKey = todayISO();
+    const ativos = (consultas.data ?? []).filter((c) => !c.realizada);
+    const hoje = ativos.filter((c) => c.data_prevista === todayKey).length;
+    const semana = ativos.filter((c) => {
+      const d = parseLocalDate(c.data_prevista);
+      return d && d >= ws && d <= we;
+    });
+    const valorSemana = semana.reduce((s, c) => s + Number(c.valor_estimado || 0), 0);
+    return { hoje, semana: semana.length, valorSemana };
+  }, [consultas.data]);
 
   const filt = <T extends { data: string }>(rows: T[] = []) =>
     rows.filter((r) => monthKey(r.data) === mes);
