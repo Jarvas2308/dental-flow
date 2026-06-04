@@ -15,7 +15,10 @@ type TableName =
   | "custos_laboratorio"
   | "receitas_extras"
   | "parcelas"
-  | "recebimentos";
+  | "recebimentos"
+  | "pacientes"
+  | "atendimento_procedimentos"
+  | "consultas_previstas";
 
 export function useTable<T = any>(table: TableName, orderBy = "created_at", asc = false) {
   const { user } = useAuth();
@@ -39,8 +42,9 @@ export function useCreate(table: TableName) {
   return useMutation({
     mutationFn: async (values: Record<string, any>) => {
       const payload = { ...values, user_id: user!.id };
-      const { error } = await (supabase.from(table) as any).insert(payload);
+      const { data, error } = await (supabase.from(table) as any).insert(payload).select().single();
       if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [table] });

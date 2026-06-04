@@ -19,6 +19,7 @@ import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppContasReceberRouteImport } from './routes/_app/contas-receber'
 import { Route as AppContasRouteImport } from './routes/_app/contas'
 import { Route as AppConsultorioRouteImport } from './routes/_app/consultorio'
+import { Route as AppConsultasRouteImport } from './routes/_app/consultas'
 import { Route as AppCadastrosRouteImport } from './routes/_app/cadastros'
 
 const LoginRoute = LoginRouteImport.update({
@@ -70,6 +71,11 @@ const AppConsultorioRoute = AppConsultorioRouteImport.update({
   path: '/consultorio',
   getParentRoute: () => AppRoute,
 } as any)
+const AppConsultasRoute = AppConsultasRouteImport.update({
+  id: '/consultas',
+  path: '/consultas',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCadastrosRoute = AppCadastrosRouteImport.update({
   id: '/cadastros',
   path: '/cadastros',
@@ -80,6 +86,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/cadastros': typeof AppCadastrosRoute
+  '/consultas': typeof AppConsultasRoute
   '/consultorio': typeof AppConsultorioRoute
   '/contas': typeof AppContasRoute
   '/contas-receber': typeof AppContasReceberRoute
@@ -92,6 +99,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/cadastros': typeof AppCadastrosRoute
+  '/consultas': typeof AppConsultasRoute
   '/consultorio': typeof AppConsultorioRoute
   '/contas': typeof AppContasRoute
   '/contas-receber': typeof AppContasReceberRoute
@@ -106,6 +114,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
   '/_app/cadastros': typeof AppCadastrosRoute
+  '/_app/consultas': typeof AppConsultasRoute
   '/_app/consultorio': typeof AppConsultorioRoute
   '/_app/contas': typeof AppContasRoute
   '/_app/contas-receber': typeof AppContasReceberRoute
@@ -120,6 +129,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/cadastros'
+    | '/consultas'
     | '/consultorio'
     | '/contas'
     | '/contas-receber'
@@ -132,6 +142,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/cadastros'
+    | '/consultas'
     | '/consultorio'
     | '/contas'
     | '/contas-receber'
@@ -145,6 +156,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/login'
     | '/_app/cadastros'
+    | '/_app/consultas'
     | '/_app/consultorio'
     | '/_app/contas'
     | '/_app/contas-receber'
@@ -232,6 +244,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppConsultorioRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/consultas': {
+      id: '/_app/consultas'
+      path: '/consultas'
+      fullPath: '/consultas'
+      preLoaderRoute: typeof AppConsultasRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/cadastros': {
       id: '/_app/cadastros'
       path: '/cadastros'
@@ -244,6 +263,7 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppCadastrosRoute: typeof AppCadastrosRoute
+  AppConsultasRoute: typeof AppConsultasRoute
   AppConsultorioRoute: typeof AppConsultorioRoute
   AppContasRoute: typeof AppContasRoute
   AppContasReceberRoute: typeof AppContasReceberRoute
@@ -255,6 +275,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppCadastrosRoute: AppCadastrosRoute,
+  AppConsultasRoute: AppConsultasRoute,
   AppConsultorioRoute: AppConsultorioRoute,
   AppContasRoute: AppContasRoute,
   AppContasReceberRoute: AppContasReceberRoute,

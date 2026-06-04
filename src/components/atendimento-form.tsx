@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useCreate, useTable, useUpdate } from "@/hooks/use-data";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 import { brl, todayISO } from "@/lib/format";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
@@ -16,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { Check, ChevronsUpDown, Loader2, Pencil, Plus, CalendarClock, Wallet } from "lucide-react";
+import { Check, ChevronsUpDown, Loader2, Pencil, Plus, CalendarClock, Wallet, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 function QuickAdd({
@@ -75,23 +77,139 @@ function QuickAdd({
   );
 }
 
+// Combobox de paciente com autocomplete e criação rápida.
+export function PacienteCombobox({
+  value, onChange,
+}: {
+  value: string;
+  onChange: (nome: string) => void;
+}) {
+  const pacientes = useTable<any>("pacientes", "nome", true);
+  const atendimentos = useTable<any>("atendimentos", "data");
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const nomes = useMemo(() => {
+    const set = new Set<string>();
+    (pacientes.data ?? []).forEach((p) => p.nome && set.add(p.nome));
+    (atendimentos.data ?? []).forEach((a) => a.paciente && set.add(a.paciente));
+    return Array.from(set).sort((a, b) => a.localeCompare(b, "pt-BR"));
+  }, [pacientes.data, atendimentos.data]);
+
+  const exists = nomes.some((n) => n.toLowerCase() === search.trim().toLowerCase());
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button type="button" variant="outline" role="combobox" aria-expanded={open}
+          className={cn("w-full justify-between font-normal", !value && "text-muted-foreground")}>
+          {value || "Selecione ou busque..."}
+          <ChevronsUpDown className="h-4 w-4 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Buscar paciente..." value={search} onValueChange={setSearch} />
+          <CommandList>
+            <CommandEmpty>Nenhum paciente encontrado.</CommandEmpty>
+            {search.trim() && !exists && (
+              <CommandGroup>
+                <CommandItem value={`__novo__${search}`} onSelect={() => { onChange(search.trim()); setSearch(""); setOpen(false); }}>
+                  <UserPlus className="h-4 w-4" /> Criar "{search.trim()}"
+                </CommandItem>
+              </CommandGroup>
+            )}
+            <CommandGroup>
+              {nomes.map((n) => (
+                <CommandItem key={n} value={n}
+                  onSelect={(val) => { onChange(val); setSearch(""); setOpen(false); }}>
+                  <Check className={cn("h-4 w-4", value === n ? "opacity-100" : "opacity-0")} />
+                  {n}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+// Combobox de procedimento (com criação rápida embutida).
+function ProcedimentoCombobox({
+  value, onChange, options,
+}: {
+  value: string;
+  onChange: (nome: string) => void;
+  options: { id: string; nome: string }[];
+}) {
+  const create = useCreate("procedimentos");
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const exists = options.some((p) => p.nome.toLowerCase() === search.trim().toLowerCase());
+
+  const criar = async () => {
+    const nome = search.trim();
+    if (!nome) return;
+    await create.mutateAsync({ nome });
+    onChange(nome);
+    setSearch("");
+    setOpen(false);
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button type="button" variant="outline" role="combobox" aria-expanded={open}
+          className={cn("w-full justify-between font-normal", !value && "text-muted-foreground")}>
+          {value || "Procedimento..."}
+          <ChevronsUpDown className="h-4 w-4 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Buscar procedimento..." value={search} onValueChange={setSearch} />
+          <CommandList>
+            <CommandEmpty>Nenhum procedimento.</CommandEmpty>
+            {search.trim() && !exists && (
+              <CommandGroup>
+                <CommandItem value={`__novo__${search}`} onSelect={criar}>
+                  <Plus className="h-4 w-4" /> Criar "{search.trim()}"
+                </CommandItem>
+              </CommandGroup>
+            )}
+            <CommandGroup>
+              {options.map((p) => (
+                <CommandItem key={p.id} value={p.nome}
+                  onSelect={(val) => { onChange(val); setSearch(""); setOpen(false); }}>
+                  <Check className={cn("h-4 w-4", value === p.nome ? "opacity-100" : "opacity-0")} />
+                  {p.nome}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+type ProcItem = { procedimento: string; valor: string };
 
 type Atendimento = {
   id?: string;
   paciente: string;
-  procedimento: string;
   forma_pagamento: string;
-  valor_bruto: number | string;
   taxa: number | string;
-  valor_liquido?: number;
   data: string;
   nota_fiscal: boolean;
   status_pagamento: string;
 };
 
 const empty = (): Atendimento => ({
-  paciente: "", procedimento: "", forma_pagamento: "",
-  valor_bruto: "", taxa: 0, data: todayISO(),
+  paciente: "", forma_pagamento: "",
+  taxa: 0, data: todayISO(),
   nota_fiscal: false, status_pagamento: "pago",
 });
 
@@ -102,16 +220,20 @@ export function AtendimentoForm({
   onClose?: () => void;
   trigger?: React.ReactNode;
 }) {
+  const { user } = useAuth();
   const procedimentos = useTable<any>("procedimentos", "nome", true);
   const formas = useTable<any>("formas_pagamento", "nome", true);
   const atendimentos = useTable<any>("atendimentos", "data");
+  const pacientes = useTable<any>("pacientes", "nome", true);
   const create = useCreate("atendimentos");
   const update = useUpdate("atendimentos");
+  const createPaciente = useCreate("pacientes");
   const [open, setOpen] = useState(!!editing);
   const [v, setV] = useState<Atendimento>(editing ? { ...editing } : empty());
-  const [procOpen, setProcOpen] = useState(false);
+  const [items, setItems] = useState<ProcItem[]>([{ procedimento: "", valor: "" }]);
   const [parcelado, setParcelado] = useState<boolean>(!!editing?.parcelado);
   const [parcelasN, setParcelasN] = useState<number>(editing?.parcelas_total > 1 ? editing.parcelas_total : 3);
+  const [saving, setSaving] = useState(false);
 
   // Procedimentos ordenados por frequência de uso, com fallback alfabético
   const procedimentosOrdenados = useMemo(() => {
@@ -128,55 +250,108 @@ export function AtendimentoForm({
   }, [procedimentos.data, atendimentos.data]);
 
   useEffect(() => {
-    if (open) {
-      setV(editing ? { ...editing } : empty());
-      setParcelado(!!editing?.parcelado);
-      setParcelasN(editing?.parcelas_total > 1 ? editing.parcelas_total : 3);
+    if (!open) return;
+    setV(editing ? { ...editing } : empty());
+    setParcelado(!!editing?.parcelado);
+    setParcelasN(editing?.parcelas_total > 1 ? editing.parcelas_total : 3);
+    if (editing?.id) {
+      // Carrega itens existentes; fallback para o atendimento legado (1 linha).
+      supabase
+        .from("atendimento_procedimentos")
+        .select("*")
+        .eq("atendimento_id", editing.id)
+        .then(({ data }) => {
+          if (data && data.length > 0) {
+            setItems(data
+              .sort((a: any, b: any) => (a.created_at ?? "").localeCompare(b.created_at ?? ""))
+              .map((d: any) => ({ procedimento: d.procedimento, valor: String(d.valor ?? "") })));
+          } else {
+            setItems([{ procedimento: editing.procedimento ?? "", valor: String(editing.valor_bruto ?? "") }]);
+          }
+        });
+    } else {
+      setItems([{ procedimento: "", valor: "" }]);
     }
   }, [open, editing]);
 
   const isEdit = !!editing;
-  const busy = create.isPending || update.isPending;
+  const busy = create.isPending || update.isPending || saving;
 
   const onForma = (val: string) => {
     const f = (formas.data ?? []).find((x) => x.nome === val);
     setV((p) => ({ ...p, forma_pagamento: val, taxa: f?.taxa ?? p.taxa }));
   };
 
-  const valorLiquido = Math.max(0, Number(v.valor_bruto || 0) * (1 - Number(v.taxa || 0) / 100));
+  const totalBruto = items.reduce((s, it) => s + Number(it.valor || 0), 0);
+  const valorLiquido = Math.max(0, totalBruto * (1 - Number(v.taxa || 0) / 100));
+
+  const setItem = (i: number, patch: Partial<ProcItem>) =>
+    setItems((arr) => arr.map((it, idx) => (idx === i ? { ...it, ...patch } : it)));
+  const addItem = () => setItems((arr) => [...arr, { procedimento: "", valor: "" }]);
+  const removeItem = (i: number) => setItems((arr) => arr.length > 1 ? arr.filter((_, idx) => idx !== i) : arr);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!v.procedimento) return toast.error("Selecione o procedimento");
+    const validItems = items.filter((it) => it.procedimento.trim());
+    if (validItems.length === 0) return toast.error("Adicione ao menos um procedimento");
     if (!v.forma_pagamento) return toast.error("Selecione a forma de pagamento");
-    if (!Number(v.valor_bruto)) return toast.error("Informe o valor bruto");
+    if (totalBruto <= 0) return toast.error("Informe o valor dos procedimentos");
 
     const usarParcelas = parcelado && parcelasN > 1;
+    const procedimentoTexto = validItems.map((it) => it.procedimento.trim()).join(", ");
 
     const payload = {
       paciente: v.paciente.trim(),
-      procedimento: v.procedimento,
+      procedimento: procedimentoTexto,
       forma_pagamento: v.forma_pagamento,
-      valor_bruto: Number(v.valor_bruto),
+      valor_bruto: Number(totalBruto.toFixed(2)),
       taxa: Number(v.taxa),
       valor_liquido: Number(valorLiquido.toFixed(2)),
       data: v.data,
       nota_fiscal: v.nota_fiscal,
-      // Parcelado = contas a receber: fica pendente. O caixa é alimentado
-      // pelos recebimentos reais registrados (de valores livres).
       status_pagamento: usarParcelas ? "pendente" : v.status_pagamento,
       parcelado: usarParcelas,
       parcelas_total: usarParcelas ? parcelasN : 1,
     };
 
-    if (isEdit) {
-      await update.mutateAsync({ id: editing.id, values: payload });
-    } else {
-      await create.mutateAsync(payload);
-    }
+    setSaving(true);
+    try {
+      let atendimentoId = editing?.id;
+      if (isEdit) {
+        await update.mutateAsync({ id: editing.id, values: payload });
+      } else {
+        const created = await create.mutateAsync(payload);
+        atendimentoId = created?.id;
+      }
 
-    setOpen(false);
-    onClose?.();
+      if (atendimentoId) {
+        // Substitui os itens do atendimento.
+        await supabase.from("atendimento_procedimentos").delete().eq("atendimento_id", atendimentoId);
+        const rows = validItems.map((it) => ({
+          user_id: user!.id,
+          atendimento_id: atendimentoId,
+          procedimento: it.procedimento.trim(),
+          valor: Number(it.valor || 0),
+        }));
+        await supabase.from("atendimento_procedimentos").insert(rows);
+      }
+
+      // Cria paciente se ainda não existir (evita duplicidade por nome).
+      const nome = v.paciente.trim();
+      if (nome) {
+        const jaExiste = (pacientes.data ?? []).some(
+          (p) => (p.nome ?? "").toLowerCase() === nome.toLowerCase(),
+        );
+        if (!jaExiste) {
+          try { await createPaciente.mutateAsync({ nome }); } catch { /* ignora duplicado */ }
+        }
+      }
+
+      setOpen(false);
+      onClose?.();
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -187,7 +362,7 @@ export function AtendimentoForm({
           <Button><Plus className="h-4 w-4" /> Novo atendimento</Button>
         </DialogTrigger>
       )}
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Editar atendimento" : "Novo atendimento"}</DialogTitle>
         </DialogHeader>
@@ -195,41 +370,46 @@ export function AtendimentoForm({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5 sm:col-span-2">
               <Label>Paciente</Label>
-              <Input required value={v.paciente} onChange={(e) => setV({ ...v, paciente: e.target.value })} />
+              <PacienteCombobox value={v.paciente} onChange={(nome) => setV((p) => ({ ...p, paciente: nome }))} />
             </div>
-            <div className="space-y-1.5">
+
+            {/* Procedimentos */}
+            <div className="sm:col-span-2 space-y-2">
               <div className="flex items-center justify-between">
-                <Label>Procedimento</Label>
-                <QuickAdd table="procedimentos" label="procedimento"
-                  onCreated={(nome) => setV((p) => ({ ...p, procedimento: nome }))} />
+                <Label>Procedimentos</Label>
+                <Button type="button" variant="ghost" size="sm" className="h-7 gap-1 text-primary" onClick={addItem}>
+                  <Plus className="h-3.5 w-3.5" /> Adicionar
+                </Button>
               </div>
-              <Popover open={procOpen} onOpenChange={setProcOpen}>
-                <PopoverTrigger asChild>
-                  <Button type="button" variant="outline" role="combobox" aria-expanded={procOpen}
-                    className={cn("w-full justify-between font-normal", !v.procedimento && "text-muted-foreground")}>
-                    {v.procedimento || "Selecione ou busque..."}
-                    <ChevronsUpDown className="h-4 w-4 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                  <Command>
-                    <CommandInput placeholder="Buscar procedimento..." />
-                    <CommandList>
-                      <CommandEmpty>Nenhum procedimento. Cadastre em Cadastros.</CommandEmpty>
-                      <CommandGroup>
-                        {procedimentosOrdenados.map((p) => (
-                          <CommandItem key={p.id} value={p.nome}
-                            onSelect={(val) => { setV({ ...v, procedimento: val }); setProcOpen(false); }}>
-                            <Check className={cn("h-4 w-4", v.procedimento === p.nome ? "opacity-100" : "opacity-0")} />
-                            {p.nome}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+              <div className="space-y-2">
+                {items.map((it, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <ProcedimentoCombobox
+                        value={it.procedimento}
+                        onChange={(nome) => setItem(i, { procedimento: nome })}
+                        options={procedimentosOrdenados}
+                      />
+                    </div>
+                    <Input
+                      type="number" step="0.01" placeholder="0,00"
+                      className="w-28"
+                      value={it.valor}
+                      onChange={(e) => setItem(i, { valor: e.target.value })}
+                    />
+                    <Button type="button" variant="ghost" size="icon" className="h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => removeItem(i)} disabled={items.length === 1} aria-label="Remover">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2 text-sm">
+                <span className="text-muted-foreground">Valor total bruto</span>
+                <span className="font-semibold">{brl(totalBruto)}</span>
+              </div>
             </div>
+
             <div className="space-y-1.5">
               <Label>Data</Label>
               <Input type="date" required value={v.data} onChange={(e) => setV({ ...v, data: e.target.value })} />
@@ -253,11 +433,6 @@ export function AtendimentoForm({
               <Label>Taxa (%)</Label>
               <Input type="number" step="0.01" value={v.taxa}
                 onChange={(e) => setV({ ...v, taxa: e.target.value })} />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Valor bruto (R$)</Label>
-              <Input type="number" step="0.01" required value={v.valor_bruto}
-                onChange={(e) => setV({ ...v, valor_bruto: e.target.value })} />
             </div>
             <div className="space-y-1.5">
               <Label>Valor líquido</Label>
@@ -284,7 +459,6 @@ export function AtendimentoForm({
                 <button
                   type="button"
                   onClick={() => setParcelado(true)}
-                  disabled={isEdit && !editing?.parcelado && false}
                   className={cn(
                     "inline-flex items-center gap-1.5 px-4 py-1.5 text-sm rounded-md transition-colors",
                     parcelado ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"

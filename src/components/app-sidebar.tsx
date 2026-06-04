@@ -9,6 +9,7 @@ import {
   TrendingUp,
   PiggyBank,
   HandCoins,
+  CalendarClock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
@@ -20,6 +21,7 @@ const items = [
   { to: "/contas-receber", label: "A Receber", icon: HandCoins },
   { to: "/ganhos", label: "Ganhos", icon: PiggyBank },
   { to: "/consultorio", label: "Consultório", icon: Stethoscope },
+  { to: "/consultas", label: "Consultas", icon: CalendarClock },
   { to: "/laboratorio", label: "Laboratório", icon: FlaskConical },
   { to: "/cadastros", label: "Cadastros", icon: Settings },
 ] as const;
@@ -86,7 +88,7 @@ export function MobileNav() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   return (
     <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t bg-card/95 backdrop-blur">
-      <div className="grid grid-cols-8">
+      <div className="grid grid-cols-9">
         {items.map(({ to, label, icon: Icon }) => {
           const active = path === to || path.startsWith(to + "/");
           return (

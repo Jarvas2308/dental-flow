@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTable } from "@/hooks/use-data";
-import { brl, monthOptions, monthLabel, currentMonthKey, monthKey } from "@/lib/format";
+import { brl, monthOptions, monthLabel, currentMonthKey, monthKey, parseLocalDate, todayISO } from "@/lib/format";
 import { receitasRecebidas, valoresEmAberto, resumoAtendimento } from "@/lib/finance";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import {
@@ -12,7 +12,7 @@ import {
 } from "recharts";
 import {
   TrendingUp, TrendingDown, Wallet, Receipt, FlaskConical, CircleDollarSign,
-  Clock, Users, HandCoins, FileSignature, Layers,
+  Clock, Users, HandCoins, FileSignature, Layers, CalendarDays, CalendarClock,
 } from "lucide-react";
 import { ProceduresAnalytics } from "@/components/procedures-analytics";
 
@@ -30,6 +30,23 @@ function Dashboard() {
   const despesas = useTable<any>("despesas", "vencimento");
   const lab = useTable<any>("custos_laboratorio", "data");
   const ganhos = useTable<any>("receitas_extras", "data");
+  const consultas = useTable<any>("consultas_previstas", "data_prevista", true);
+
+  // Previsão de consultas futuras (hoje / semana)
+  const previsao = useMemo(() => {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const ws = new Date(today); ws.setDate(today.getDate() - today.getDay()); ws.setHours(0, 0, 0, 0);
+    const we = new Date(ws); we.setDate(ws.getDate() + 6); we.setHours(23, 59, 59, 999);
+    const todayKey = todayISO();
+    const ativos = (consultas.data ?? []).filter((c) => !c.realizada);
+    const hoje = ativos.filter((c) => c.data_prevista === todayKey).length;
+    const semana = ativos.filter((c) => {
+      const d = parseLocalDate(c.data_prevista);
+      return d && d >= ws && d <= we;
+    });
+    const valorSemana = semana.reduce((s, c) => s + Number(c.valor_estimado || 0), 0);
+    return { hoje, semana: semana.length, valorSemana };
+  }, [consultas.data]);
 
   const filt = <T extends { data: string }>(rows: T[] = []) =>
     rows.filter((r) => monthKey(r.data) === mes);
@@ -123,6 +140,19 @@ function Dashboard() {
           </Select>
         }
       />
+
+      {/* Próximas consultas */}
+      <div className="mb-2 flex items-center gap-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Próximas Consultas</h2>
+        <div className="h-px flex-1 bg-border" />
+      </div>
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-3 mb-6">
+        <StatCard label="Consultas hoje" value={String(previsao.hoje)} tone="primary" icon={<CalendarDays className="h-4 w-4" />} />
+        <StatCard label="Consultas na semana" value={String(previsao.semana)} icon={<CalendarClock className="h-4 w-4" />} />
+        <StatCard label="Valor previsto da semana" value={brl(previsao.valorSemana)} tone="success" icon={<CircleDollarSign className="h-4 w-4" />} hint="Estimado" />
+      </div>
+
+
 
       {/* Receitas */}
       <div className="mb-2 flex items-center gap-2">

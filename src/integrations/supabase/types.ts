@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      atendimento_procedimentos: {
+        Row: {
+          atendimento_id: string
+          created_at: string
+          id: string
+          procedimento: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          atendimento_id: string
+          created_at?: string
+          id?: string
+          procedimento: string
+          user_id: string
+          valor?: number
+        }
+        Update: {
+          atendimento_id?: string
+          created_at?: string
+          id?: string
+          procedimento?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "atendimento_procedimentos_atendimento_id_fkey"
+            columns: ["atendimento_id"]
+            isOneToOne: false
+            referencedRelation: "atendimentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       atendimentos: {
         Row: {
           created_at: string
@@ -62,6 +97,39 @@ export type Database = {
           user_id?: string
           valor_bruto?: number
           valor_liquido?: number
+        }
+        Relationships: []
+      }
+      consultas_previstas: {
+        Row: {
+          created_at: string
+          data_prevista: string
+          id: string
+          observacao: string | null
+          paciente: string
+          realizada: boolean
+          user_id: string
+          valor_estimado: number
+        }
+        Insert: {
+          created_at?: string
+          data_prevista: string
+          id?: string
+          observacao?: string | null
+          paciente: string
+          realizada?: boolean
+          user_id: string
+          valor_estimado?: number
+        }
+        Update: {
+          created_at?: string
+          data_prevista?: string
+          id?: string
+          observacao?: string | null
+          paciente?: string
+          realizada?: boolean
+          user_id?: string
+          valor_estimado?: number
         }
         Relationships: []
       }
@@ -248,6 +316,27 @@ export type Database = {
         Relationships: []
       }
       laboratorios: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pacientes: {
         Row: {
           created_at: string
           id: string
