@@ -82,7 +82,7 @@ export function PacienteCombobox({
   value, onChange,
 }: {
   value: string;
-  onChange: (nome: string) => void;
+  onChange: (nome: string, id: string | null) => void;
 }) {
   const pacientes = useTable<any>("pacientes", "nome", true);
   const atendimentos = useTable<any>("atendimentos", "data");
@@ -95,6 +95,15 @@ export function PacienteCombobox({
     (atendimentos.data ?? []).forEach((a) => a.paciente && set.add(a.paciente));
     return Array.from(set).sort((a, b) => a.localeCompare(b, "pt-BR"));
   }, [pacientes.data, atendimentos.data]);
+
+  // Mapa nome (case-insensitive, trim) -> id do paciente.
+  const idPorNome = useMemo(() => {
+    const map = new Map<string, string>();
+    (pacientes.data ?? []).forEach((p) => {
+      if (p.nome) map.set(p.nome.trim().toLowerCase(), p.id);
+    });
+    return map;
+  }, [pacientes.data]);
 
   const exists = nomes.some((n) => n.toLowerCase() === search.trim().toLowerCase());
 
@@ -114,7 +123,7 @@ export function PacienteCombobox({
             <CommandEmpty>Nenhum paciente encontrado.</CommandEmpty>
             {search.trim() && !exists && (
               <CommandGroup>
-                <CommandItem value={`__novo__${search}`} onSelect={() => { onChange(search.trim()); setSearch(""); setOpen(false); }}>
+                <CommandItem value={`__novo__${search}`} onSelect={() => { onChange(search.trim(), null); setSearch(""); setOpen(false); }}>
                   <UserPlus className="h-4 w-4" /> Criar "{search.trim()}"
                 </CommandItem>
               </CommandGroup>
@@ -122,7 +131,7 @@ export function PacienteCombobox({
             <CommandGroup>
               {nomes.map((n) => (
                 <CommandItem key={n} value={n}
-                  onSelect={(val) => { onChange(val); setSearch(""); setOpen(false); }}>
+                  onSelect={(val) => { onChange(val, idPorNome.get(val.trim().toLowerCase()) ?? null); setSearch(""); setOpen(false); }}>
                   <Check className={cn("h-4 w-4", value === n ? "opacity-100" : "opacity-0")} />
                   {n}
                 </CommandItem>
@@ -232,6 +241,7 @@ export function AtendimentoForm({
   const createPaciente = useCreate("pacientes");
   const [open, setOpen] = useState(!!editing);
   const [v, setV] = useState<Atendimento>(editing ? { ...editing } : empty());
+  const [pacienteId, setPacienteId] = useState<string | null>(editing?.paciente_id ?? null);
   const [items, setItems] = useState<ProcItem[]>([{ procedimento: "", valor: "" }]);
   const [parcelado, setParcelado] = useState<boolean>(!!editing?.parcelado);
   const [parcelasN, setParcelasN] = useState<number>(editing?.parcelas_total > 1 ? editing.parcelas_total : 3);
@@ -261,6 +271,7 @@ export function AtendimentoForm({
     } else {
       setV(empty());
     }
+    setPacienteId(editing?.paciente_id ?? null);
     setParcelado(!!editing?.parcelado);
     setParcelasN(editing?.parcelas_total > 1 ? editing.parcelas_total : 3);
     setShowMore(!!editing && (!!editing.parcelado || !!editing.nota_fiscal));
@@ -311,23 +322,39 @@ export function AtendimentoForm({
 
     const usarParcelas = parcelado && parcelasN > 1;
     const procedimentoTexto = validItems.map((it) => it.procedimento.trim()).join(", ");
-
-    const payload = {
-      paciente: v.paciente.trim(),
-      procedimento: procedimentoTexto,
-      forma_pagamento: v.forma_pagamento,
-      valor_bruto: Number(totalBruto.toFixed(2)),
-      taxa: Number(v.taxa),
-      valor_liquido: Number(valorLiquido.toFixed(2)),
-      data: v.data,
-      nota_fiscal: v.nota_fiscal,
-      status_pagamento: usarParcelas ? "pendente" : v.status_pagamento,
-      parcelado: usarParcelas,
-      parcelas_total: usarParcelas ? parcelasN : 1,
-    };
+    const nome = v.paciente.trim();
 
     setSaving(true);
     try {
+      // Resolve o paciente_id definitivo ANTES de salvar o atendimento.
+      let idResolvido = pacienteId;
+      if (!idResolvido && nome) {
+        const existente = (pacientes.data ?? []).find(
+          (p) => (p.nome ?? "").trim().toLowerCase() === nome.toLowerCase(),
+        );
+        if (existente) {
+          idResolvido = existente.id;
+        } else {
+          const novo = await createPaciente.mutateAsync({ nome });
+          idResolvido = novo?.id ?? null;
+        }
+      }
+
+      const payload = {
+        paciente: nome,
+        paciente_id: idResolvido,
+        procedimento: procedimentoTexto,
+        forma_pagamento: v.forma_pagamento,
+        valor_bruto: Number(totalBruto.toFixed(2)),
+        taxa: Number(v.taxa),
+        valor_liquido: Number(valorLiquido.toFixed(2)),
+        data: v.data,
+        nota_fiscal: v.nota_fiscal,
+        status_pagamento: usarParcelas ? "pendente" : v.status_pagamento,
+        parcelado: usarParcelas,
+        parcelas_total: usarParcelas ? parcelasN : 1,
+      };
+
       let atendimentoId = editing?.id;
       if (isEdit) {
         await update.mutateAsync({ id: editing.id, values: payload });
@@ -346,17 +373,6 @@ export function AtendimentoForm({
           valor: Number(it.valor || 0),
         }));
         await supabase.from("atendimento_procedimentos").insert(rows);
-      }
-
-      // Cria paciente se ainda não existir (evita duplicidade por nome).
-      const nome = v.paciente.trim();
-      if (nome) {
-        const jaExiste = (pacientes.data ?? []).some(
-          (p) => (p.nome ?? "").toLowerCase() === nome.toLowerCase(),
-        );
-        if (!jaExiste) {
-          try { await createPaciente.mutateAsync({ nome }); } catch { /* ignora duplicado */ }
-        }
       }
 
       onSaved?.();
@@ -383,7 +399,7 @@ export function AtendimentoForm({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5 sm:col-span-2">
               <Label>Paciente</Label>
-              <PacienteCombobox value={v.paciente} onChange={(nome) => setV((p) => ({ ...p, paciente: nome }))} />
+              <PacienteCombobox value={v.paciente} onChange={(nome, id) => { setV((p) => ({ ...p, paciente: nome })); setPacienteId(id); }} />
             </div>
 
             {/* Procedimentos */}
