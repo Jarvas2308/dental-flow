@@ -12,7 +12,7 @@ import {
 } from "recharts";
 import {
   TrendingUp, TrendingDown, Wallet, Receipt, FlaskConical, CircleDollarSign,
-  Clock, Users, HandCoins, FileSignature, Layers, CalendarDays, CalendarClock,
+  Clock, HandCoins, FileSignature, CalendarDays, CalendarClock,
 } from "lucide-react";
 import { ProceduresAnalytics } from "@/components/procedures-analytics";
 
