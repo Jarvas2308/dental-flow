@@ -51,7 +51,7 @@ export function ProceduresAnalytics({ mes }: { mes: string }) {
       itensPorAtend.set(it.atendimento_id, arr);
     });
 
-    const out: { procedimento: string; bruto: number; liquido: number; data: string }[] = [];
+    const out: { procedimento: string; bruto: number; liquido: number; data: string; atendimentoId: string; ratio: number }[] = [];
     (atendimentos.data ?? []).forEach((a: any) => {
       if (!mesesPeriodo.includes(monthKey(a.data))) return;
       const its = itensPorAtend.get(a.id);
@@ -67,6 +67,8 @@ export function ProceduresAnalytics({ mes }: { mes: string }) {
             bruto,
             liquido: liqTotal * ratio,
             data: a.data,
+            atendimentoId: a.id,
+            ratio,
           });
         });
       } else {
@@ -75,6 +77,8 @@ export function ProceduresAnalytics({ mes }: { mes: string }) {
           bruto: bruTotal,
           liquido: liqTotal,
           data: a.data,
+          atendimentoId: a.id,
+          ratio: 1,
         });
       }
     });
