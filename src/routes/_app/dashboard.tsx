@@ -112,21 +112,17 @@ function Dashboard() {
         .reduce((s, r) => s + r.valor_liquido, 0);
       const recExtra = (ganhos.data ?? []).filter((r: any) => monthKey(r.data) === m)
         .reduce((s, r: any) => s + Number(r.valor || 0), 0);
-      const pend = aberto.filter((r) => monthKey(r.vencimento) === m)
-        .reduce((s, r) => s + r.valor_liquido, 0);
       const desp =
         (despesas.data ?? []).filter((r: any) => monthKey(r.vencimento) === m).reduce((s, r: any) => s + Number(r.valor || 0), 0) +
         (lab.data ?? []).filter((r: any) => monthKey(r.data) === m).reduce((s, r: any) => s + Number(r.valor || 0), 0);
       return {
         mes: monthLabel(m).replace(" de ", "/"),
-        Atendimentos: Number(recAtend.toFixed(2)),
-        "Ganhos extras": Number(recExtra.toFixed(2)),
-        "Em aberto": Number(pend.toFixed(2)),
+        Receita: Number((recAtend + recExtra).toFixed(2)),
         Despesas: Number(desp.toFixed(2)),
-        "Lucro geral": Number((recAtend + recExtra - desp).toFixed(2)),
       };
     });
-  }, [recebidas, aberto, despesas.data, lab.data, ganhos.data]);
+  }, [recebidas, despesas.data, lab.data, ganhos.data]);
+
 
 
   return (
