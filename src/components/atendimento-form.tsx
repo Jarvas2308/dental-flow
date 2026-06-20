@@ -399,7 +399,7 @@ export function AtendimentoForm({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5 sm:col-span-2">
               <Label>Paciente</Label>
-              <PacienteCombobox value={v.paciente} onChange={(nome) => setV((p) => ({ ...p, paciente: nome }))} />
+              <PacienteCombobox value={v.paciente} onChange={(nome, id) => { setV((p) => ({ ...p, paciente: nome })); setPacienteId(id); }} />
             </div>
 
             {/* Procedimentos */}
