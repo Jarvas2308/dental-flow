@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTable, useDelete } from "@/hooks/use-data";
-import { brl, currentMonthKey, monthKey, monthLabel, monthOptions } from "@/lib/format";
+import { brl, currentMonthKey, formatDateBR, monthKey, monthLabel, monthOptions } from "@/lib/format";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -83,7 +83,7 @@ function Laboratorio() {
             )}
             {rows.map((r) => (
               <TableRow key={r.id}>
-                <TableCell className="text-muted-foreground">{new Date(r.data).toLocaleDateString("pt-BR")}</TableCell>
+                <TableCell className="text-muted-foreground">{formatDateBR(r.data)}</TableCell>
                 <TableCell className="font-medium">{r.laboratorio}</TableCell>
                 <TableCell>{r.tipo_trabalho}</TableCell>
                 <TableCell>{r.paciente}</TableCell>
