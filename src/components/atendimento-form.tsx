@@ -82,7 +82,7 @@ export function PacienteCombobox({
   value, onChange,
 }: {
   value: string;
-  onChange: (nome: string) => void;
+  onChange: (nome: string, id: string | null) => void;
 }) {
   const pacientes = useTable<any>("pacientes", "nome", true);
   const atendimentos = useTable<any>("atendimentos", "data");
@@ -95,6 +95,15 @@ export function PacienteCombobox({
     (atendimentos.data ?? []).forEach((a) => a.paciente && set.add(a.paciente));
     return Array.from(set).sort((a, b) => a.localeCompare(b, "pt-BR"));
   }, [pacientes.data, atendimentos.data]);
+
+  // Mapa nome (case-insensitive, trim) -> id do paciente.
+  const idPorNome = useMemo(() => {
+    const map = new Map<string, string>();
+    (pacientes.data ?? []).forEach((p) => {
+      if (p.nome) map.set(p.nome.trim().toLowerCase(), p.id);
+    });
+    return map;
+  }, [pacientes.data]);
 
   const exists = nomes.some((n) => n.toLowerCase() === search.trim().toLowerCase());
 
