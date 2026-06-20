@@ -70,23 +70,9 @@ function Dashboard() {
   );
   const totPendente = aberto.reduce((s, r) => s + r.valor_liquido, 0);
   const qtdPendente = aberto.length;
-  const pacientesPendentes = Array.from(new Set(aberto.map((r) => r.paciente).filter(Boolean)));
   // Receita contratada total = já recebido (todos os meses) + a receber
   const totRecebidoGeral = recebidas.reduce((s, r) => s + r.valor_liquido, 0);
   const totContratado = totRecebidoGeral + totPendente;
-
-  // Tratamentos parcelados por status
-  const tratamentos = useMemo(() => {
-    const ps = (atendimentos.data ?? []).filter((a) => a.parcelado);
-    let quitados = 0, parciais = 0, abertos = 0;
-    for (const a of ps) {
-      const r = resumoAtendimento(a, recebimentos.data ?? [], parcelas.data ?? []);
-      if (r.status === "quitado") quitados++;
-      else if (r.status === "parcial") parciais++;
-      else abertos++;
-    }
-    return { total: ps.length, quitados, parciais, abertos };
-  }, [atendimentos.data, recebimentos.data, parcelas.data]);
 
   const totGanhos = filt(ganhos.data).reduce((s, r: any) => s + Number(r.valor || 0), 0);
   const totReceitaTotal = totLiquidoAtend + totGanhos;
@@ -99,6 +85,25 @@ function Dashboard() {
   const lucroOperacional = totLiquidoAtend - totDesp - totLab;
   // Lucro geral = inclui ganhos extras
   const lucroGeral = totReceitaTotal - totDesp - totLab;
+
+  // Mês anterior ao mês selecionado (não ao calendário) para comparação
+  const prevMes = useMemo(() => {
+    const [y, m] = mes.split("-").map(Number);
+    return monthKey(new Date(y, m - 2, 1));
+  }, [mes]);
+
+  const totLiquidoAtendPrev = recebidas.filter((r) => monthKey(r.data) === prevMes).reduce((s, r) => s + r.valor_liquido, 0);
+  const totGanhosPrev = (ganhos.data ?? []).filter((r: any) => monthKey(r.data) === prevMes).reduce((s, r: any) => s + Number(r.valor || 0), 0);
+  const totReceitaTotalPrev = totLiquidoAtendPrev + totGanhosPrev;
+  const totDespPrev = (despesas.data ?? []).filter((r: any) => monthKey(r.vencimento) === prevMes).reduce((s, r: any) => s + Number(r.valor || 0), 0);
+  const totLabPrev = (lab.data ?? []).filter((r: any) => monthKey(r.data) === prevMes).reduce((s, r: any) => s + Number(r.valor || 0), 0);
+  const lucroGeralPrev = totReceitaTotalPrev - totDespPrev - totLabPrev;
+
+  const variacao = (cur: number, prev: number) => {
+    if (prev === 0) return "";
+    const p = Math.round(((cur - prev) / prev) * 100);
+    return ` · ${p >= 0 ? "+" : ""}${p}% vs mês anterior`;
+  };
 
   const chartData = useMemo(() => {
     const months = monthOptions(6).reverse();
