@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { Check, ChevronsUpDown, Loader2, Pencil, Plus, CalendarClock, Wallet, Trash2, UserPlus } from "lucide-react";
+import { Check, ChevronDown, ChevronsUpDown, Loader2, Pencil, Plus, CalendarClock, Wallet, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 function QuickAdd({
