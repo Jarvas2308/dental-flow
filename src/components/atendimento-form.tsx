@@ -322,23 +322,39 @@ export function AtendimentoForm({
 
     const usarParcelas = parcelado && parcelasN > 1;
     const procedimentoTexto = validItems.map((it) => it.procedimento.trim()).join(", ");
-
-    const payload = {
-      paciente: v.paciente.trim(),
-      procedimento: procedimentoTexto,
-      forma_pagamento: v.forma_pagamento,
-      valor_bruto: Number(totalBruto.toFixed(2)),
-      taxa: Number(v.taxa),
-      valor_liquido: Number(valorLiquido.toFixed(2)),
-      data: v.data,
-      nota_fiscal: v.nota_fiscal,
-      status_pagamento: usarParcelas ? "pendente" : v.status_pagamento,
-      parcelado: usarParcelas,
-      parcelas_total: usarParcelas ? parcelasN : 1,
-    };
+    const nome = v.paciente.trim();
 
     setSaving(true);
     try {
+      // Resolve o paciente_id definitivo ANTES de salvar o atendimento.
+      let idResolvido = pacienteId;
+      if (!idResolvido && nome) {
+        const existente = (pacientes.data ?? []).find(
+          (p) => (p.nome ?? "").trim().toLowerCase() === nome.toLowerCase(),
+        );
+        if (existente) {
+          idResolvido = existente.id;
+        } else {
+          const novo = await createPaciente.mutateAsync({ nome });
+          idResolvido = novo?.id ?? null;
+        }
+      }
+
+      const payload = {
+        paciente: nome,
+        paciente_id: idResolvido,
+        procedimento: procedimentoTexto,
+        forma_pagamento: v.forma_pagamento,
+        valor_bruto: Number(totalBruto.toFixed(2)),
+        taxa: Number(v.taxa),
+        valor_liquido: Number(valorLiquido.toFixed(2)),
+        data: v.data,
+        nota_fiscal: v.nota_fiscal,
+        status_pagamento: usarParcelas ? "pendente" : v.status_pagamento,
+        parcelado: usarParcelas,
+        parcelas_total: usarParcelas ? parcelasN : 1,
+      };
+
       let atendimentoId = editing?.id;
       if (isEdit) {
         await update.mutateAsync({ id: editing.id, values: payload });
@@ -357,17 +373,6 @@ export function AtendimentoForm({
           valor: Number(it.valor || 0),
         }));
         await supabase.from("atendimento_procedimentos").insert(rows);
-      }
-
-      // Cria paciente se ainda não existir (evita duplicidade por nome).
-      const nome = v.paciente.trim();
-      if (nome) {
-        const jaExiste = (pacientes.data ?? []).some(
-          (p) => (p.nome ?? "").toLowerCase() === nome.toLowerCase(),
-        );
-        if (!jaExiste) {
-          try { await createPaciente.mutateAsync({ nome }); } catch { /* ignora duplicado */ }
-        }
       }
 
       onSaved?.();
