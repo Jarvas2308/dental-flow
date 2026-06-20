@@ -123,7 +123,7 @@ export function PacienteCombobox({
             <CommandEmpty>Nenhum paciente encontrado.</CommandEmpty>
             {search.trim() && !exists && (
               <CommandGroup>
-                <CommandItem value={`__novo__${search}`} onSelect={() => { onChange(search.trim()); setSearch(""); setOpen(false); }}>
+                <CommandItem value={`__novo__${search}`} onSelect={() => { onChange(search.trim(), null); setSearch(""); setOpen(false); }}>
                   <UserPlus className="h-4 w-4" /> Criar "{search.trim()}"
                 </CommandItem>
               </CommandGroup>
@@ -131,7 +131,7 @@ export function PacienteCombobox({
             <CommandGroup>
               {nomes.map((n) => (
                 <CommandItem key={n} value={n}
-                  onSelect={(val) => { onChange(val); setSearch(""); setOpen(false); }}>
+                  onSelect={(val) => { onChange(val, idPorNome.get(val.trim().toLowerCase()) ?? null); setSearch(""); setOpen(false); }}>
                   <Check className={cn("h-4 w-4", value === n ? "opacity-100" : "opacity-0")} />
                   {n}
                 </CommandItem>
