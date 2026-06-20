@@ -271,6 +271,7 @@ export function AtendimentoForm({
     } else {
       setV(empty());
     }
+    setPacienteId(editing?.paciente_id ?? null);
     setParcelado(!!editing?.parcelado);
     setParcelasN(editing?.parcelas_total > 1 ? editing.parcelas_total : 3);
     setShowMore(!!editing && (!!editing.parcelado || !!editing.nota_fiscal));
