@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { Check, ChevronsUpDown, Loader2, Pencil, Plus, CalendarClock, Wallet, Trash2, UserPlus } from "lucide-react";
+import { Check, ChevronDown, ChevronsUpDown, Loader2, Pencil, Plus, CalendarClock, Wallet, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 function QuickAdd({
@@ -234,6 +234,7 @@ export function AtendimentoForm({
   const [parcelado, setParcelado] = useState<boolean>(!!editing?.parcelado);
   const [parcelasN, setParcelasN] = useState<number>(editing?.parcelas_total > 1 ? editing.parcelas_total : 3);
   const [saving, setSaving] = useState(false);
+  const [showMore, setShowMore] = useState(false);
 
   // Procedimentos ordenados por frequência de uso, com fallback alfabético
   const procedimentosOrdenados = useMemo(() => {
@@ -254,6 +255,7 @@ export function AtendimentoForm({
     setV(editing ? { ...editing } : empty());
     setParcelado(!!editing?.parcelado);
     setParcelasN(editing?.parcelas_total > 1 ? editing.parcelas_total : 3);
+    setShowMore(!!editing && (!!editing.parcelado || !!editing.nota_fiscal));
     if (editing?.id) {
       // Carrega itens existentes; fallback para o atendimento legado (1 linha).
       supabase
@@ -439,7 +441,17 @@ export function AtendimentoForm({
               <div className="h-9 px-3 rounded-md border bg-muted/30 flex items-center text-sm font-medium">{brl(valorLiquido)}</div>
             </div>
 
-            {/* Forma de recebimento */}
+            <button
+              type="button"
+              onClick={() => setShowMore((s) => !s)}
+              className="sm:col-span-2 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors self-start -mt-1"
+            >
+              <ChevronDown className={cn("h-4 w-4 transition-transform", showMore && "rotate-180")} />
+              {showMore ? "Menos opções" : "Mais opções"}
+            </button>
+
+            {showMore && (
+            <>
             <div className="sm:col-span-2 rounded-lg bg-muted/40 p-3 space-y-3">
               <Label className="flex items-center gap-1.5">
                 <Wallet className="h-3.5 w-3.5" /> Forma de recebimento
@@ -514,6 +526,8 @@ export function AtendimentoForm({
               </div>
               <Switch checked={v.nota_fiscal} onCheckedChange={(c) => setV({ ...v, nota_fiscal: c })} />
             </div>
+            </>
+            )}
           </div>
           <DialogFooter>
             <Button type="submit" disabled={busy}>
