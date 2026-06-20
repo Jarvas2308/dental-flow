@@ -214,11 +214,13 @@ const empty = (): Atendimento => ({
 });
 
 export function AtendimentoForm({
-  editing, onClose, trigger,
+  editing, onClose, onSaved, trigger, initialData,
 }: {
   editing?: any;
   onClose?: () => void;
+  onSaved?: () => void;
   trigger?: React.ReactNode;
+  initialData?: { paciente?: string; valorEstimado?: number };
 }) {
   const { user } = useAuth();
   const procedimentos = useTable<any>("procedimentos", "nome", true);
