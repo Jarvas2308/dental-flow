@@ -161,9 +161,9 @@ function Dashboard() {
         <div className="h-px flex-1 bg-border" />
       </div>
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
-        <StatCard label="Receita de Atendimentos" value={brl(totLiquidoAtend)} tone="primary" icon={<TrendingUp className="h-4 w-4" />} hint={`Bruto ${brl(totBruto)} · apenas pagos`} />
+        <StatCard label="Receita de Atendimentos" value={brl(totLiquidoAtend)} tone="primary" icon={<TrendingUp className="h-4 w-4" />} hint={`Bruto ${brl(totBruto)} · apenas pagos${variacao(totLiquidoAtend, totLiquidoAtendPrev)}`} />
         <StatCard label="Receitas Extras" value={brl(totGanhos)} icon={<CircleDollarSign className="h-4 w-4" />} hint="Aluguel, rendimentos, etc." />
-        <StatCard label="Receita Total" value={brl(totReceitaTotal)} tone="success" icon={<CircleDollarSign className="h-4 w-4" />} hint="Atendimentos pagos + extras" />
+        <StatCard label="Receita Total" value={brl(totReceitaTotal)} tone="success" icon={<CircleDollarSign className="h-4 w-4" />} hint={`Atendimentos pagos + extras${variacao(totReceitaTotal, totReceitaTotalPrev)}`} />
       </div>
 
       {/* Contas a Receber */}
