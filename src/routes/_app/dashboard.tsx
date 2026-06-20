@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTable } from "@/hooks/use-data";
 import { brl, monthOptions, monthLabel, currentMonthKey, monthKey, parseLocalDate, todayISO } from "@/lib/format";
-import { receitasRecebidas, valoresEmAberto, resumoAtendimento } from "@/lib/finance";
+import { receitasRecebidas, valoresEmAberto } from "@/lib/finance";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -12,7 +12,7 @@ import {
 } from "recharts";
 import {
   TrendingUp, TrendingDown, Wallet, Receipt, FlaskConical, CircleDollarSign,
-  Clock, Users, HandCoins, FileSignature, Layers, CalendarDays, CalendarClock,
+  Clock, HandCoins, FileSignature, CalendarDays, CalendarClock,
 } from "lucide-react";
 import { ProceduresAnalytics } from "@/components/procedures-analytics";
 
@@ -70,23 +70,9 @@ function Dashboard() {
   );
   const totPendente = aberto.reduce((s, r) => s + r.valor_liquido, 0);
   const qtdPendente = aberto.length;
-  const pacientesPendentes = Array.from(new Set(aberto.map((r) => r.paciente).filter(Boolean)));
   // Receita contratada total = já recebido (todos os meses) + a receber
   const totRecebidoGeral = recebidas.reduce((s, r) => s + r.valor_liquido, 0);
   const totContratado = totRecebidoGeral + totPendente;
-
-  // Tratamentos parcelados por status
-  const tratamentos = useMemo(() => {
-    const ps = (atendimentos.data ?? []).filter((a) => a.parcelado);
-    let quitados = 0, parciais = 0, abertos = 0;
-    for (const a of ps) {
-      const r = resumoAtendimento(a, recebimentos.data ?? [], parcelas.data ?? []);
-      if (r.status === "quitado") quitados++;
-      else if (r.status === "parcial") parciais++;
-      else abertos++;
-    }
-    return { total: ps.length, quitados, parciais, abertos };
-  }, [atendimentos.data, recebimentos.data, parcelas.data]);
 
   const totGanhos = filt(ganhos.data).reduce((s, r: any) => s + Number(r.valor || 0), 0);
   const totReceitaTotal = totLiquidoAtend + totGanhos;
@@ -100,6 +86,25 @@ function Dashboard() {
   // Lucro geral = inclui ganhos extras
   const lucroGeral = totReceitaTotal - totDesp - totLab;
 
+  // Mês anterior ao mês selecionado (não ao calendário) para comparação
+  const prevMes = useMemo(() => {
+    const [y, m] = mes.split("-").map(Number);
+    return monthKey(new Date(y, m - 2, 1));
+  }, [mes]);
+
+  const totLiquidoAtendPrev = recebidas.filter((r) => monthKey(r.data) === prevMes).reduce((s, r) => s + r.valor_liquido, 0);
+  const totGanhosPrev = (ganhos.data ?? []).filter((r: any) => monthKey(r.data) === prevMes).reduce((s, r: any) => s + Number(r.valor || 0), 0);
+  const totReceitaTotalPrev = totLiquidoAtendPrev + totGanhosPrev;
+  const totDespPrev = (despesas.data ?? []).filter((r: any) => monthKey(r.vencimento) === prevMes).reduce((s, r: any) => s + Number(r.valor || 0), 0);
+  const totLabPrev = (lab.data ?? []).filter((r: any) => monthKey(r.data) === prevMes).reduce((s, r: any) => s + Number(r.valor || 0), 0);
+  const lucroGeralPrev = totReceitaTotalPrev - totDespPrev - totLabPrev;
+
+  const variacao = (cur: number, prev: number) => {
+    if (prev === 0) return "";
+    const p = Math.round(((cur - prev) / prev) * 100);
+    return ` · ${p >= 0 ? "+" : ""}${p}% vs mês anterior`;
+  };
+
   const chartData = useMemo(() => {
     const months = monthOptions(6).reverse();
     return months.map((m) => {
@@ -107,21 +112,17 @@ function Dashboard() {
         .reduce((s, r) => s + r.valor_liquido, 0);
       const recExtra = (ganhos.data ?? []).filter((r: any) => monthKey(r.data) === m)
         .reduce((s, r: any) => s + Number(r.valor || 0), 0);
-      const pend = aberto.filter((r) => monthKey(r.vencimento) === m)
-        .reduce((s, r) => s + r.valor_liquido, 0);
       const desp =
         (despesas.data ?? []).filter((r: any) => monthKey(r.vencimento) === m).reduce((s, r: any) => s + Number(r.valor || 0), 0) +
         (lab.data ?? []).filter((r: any) => monthKey(r.data) === m).reduce((s, r: any) => s + Number(r.valor || 0), 0);
       return {
         mes: monthLabel(m).replace(" de ", "/"),
-        Atendimentos: Number(recAtend.toFixed(2)),
-        "Ganhos extras": Number(recExtra.toFixed(2)),
-        "Em aberto": Number(pend.toFixed(2)),
+        Receita: Number((recAtend + recExtra).toFixed(2)),
         Despesas: Number(desp.toFixed(2)),
-        "Lucro geral": Number((recAtend + recExtra - desp).toFixed(2)),
       };
     });
-  }, [recebidas, aberto, despesas.data, lab.data, ganhos.data]);
+  }, [recebidas, despesas.data, lab.data, ganhos.data]);
+
 
 
   return (
@@ -160,9 +161,9 @@ function Dashboard() {
         <div className="h-px flex-1 bg-border" />
       </div>
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
-        <StatCard label="Receita de Atendimentos" value={brl(totLiquidoAtend)} tone="primary" icon={<TrendingUp className="h-4 w-4" />} hint={`Bruto ${brl(totBruto)} · apenas pagos`} />
+        <StatCard label="Receita de Atendimentos" value={brl(totLiquidoAtend)} tone="primary" icon={<TrendingUp className="h-4 w-4" />} hint={`Bruto ${brl(totBruto)} · apenas pagos${variacao(totLiquidoAtend, totLiquidoAtendPrev)}`} />
         <StatCard label="Receitas Extras" value={brl(totGanhos)} icon={<CircleDollarSign className="h-4 w-4" />} hint="Aluguel, rendimentos, etc." />
-        <StatCard label="Receita Total" value={brl(totReceitaTotal)} tone="success" icon={<CircleDollarSign className="h-4 w-4" />} hint="Atendimentos pagos + extras" />
+        <StatCard label="Receita Total" value={brl(totReceitaTotal)} tone="success" icon={<CircleDollarSign className="h-4 w-4" />} hint={`Atendimentos pagos + extras${variacao(totReceitaTotal, totReceitaTotalPrev)}`} />
       </div>
 
       {/* Contas a Receber */}
@@ -174,20 +175,9 @@ function Dashboard() {
         <StatCard label="Receita Recebida" value={brl(totLiquidoAtend)} tone="success" icon={<HandCoins className="h-4 w-4" />} hint={`${monthLabel(mes)} · caixa`} />
         <StatCard label="Valores em Aberto" value={brl(totPendente)} tone={totPendente > 0 ? "warning" : "success"} icon={<Clock className="h-4 w-4" />} hint={`${qtdPendente} parcela(s) · todos os meses`} />
         <StatCard label="Receita Contratada" value={brl(totContratado)} tone="primary" icon={<FileSignature className="h-4 w-4" />} hint="Recebido + a receber" />
-        <StatCard label="Pacientes a Receber" value={String(pacientesPendentes.length)} icon={<Users className="h-4 w-4" />} hint={pacientesPendentes.slice(0, 3).join(", ") || "Nenhum"} />
       </div>
 
-      {/* Tratamentos parcelados */}
-      <div className="mt-6 mb-2 flex items-center gap-2">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Tratamentos Parcelados</h2>
-        <div className="h-px flex-1 bg-border" />
-      </div>
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Total Recebido" value={brl(totRecebidoGeral)} tone="success" icon={<HandCoins className="h-4 w-4" />} hint="Todos os meses · caixa" />
-        <StatCard label="Total em Aberto" value={brl(totPendente)} tone={totPendente > 0 ? "warning" : "success"} icon={<Clock className="h-4 w-4" />} />
-        <StatCard label="Parcelados / Quitados" value={`${tratamentos.total} / ${tratamentos.quitados}`} tone="primary" icon={<Layers className="h-4 w-4" />} hint={`${tratamentos.parciais} parcial(is)`} />
-        <StatCard label="Parcialmente Recebidos" value={String(tratamentos.parciais)} icon={<FileSignature className="h-4 w-4" />} hint={`${tratamentos.abertos} sem recebimentos`} />
-      </div>
+
 
 
 
@@ -198,7 +188,7 @@ function Dashboard() {
       </div>
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
         <StatCard label="Lucro Operacional" value={brl(lucroOperacional)} tone={lucroOperacional >= 0 ? "success" : "destructive"} icon={<Wallet className="h-4 w-4" />} hint="Só consultório − despesas − lab" />
-        <StatCard label="Lucro Geral" value={brl(lucroGeral)} tone={lucroGeral >= 0 ? "success" : "destructive"} icon={<Wallet className="h-4 w-4" />} hint="Inclui receitas extras" />
+        <StatCard label="Lucro Geral" value={brl(lucroGeral)} tone={lucroGeral >= 0 ? "success" : "destructive"} icon={<Wallet className="h-4 w-4" />} hint={`Inclui receitas extras${variacao(lucroGeral, lucroGeralPrev)}`} />
         <StatCard label="Despesas" value={brl(totDesp)} tone="warning" icon={<Receipt className="h-4 w-4" />} hint={`Pagas ${brl(totDespPagas)} · Pend. ${brl(totDespPendentes)}`} />
         <StatCard label="Pendentes" value={brl(totDespPendentes)} tone={totDespPendentes > 0 ? "warning" : "success"} icon={<TrendingDown className="h-4 w-4" />} />
         <StatCard label="Laboratório" value={brl(totLab)} icon={<FlaskConical className="h-4 w-4" />} />
@@ -227,11 +217,8 @@ function Dashboard() {
                 formatter={(v: any) => brl(Number(v))}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Bar dataKey="Atendimentos" stackId="rec" fill="var(--chart-1)" radius={[0, 0, 0, 0]} />
-              <Bar dataKey="Ganhos extras" stackId="rec" fill="var(--chart-3)" radius={[8, 8, 0, 0]} />
-              <Bar dataKey="Em aberto" fill="var(--destructive)" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="Receita" fill="var(--chart-1)" radius={[8, 8, 0, 0]} />
               <Bar dataKey="Despesas" fill="var(--chart-4)" radius={[8, 8, 0, 0]} />
-              <Bar dataKey="Lucro geral" fill="var(--chart-2)" radius={[8, 8, 0, 0]} />
 
             </BarChart>
           </ResponsiveContainer>
