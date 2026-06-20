@@ -163,6 +163,25 @@ function Consultas() {
   );
 }
 
+function RealizarConsulta({ consulta, onRealizada }: { consulta: any; onRealizada: () => void }) {
+  const [saved, setSaved] = useState(false);
+  return (
+    <AtendimentoForm
+      initialData={{ paciente: consulta.paciente, valorEstimado: Number(consulta.valor_estimado) || undefined }}
+      onSaved={() => setSaved(true)}
+      onClose={() => {
+        if (saved) onRealizada();
+        setSaved(false);
+      }}
+      trigger={
+        <Button variant="ghost" size="sm" className="h-8 gap-1 text-success hover:bg-success/10">
+          <CheckCircle2 className="h-4 w-4" /> Realizada
+        </Button>
+      }
+    />
+  );
+}
+
 function EditConsultaButton({ row }: { row: any }) {
   const [editing, setEditing] = useState<any | null>(null);
   return (
