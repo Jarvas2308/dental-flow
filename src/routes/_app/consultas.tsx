@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { ConsultaForm } from "@/components/consulta-form";
+import { AtendimentoForm } from "@/components/atendimento-form";
 import {
   CalendarDays, CalendarClock, CircleDollarSign, Search, Loader2, CheckCircle2, Pencil, Clock,
 } from "lucide-react";
