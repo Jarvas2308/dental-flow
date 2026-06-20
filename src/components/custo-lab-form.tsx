@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useCreate, useTable, useUpdate } from "@/hooks/use-data";
 import { formatDateBR } from "@/lib/format";
 import {
@@ -7,13 +7,16 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import {
+  Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Loader2, Pencil, Plus } from "lucide-react";
+import { Check, ChevronsUpDown, Loader2, Pencil, Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-
-const NONE = "__none__";
 
 type Custo = {
   id?: string;
@@ -30,6 +33,79 @@ const empty = (): Custo => ({
   laboratorio: "", tipo_trabalho: "", paciente: "", procedimento: "",
   atendimento_id: null, valor: "", data: new Date().toISOString().slice(0, 10),
 });
+
+function AtendimentoCombobox({
+  atendimentos,
+  value,
+  onChange,
+}: {
+  atendimentos: any[];
+  value: string | null;
+  onChange: (id: string | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    if (!term) return atendimentos;
+    return atendimentos.filter((a) =>
+      (a.paciente ?? "").toLowerCase().includes(term) ||
+      (a.procedimento ?? "").toLowerCase().includes(term)
+    );
+  }, [atendimentos, search]);
+
+  const selectedLabel = useMemo(() => {
+    if (!value) return null;
+    const a = atendimentos.find((x) => x.id === value);
+    if (!a) return null;
+    return `${formatDateBR(a.data)} · ${a.paciente} · ${a.procedimento}`;
+  }, [atendimentos, value]);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className={cn("w-full justify-between font-normal", !value && "text-muted-foreground")}
+        >
+          {selectedLabel || "Nenhum"}
+          <ChevronsUpDown className="h-4 w-4 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Buscar paciente ou procedimento..." value={search} onValueChange={setSearch} />
+          <CommandList>
+            <CommandEmpty>Nenhum atendimento encontrado.</CommandEmpty>
+            <CommandGroup>
+              <CommandItem
+                value="__none__"
+                onSelect={() => { onChange(null); setSearch(""); setOpen(false); }}
+              >
+                <Check className={cn("h-4 w-4", !value ? "opacity-100" : "opacity-0")} />
+                Nenhum
+              </CommandItem>
+              {filtered.map((a) => (
+                <CommandItem
+                  key={a.id}
+                  value={a.id}
+                  onSelect={() => { onChange(a.id); setSearch(""); setOpen(false); }}
+                >
+                  <Check className={cn("h-4 w-4", value === a.id ? "opacity-100" : "opacity-0")} />
+                  {formatDateBR(a.data)} · {a.paciente} · {a.procedimento}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 export function CustoLabForm({
   editing, onClose,
@@ -53,8 +129,8 @@ export function CustoLabForm({
   const isEdit = !!editing;
   const busy = create.isPending || update.isPending;
 
-  const onAtendimento = (id: string) => {
-    if (id === NONE) {
+  const onAtendimento = (id: string | null) => {
+    if (!id) {
       setV((p) => ({ ...p, atendimento_id: null }));
       return;
     }
@@ -122,17 +198,11 @@ export function CustoLabForm({
             </div>
             <div className="space-y-1.5 sm:col-span-2">
               <Label>Vincular ao atendimento (opcional)</Label>
-              <Select value={v.atendimento_id ?? NONE} onValueChange={onAtendimento}>
-                <SelectTrigger><SelectValue placeholder="Nenhum" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={NONE}>Nenhum</SelectItem>
-                  {(atendimentos.data ?? []).slice(0, 100).map((a: any) => (
-                    <SelectItem key={a.id} value={a.id}>
-                      {formatDateBR(a.data)} · {a.paciente} · {a.procedimento}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <AtendimentoCombobox
+                atendimentos={atendimentos.data ?? []}
+                value={v.atendimento_id}
+                onChange={onAtendimento}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Paciente</Label>
