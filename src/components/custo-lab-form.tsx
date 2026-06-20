@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useCreate, useTable, useUpdate } from "@/hooks/use-data";
+import { formatDateBR } from "@/lib/format";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
@@ -127,7 +128,7 @@ export function CustoLabForm({
                   <SelectItem value={NONE}>Nenhum</SelectItem>
                   {(atendimentos.data ?? []).slice(0, 100).map((a: any) => (
                     <SelectItem key={a.id} value={a.id}>
-                      {new Date(a.data).toLocaleDateString("pt-BR")} · {a.paciente} · {a.procedimento}
+                      {formatDateBR(a.data)} · {a.paciente} · {a.procedimento}
                     </SelectItem>
                   ))}
                 </SelectContent>

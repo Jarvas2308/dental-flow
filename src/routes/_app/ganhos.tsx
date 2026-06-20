@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useTable, useCreate, useUpdate, useDelete } from "@/hooks/use-data";
-import { brl, currentMonthKey, monthKey, monthLabel, monthOptions } from "@/lib/format";
+import { brl, currentMonthKey, formatDateBR, monthKey, monthLabel, monthOptions } from "@/lib/format";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -211,7 +211,7 @@ function Ganhos() {
             {rows.map((r) => (
               <TableRow key={r.id}>
                 <TableCell className="text-muted-foreground">
-                  {new Date(r.data + "T00:00:00").toLocaleDateString("pt-BR")}
+                  {formatDateBR(r.data)}
                 </TableCell>
                 <TableCell className="font-medium">{r.descricao}</TableCell>
                 <TableCell><Badge variant="outline">{tipoLabel(r.tipo)}</Badge></TableCell>
