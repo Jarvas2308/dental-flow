@@ -141,10 +141,7 @@ function Consultas() {
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
                       {!c.realizada && (
-                        <Button variant="ghost" size="sm" className="h-8 gap-1 text-success hover:bg-success/10"
-                          onClick={() => upd.mutate({ id: c.id, values: { realizada: true } })}>
-                          <CheckCircle2 className="h-4 w-4" /> Realizada
-                        </Button>
+                        <RealizarConsulta consulta={c} onRealizada={() => upd.mutate({ id: c.id, values: { realizada: true } })} />
                       )}
                       {c.realizada && (
                         <Button variant="ghost" size="sm" className="h-8 text-muted-foreground"
