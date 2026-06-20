@@ -359,6 +359,7 @@ export function AtendimentoForm({
         }
       }
 
+      onSaved?.();
       setOpen(false);
       onClose?.();
     } finally {
