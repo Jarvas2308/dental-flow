@@ -77,7 +77,7 @@ export function ConsultaForm({
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-1.5">
             <Label>Paciente</Label>
-            <PacienteCombobox value={v.paciente} onChange={(nome) => setV((p) => ({ ...p, paciente: nome }))} />
+            <PacienteCombobox value={v.paciente} onChange={(nome, _id) => setV((p) => ({ ...p, paciente: nome }))} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
