@@ -113,7 +113,7 @@ function ContasReceber() {
                 </div>
 
                 <div className="mt-3 flex items-center justify-end gap-2">
-                  {atend && atend.parcelado ? (
+                  {atend ? (
                     <RegistrarRecebimento atendimento={atend} />
                   ) : (
                     <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
