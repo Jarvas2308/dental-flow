@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppPacientesRouteImport } from './routes/_app/pacientes'
 import { Route as AppLaboratorioRouteImport } from './routes/_app/laboratorio'
 import { Route as AppGanhosRouteImport } from './routes/_app/ganhos'
 import { Route as AppFluxoCaixaRouteImport } from './routes/_app/fluxo-caixa'
@@ -35,6 +36,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppPacientesRoute = AppPacientesRouteImport.update({
+  id: '/pacientes',
+  path: '/pacientes',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppLaboratorioRoute = AppLaboratorioRouteImport.update({
   id: '/laboratorio',
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/fluxo-caixa': typeof AppFluxoCaixaRoute
   '/ganhos': typeof AppGanhosRoute
   '/laboratorio': typeof AppLaboratorioRoute
+  '/pacientes': typeof AppPacientesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -107,6 +114,7 @@ export interface FileRoutesByTo {
   '/fluxo-caixa': typeof AppFluxoCaixaRoute
   '/ganhos': typeof AppGanhosRoute
   '/laboratorio': typeof AppLaboratorioRoute
+  '/pacientes': typeof AppPacientesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -122,6 +130,7 @@ export interface FileRoutesById {
   '/_app/fluxo-caixa': typeof AppFluxoCaixaRoute
   '/_app/ganhos': typeof AppGanhosRoute
   '/_app/laboratorio': typeof AppLaboratorioRoute
+  '/_app/pacientes': typeof AppPacientesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -137,6 +146,7 @@ export interface FileRouteTypes {
     | '/fluxo-caixa'
     | '/ganhos'
     | '/laboratorio'
+    | '/pacientes'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -150,6 +160,7 @@ export interface FileRouteTypes {
     | '/fluxo-caixa'
     | '/ganhos'
     | '/laboratorio'
+    | '/pacientes'
   id:
     | '__root__'
     | '/'
@@ -164,6 +175,7 @@ export interface FileRouteTypes {
     | '/_app/fluxo-caixa'
     | '/_app/ganhos'
     | '/_app/laboratorio'
+    | '/_app/pacientes'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -194,6 +206,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/pacientes': {
+      id: '/_app/pacientes'
+      path: '/pacientes'
+      fullPath: '/pacientes'
+      preLoaderRoute: typeof AppPacientesRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/laboratorio': {
       id: '/_app/laboratorio'
@@ -271,6 +290,7 @@ interface AppRouteChildren {
   AppFluxoCaixaRoute: typeof AppFluxoCaixaRoute
   AppGanhosRoute: typeof AppGanhosRoute
   AppLaboratorioRoute: typeof AppLaboratorioRoute
+  AppPacientesRoute: typeof AppPacientesRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -283,6 +303,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppFluxoCaixaRoute: AppFluxoCaixaRoute,
   AppGanhosRoute: AppGanhosRoute,
   AppLaboratorioRoute: AppLaboratorioRoute,
+  AppPacientesRoute: AppPacientesRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
