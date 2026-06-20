@@ -51,7 +51,7 @@ export function ProceduresAnalytics({ mes }: { mes: string }) {
       itensPorAtend.set(it.atendimento_id, arr);
     });
 
-    const out: { procedimento: string; bruto: number; liquido: number; data: string }[] = [];
+    const out: { procedimento: string; bruto: number; liquido: number; data: string; atendimentoId: string; ratio: number }[] = [];
     (atendimentos.data ?? []).forEach((a: any) => {
       if (!mesesPeriodo.includes(monthKey(a.data))) return;
       const its = itensPorAtend.get(a.id);
@@ -67,6 +67,8 @@ export function ProceduresAnalytics({ mes }: { mes: string }) {
             bruto,
             liquido: liqTotal * ratio,
             data: a.data,
+            atendimentoId: a.id,
+            ratio,
           });
         });
       } else {
@@ -75,6 +77,8 @@ export function ProceduresAnalytics({ mes }: { mes: string }) {
           bruto: bruTotal,
           liquido: liqTotal,
           data: a.data,
+          atendimentoId: a.id,
+          ratio: 1,
         });
       }
     });
@@ -104,6 +108,13 @@ export function ProceduresAnalytics({ mes }: { mes: string }) {
 
   // Agrupar por procedimento
   const agrupado = useMemo(() => {
+    // Soma os custos de laboratório por atendimento_id
+    const labPorAtend = new Map<string, number>();
+    labFiltrado.forEach((r: any) => {
+      if (!r.atendimento_id) return;
+      labPorAtend.set(r.atendimento_id, (labPorAtend.get(r.atendimento_id) ?? 0) + Number(r.valor || 0));
+    });
+
     const map = new Map<string, { nome: string; qtd: number; bruto: number; liquido: number; lab: number }>();
     filtrados.forEach((r) => {
       const k = r.procedimento || "—";
@@ -111,13 +122,10 @@ export function ProceduresAnalytics({ mes }: { mes: string }) {
       cur.qtd += 1;
       cur.bruto += Number(r.bruto || 0);
       cur.liquido += Number(r.liquido || 0);
+      // Custo de lab apenas do mesmo atendimento, rateado pelo peso do item
+      const labAtend = labPorAtend.get(r.atendimentoId) ?? 0;
+      cur.lab += labAtend * Number(r.ratio || 0);
       map.set(k, cur);
-    });
-    labFiltrado.forEach((r) => {
-      const k = r.procedimento || "";
-      if (!k) return;
-      const cur = map.get(k);
-      if (cur) cur.lab += Number(r.valor || 0);
     });
     return Array.from(map.values()).map((r) => ({
       ...r,
