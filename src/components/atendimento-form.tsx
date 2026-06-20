@@ -241,6 +241,7 @@ export function AtendimentoForm({
   const createPaciente = useCreate("pacientes");
   const [open, setOpen] = useState(!!editing);
   const [v, setV] = useState<Atendimento>(editing ? { ...editing } : empty());
+  const [pacienteId, setPacienteId] = useState<string | null>(editing?.paciente_id ?? null);
   const [items, setItems] = useState<ProcItem[]>([{ procedimento: "", valor: "" }]);
   const [parcelado, setParcelado] = useState<boolean>(!!editing?.parcelado);
   const [parcelasN, setParcelasN] = useState<number>(editing?.parcelas_total > 1 ? editing.parcelas_total : 3);
