@@ -214,11 +214,13 @@ const empty = (): Atendimento => ({
 });
 
 export function AtendimentoForm({
-  editing, onClose, trigger,
+  editing, onClose, onSaved, trigger, initialData,
 }: {
   editing?: any;
   onClose?: () => void;
+  onSaved?: () => void;
   trigger?: React.ReactNode;
+  initialData?: { paciente?: string; valorEstimado?: number };
 }) {
   const { user } = useAuth();
   const procedimentos = useTable<any>("procedimentos", "nome", true);
@@ -252,7 +254,13 @@ export function AtendimentoForm({
 
   useEffect(() => {
     if (!open) return;
-    setV(editing ? { ...editing } : empty());
+    if (editing) {
+      setV({ ...editing });
+    } else if (initialData) {
+      setV({ ...empty(), paciente: initialData.paciente ?? "" });
+    } else {
+      setV(empty());
+    }
     setParcelado(!!editing?.parcelado);
     setParcelasN(editing?.parcelas_total > 1 ? editing.parcelas_total : 3);
     setShowMore(!!editing && (!!editing.parcelado || !!editing.nota_fiscal));
@@ -271,6 +279,8 @@ export function AtendimentoForm({
             setItems([{ procedimento: editing.procedimento ?? "", valor: String(editing.valor_bruto ?? "") }]);
           }
         });
+    } else if (initialData) {
+      setItems([{ procedimento: "", valor: initialData.valorEstimado ? String(initialData.valorEstimado) : "" }]);
     } else {
       setItems([{ procedimento: "", valor: "" }]);
     }
@@ -349,6 +359,7 @@ export function AtendimentoForm({
         }
       }
 
+      onSaved?.();
       setOpen(false);
       onClose?.();
     } finally {

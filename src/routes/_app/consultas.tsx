@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { ConsultaForm } from "@/components/consulta-form";
+import { AtendimentoForm } from "@/components/atendimento-form";
 import {
   CalendarDays, CalendarClock, CircleDollarSign, Search, Loader2, CheckCircle2, Pencil, Clock,
 } from "lucide-react";
@@ -140,10 +141,7 @@ function Consultas() {
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
                       {!c.realizada && (
-                        <Button variant="ghost" size="sm" className="h-8 gap-1 text-success hover:bg-success/10"
-                          onClick={() => upd.mutate({ id: c.id, values: { realizada: true } })}>
-                          <CheckCircle2 className="h-4 w-4" /> Realizada
-                        </Button>
+                        <RealizarConsulta consulta={c} onRealizada={() => upd.mutate({ id: c.id, values: { realizada: true } })} />
                       )}
                       {c.realizada && (
                         <Button variant="ghost" size="sm" className="h-8 text-muted-foreground"
@@ -162,6 +160,25 @@ function Consultas() {
         </Table>
       </div>
     </>
+  );
+}
+
+function RealizarConsulta({ consulta, onRealizada }: { consulta: any; onRealizada: () => void }) {
+  const [saved, setSaved] = useState(false);
+  return (
+    <AtendimentoForm
+      initialData={{ paciente: consulta.paciente, valorEstimado: Number(consulta.valor_estimado) || undefined }}
+      onSaved={() => setSaved(true)}
+      onClose={() => {
+        if (saved) onRealizada();
+        setSaved(false);
+      }}
+      trigger={
+        <Button variant="ghost" size="sm" className="h-8 gap-1 text-success hover:bg-success/10">
+          <CheckCircle2 className="h-4 w-4" /> Realizada
+        </Button>
+      }
+    />
   );
 }
 
