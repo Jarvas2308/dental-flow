@@ -57,6 +57,7 @@ export type Database = {
           id: string
           nota_fiscal: boolean
           paciente: string
+          paciente_id: string | null
           parcelado: boolean
           parcelas_total: number
           procedimento: string
@@ -73,6 +74,7 @@ export type Database = {
           id?: string
           nota_fiscal?: boolean
           paciente: string
+          paciente_id?: string | null
           parcelado?: boolean
           parcelas_total?: number
           procedimento: string
@@ -89,6 +91,7 @@ export type Database = {
           id?: string
           nota_fiscal?: boolean
           paciente?: string
+          paciente_id?: string | null
           parcelado?: boolean
           parcelas_total?: number
           procedimento?: string
@@ -98,7 +101,15 @@ export type Database = {
           valor_bruto?: number
           valor_liquido?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "atendimentos_paciente_id_fkey"
+            columns: ["paciente_id"]
+            isOneToOne: false
+            referencedRelation: "pacientes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       consultas_previstas: {
         Row: {
