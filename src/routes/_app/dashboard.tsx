@@ -188,7 +188,7 @@ function Dashboard() {
       </div>
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
         <StatCard label="Lucro Operacional" value={brl(lucroOperacional)} tone={lucroOperacional >= 0 ? "success" : "destructive"} icon={<Wallet className="h-4 w-4" />} hint="Só consultório − despesas − lab" />
-        <StatCard label="Lucro Geral" value={brl(lucroGeral)} tone={lucroGeral >= 0 ? "success" : "destructive"} icon={<Wallet className="h-4 w-4" />} hint="Inclui receitas extras" />
+        <StatCard label="Lucro Geral" value={brl(lucroGeral)} tone={lucroGeral >= 0 ? "success" : "destructive"} icon={<Wallet className="h-4 w-4" />} hint={`Inclui receitas extras${variacao(lucroGeral, lucroGeralPrev)}`} />
         <StatCard label="Despesas" value={brl(totDesp)} tone="warning" icon={<Receipt className="h-4 w-4" />} hint={`Pagas ${brl(totDespPagas)} · Pend. ${brl(totDespPendentes)}`} />
         <StatCard label="Pendentes" value={brl(totDespPendentes)} tone={totDespPendentes > 0 ? "warning" : "success"} icon={<TrendingDown className="h-4 w-4" />} />
         <StatCard label="Laboratório" value={brl(totLab)} icon={<FlaskConical className="h-4 w-4" />} />
