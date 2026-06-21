@@ -560,7 +560,7 @@ export function AtendimentoForm({
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setDividido(true); setParcelado(false); }}
+                  onClick={() => { setDividido(true); setParcelado(false); if (!formaInicialTocada) setFormaInicial(v.forma_pagamento); }}
                   disabled={isEdit}
                   className={cn(
                     "inline-flex items-center gap-1.5 px-4 py-1.5 text-sm rounded-md transition-colors",
