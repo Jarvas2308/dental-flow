@@ -11,6 +11,7 @@ import {
   PiggyBank,
   HandCoins,
   CalendarClock,
+  PhoneCall,
   MessageCircle,
   Users,
   Menu,
@@ -28,7 +29,7 @@ const items = [
   { to: "/consultorio", label: "Consultório", icon: Stethoscope },
   { to: "/pacientes", label: "Pacientes", icon: Users },
   { to: "/consultas", label: "Consultas", icon: CalendarClock },
-  { to: "/followup", label: "Follow-up", icon: MessageCircle },
+  { to: "/followup", label: "Follow-up", icon: PhoneCall },
   { to: "/laboratorio", label: "Laboratório", icon: FlaskConical },
   { to: "/cadastros", label: "Cadastros", icon: Settings },
 ] as const;

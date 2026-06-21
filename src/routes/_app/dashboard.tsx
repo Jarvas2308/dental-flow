@@ -1,8 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTable } from "@/hooks/use-data";
 import { brl, monthOptions, monthLabel, currentMonthKey, monthKey, parseLocalDate, todayISO } from "@/lib/format";
 import { receitasRecebidas, valoresEmAberto } from "@/lib/finance";
+import { proximaTentativa, estaPendenteHoje } from "@/lib/followup";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -12,7 +13,7 @@ import {
 } from "recharts";
 import {
   TrendingUp, TrendingDown, Wallet, Receipt, FlaskConical, CircleDollarSign,
-  Clock, HandCoins, FileSignature, CalendarDays, CalendarClock,
+  Clock, HandCoins, FileSignature, CalendarDays, CalendarClock, PhoneCall,
 } from "lucide-react";
 import { ProceduresAnalytics } from "@/components/procedures-analytics";
 
@@ -31,6 +32,8 @@ function Dashboard() {
   const lab = useTable<any>("custos_laboratorio", "data");
   const ganhos = useTable<any>("receitas_extras", "data");
   const consultas = useTable<any>("consultas_previstas", "data_prevista", true);
+  const tratamentosPropostos = useTable<any>("tratamentos_propostos", "data_proposta", true);
+  const tentativasContato = useTable<any>("tentativas_contato", "data", true);
 
   // Previsão de consultas futuras (hoje / semana)
   const previsao = useMemo(() => {
@@ -47,6 +50,16 @@ function Dashboard() {
     const valorSemana = semana.reduce((s, c) => s + Number(c.valor_estimado || 0), 0);
     return { hoje, semana: semana.length, valorSemana };
   }, [consultas.data]);
+
+  const pendentesFollowup = useMemo(() =>
+    (tratamentosPropostos.data ?? [])
+      .filter((t: any) => t.status === "acompanhando")
+      .filter((t: any) => {
+        const tts = (tentativasContato.data ?? []).filter((x: any) => x.tratamento_proposto_id === t.id);
+        return estaPendenteHoje(proximaTentativa(t, tts).dataPrevista);
+      }).length,
+    [tratamentosPropostos.data, tentativasContato.data]
+  );
 
   const filt = <T extends { data: string }>(rows: T[] = []) =>
     rows.filter((r) => monthKey(r.data) === mes);
@@ -141,6 +154,18 @@ function Dashboard() {
           </Select>
         }
       />
+
+      {pendentesFollowup > 0 && (
+        <Link to="/followup" className="block mb-6">
+          <StatCard
+            label="Follow-up pendente"
+            value={String(pendentesFollowup)}
+            tone="warning"
+            icon={<PhoneCall className="h-5 w-5" />}
+            hint="Tratamentos propostos aguardando contato hoje"
+          />
+        </Link>
+      )}
 
       {/* Próximas consultas */}
       <div className="mb-2 flex items-center gap-2">
