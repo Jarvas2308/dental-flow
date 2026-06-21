@@ -283,6 +283,8 @@ export function AtendimentoForm({
     setDividido(false);
     setValorInicial("");
     setFormaInicial("");
+    setSegundaAgora(false);
+    setFormaSegunda("");
     setShowMore(!!editing && (!!editing.parcelado || !!editing.nota_fiscal));
     if (editing?.id) {
       // Carrega itens existentes; fallback para o atendimento legado (1 linha).
