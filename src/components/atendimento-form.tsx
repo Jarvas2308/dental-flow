@@ -326,6 +326,11 @@ export function AtendimentoForm({
     if (validItems.length === 0) return toast.error("Adicione ao menos um procedimento");
     if (!v.forma_pagamento) return toast.error("Selecione a forma de pagamento");
     if (totalBruto <= 0) return toast.error("Informe o valor dos procedimentos");
+    if (dividido) {
+      if (!(Number(valorInicial) > 0)) return toast.error("Informe o valor já recebido");
+      if (!formaInicial) return toast.error("Selecione a forma de pagamento da parte recebida");
+      if (Number(valorInicial) > totalBruto) return toast.error("Valor recebido não pode ser maior que o total do atendimento");
+    }
 
     const usarParcelas = parcelado && parcelasN > 1;
     const procedimentoTexto = validItems.map((it) => it.procedimento.trim()).join(", ");
@@ -357,8 +362,8 @@ export function AtendimentoForm({
         valor_liquido: Number(valorLiquido.toFixed(2)),
         data: v.data,
         nota_fiscal: v.nota_fiscal,
-        status_pagamento: usarParcelas ? "pendente" : v.status_pagamento,
-        parcelado: usarParcelas,
+        status_pagamento: usarParcelas || dividido ? "pendente" : v.status_pagamento,
+        parcelado: dividido ? false : usarParcelas,
         parcelas_total: usarParcelas ? parcelasN : 1,
       };
 
