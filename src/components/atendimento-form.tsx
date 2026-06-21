@@ -544,7 +544,33 @@ export function AtendimentoForm({
               </div>
 
 
-              {parcelado ? (
+              {dividido ? (
+                <div className="rounded-lg bg-muted/40 p-3 space-y-3">
+                  <p className="text-xs text-muted-foreground">
+                    Registre o valor já recebido agora. O restante fica pendente para receber depois, em Contas a Receber.
+                  </p>
+                  <div className="space-y-1.5">
+                    <Label>Valor recebido agora (R$)</Label>
+                    <Input
+                      type="number" step="0.01" placeholder="0,00"
+                      value={valorInicial}
+                      onChange={(e) => setValorInicial(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Forma de pagamento (desta parte)</Label>
+                    <Select value={formaInicial} onValueChange={setFormaInicial}>
+                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        {(formas.data ?? []).map((p) => <SelectItem key={p.id} value={p.nome}>{p.nome} ({p.taxa}%)</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Restante: {brl(totalBruto - Number(valorInicial || 0))}
+                  </p>
+                </div>
+              ) : parcelado ? (
                 <div className="space-y-2">
                   <div className="flex items-center gap-3">
                     <Label className="shrink-0">Parcelas combinadas</Label>
