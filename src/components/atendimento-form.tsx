@@ -596,7 +596,7 @@ export function AtendimentoForm({
                   </div>
                   <div className="space-y-1.5">
                     <Label>Forma de pagamento (desta parte)</Label>
-                    <Select value={formaInicial} onValueChange={setFormaInicial}>
+                    <Select value={formaInicial} onValueChange={(val) => { setFormaInicial(val); setFormaInicialTocada(true); }}>
                       <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
                         {(formas.data ?? []).map((p) => <SelectItem key={p.id} value={p.nome}>{p.nome} ({p.taxa}%)</SelectItem>)}
