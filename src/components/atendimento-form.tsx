@@ -310,6 +310,12 @@ export function AtendimentoForm({
     }
   }, [open, editing]);
 
+  useEffect(() => {
+    if (dividido && !formaInicialTocada) {
+      setFormaInicial(v.forma_pagamento);
+    }
+  }, [v.forma_pagamento, dividido, formaInicialTocada]);
+
   const isEdit = !!editing;
   const busy = create.isPending || update.isPending || saving;
 
