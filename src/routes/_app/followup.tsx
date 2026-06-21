@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import {
-  Plus, Loader2, MessageCircle, CheckCircle2, XCircle, CalendarClock,
+  Plus, Loader2, MessageCircle, CheckCircle2, XCircle, CalendarClock, Pencil,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -51,16 +51,25 @@ const empty = (): Proposta => ({
   fase3_intervalo_dias: 30,
 });
 
-function NovaProposta() {
+function PropostaForm({ proposta, onClose }: { proposta?: any; onClose: () => void }) {
   const create = useCreate("tratamentos_propostos");
+  const update = useUpdate("tratamentos_propostos");
   const procedimentos = useTable<any>("procedimentos", "nome", true);
-  const [open, setOpen] = useState(false);
-  const [v, setV] = useState<Proposta>(empty());
-
-  const reset = (o: boolean) => {
-    setOpen(o);
-    if (o) setV(empty());
-  };
+  const [v, setV] = useState<Proposta>(
+    proposta
+      ? {
+          paciente: String(proposta.paciente ?? ""),
+          tratamento: String(proposta.tratamento ?? ""),
+          valor_estimado: proposta.valor_estimado == null ? "" : String(proposta.valor_estimado),
+          data_proposta: String(proposta.data_proposta ?? todayISO()),
+          fase1_intervalo_dias: String(proposta.fase1_intervalo_dias ?? ""),
+          fase1_qtd: String(proposta.fase1_qtd ?? ""),
+          fase2_intervalo_dias: String(proposta.fase2_intervalo_dias ?? ""),
+          fase2_qtd: String(proposta.fase2_qtd ?? ""),
+          fase3_intervalo_dias: String(proposta.fase3_intervalo_dias ?? ""),
+        }
+      : empty()
+  );
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,7 +77,7 @@ function NovaProposta() {
     if (!v.tratamento.trim()) return toast.error("Informe o tratamento");
     if (!v.data_proposta) return toast.error("Informe a data da proposta");
 
-    await create.mutateAsync({
+    const payload = {
       paciente: v.paciente.trim(),
       tratamento: v.tratamento.trim(),
       valor_estimado: v.valor_estimado === "" ? null : Number(v.valor_estimado),
@@ -78,14 +87,100 @@ function NovaProposta() {
       fase2_intervalo_dias: Number(v.fase2_intervalo_dias) || 0,
       fase2_qtd: Number(v.fase2_qtd) || 0,
       fase3_intervalo_dias: Number(v.fase3_intervalo_dias) || 0,
-      tentativas_feitas: 0,
-      status: "acompanhando",
-    });
-    setOpen(false);
+    };
+
+    if (proposta) {
+      update.mutate({ id: proposta.id, values: payload });
+    } else {
+      await create.mutateAsync({ ...payload, tentativas_feitas: 0, status: "acompanhando" });
+    }
+    onClose();
   };
 
+  const isPending = proposta ? update.isPending : create.isPending;
+
   return (
-    <Dialog open={open} onOpenChange={reset}>
+    <form onSubmit={submit} className="space-y-4">
+      <div className="space-y-1.5">
+        <Label>Paciente</Label>
+        <PacienteCombobox value={v.paciente} onChange={(nome, _id) => setV((p) => ({ ...p, paciente: nome }))} />
+      </div>
+      <div className="space-y-1.5">
+        <Label>Tratamento</Label>
+        <ProcedimentoCombobox value={v.tratamento} onChange={(nome) => setV((p) => ({ ...p, tratamento: nome }))} options={procedimentos.data ?? []} />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label>Valor estimado (R$)</Label>
+          <Input type="number" step="0.01" placeholder="opcional" value={v.valor_estimado}
+            onChange={(e) => setV({ ...v, valor_estimado: e.target.value })} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Data da proposta</Label>
+          <Input type="date" required value={v.data_proposta}
+            onChange={(e) => setV({ ...v, data_proposta: e.target.value })} />
+        </div>
+      </div>
+
+      <div className="space-y-3 rounded-xl border p-3">
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Fase 1 — Curto prazo</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">A cada (dias)</Label>
+              <Input type="number" min="1" value={v.fase1_intervalo_dias}
+                onChange={(e) => setV({ ...v, fase1_intervalo_dias: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Tentativas</Label>
+              <Input type="number" min="0" value={v.fase1_qtd}
+                onChange={(e) => setV({ ...v, fase1_qtd: e.target.value })} />
+            </div>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Fase 2 — Médio prazo</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">A cada (dias)</Label>
+              <Input type="number" min="1" value={v.fase2_intervalo_dias}
+                onChange={(e) => setV({ ...v, fase2_intervalo_dias: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Tentativas</Label>
+              <Input type="number" min="0" value={v.fase2_qtd}
+                onChange={(e) => setV({ ...v, fase2_qtd: e.target.value })} />
+            </div>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <p className="text-sm font-medium">Fase 3 — Longo prazo</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">A cada (dias)</Label>
+              <Input type="number" min="1" value={v.fase3_intervalo_dias}
+                onChange={(e) => setV({ ...v, fase3_intervalo_dias: e.target.value })} />
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">Repete até você marcar como Fechado ou Recusado</p>
+        </div>
+      </div>
+
+      <DialogFooter>
+        <Button type="submit" disabled={isPending}>
+          {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+          Salvar
+        </Button>
+      </DialogFooter>
+    </form>
+  );
+}
+
+function NovaProposta() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button><Plus className="h-4 w-4" /> Nova proposta</Button>
       </DialogTrigger>
@@ -93,79 +188,27 @@ function NovaProposta() {
         <DialogHeader>
           <DialogTitle>Nova proposta</DialogTitle>
         </DialogHeader>
-        <form onSubmit={submit} className="space-y-4">
-          <div className="space-y-1.5">
-            <Label>Paciente</Label>
-            <PacienteCombobox value={v.paciente} onChange={(nome, _id) => setV((p) => ({ ...p, paciente: nome }))} />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Tratamento</Label>
-            <ProcedimentoCombobox value={v.tratamento} onChange={(nome) => setV((p) => ({ ...p, tratamento: nome }))} options={procedimentos.data ?? []} />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label>Valor estimado (R$)</Label>
-              <Input type="number" step="0.01" placeholder="opcional" value={v.valor_estimado}
-                onChange={(e) => setV({ ...v, valor_estimado: e.target.value })} />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Data da proposta</Label>
-              <Input type="date" required value={v.data_proposta}
-                onChange={(e) => setV({ ...v, data_proposta: e.target.value })} />
-            </div>
-          </div>
+        {open && <PropostaForm proposta={undefined} onClose={() => setOpen(false)} />}
+      </DialogContent>
+    </Dialog>
+  );
+}
 
-          <div className="space-y-3 rounded-xl border p-3">
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Fase 1 — Curto prazo</p>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">A cada (dias)</Label>
-                  <Input type="number" min="1" value={v.fase1_intervalo_dias}
-                    onChange={(e) => setV({ ...v, fase1_intervalo_dias: e.target.value })} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Tentativas</Label>
-                  <Input type="number" min="0" value={v.fase1_qtd}
-                    onChange={(e) => setV({ ...v, fase1_qtd: e.target.value })} />
-                </div>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Fase 2 — Médio prazo</p>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">A cada (dias)</Label>
-                  <Input type="number" min="1" value={v.fase2_intervalo_dias}
-                    onChange={(e) => setV({ ...v, fase2_intervalo_dias: e.target.value })} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">Tentativas</Label>
-                  <Input type="number" min="0" value={v.fase2_qtd}
-                    onChange={(e) => setV({ ...v, fase2_qtd: e.target.value })} />
-                </div>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Fase 3 — Longo prazo</p>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">A cada (dias)</Label>
-                  <Input type="number" min="1" value={v.fase3_intervalo_dias}
-                    onChange={(e) => setV({ ...v, fase3_intervalo_dias: e.target.value })} />
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground">Repete até você marcar como Fechado ou Recusado</p>
-            </div>
-          </div>
+function EditarPropostaButton({ proposta }: { proposta: any }) {
+  const [open, setOpen] = useState(false);
 
-          <DialogFooter>
-            <Button type="submit" disabled={create.isPending}>
-              {create.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-              Salvar
-            </Button>
-          </DialogFooter>
-        </form>
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="sm" className="h-8 gap-1">
+          <Pencil className="h-4 w-4" /> Editar
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Editar proposta</DialogTitle>
+        </DialogHeader>
+        {open && <PropostaForm proposta={proposta} onClose={() => setOpen(false)} />}
       </DialogContent>
     </Dialog>
   );
@@ -310,6 +353,7 @@ function Followup() {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1">
+                    <EditarPropostaButton proposta={p} />
                     <ContatadoButton proposta={p} />
                     <FecharButton proposta={p} onFechado={() => marcarStatus(p.id, "fechado")} />
                     <ConfirmDelete
