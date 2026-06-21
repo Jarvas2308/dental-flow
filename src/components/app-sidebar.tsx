@@ -11,6 +11,7 @@ import {
   PiggyBank,
   HandCoins,
   CalendarClock,
+  PhoneCall,
   MessageCircle,
   Users,
   Menu,
