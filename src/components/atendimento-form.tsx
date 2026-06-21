@@ -400,8 +400,6 @@ export function AtendimentoForm({
         await supabase.from("atendimento_procedimentos").insert(rows);
       }
 
-      const taxaInicial = Number((formas.data ?? []).find((x) => x.nome === formaInicial)?.taxa ?? 0);
-      const taxaSegunda = Number((formas.data ?? []).find((x) => x.nome === formaSegunda)?.taxa ?? 0);
 
       if (!isEdit && dividido && atendimentoId) {
         await createRecebimento.mutateAsync({
