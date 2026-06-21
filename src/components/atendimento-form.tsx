@@ -510,18 +510,18 @@ export function AtendimentoForm({
               <div className="inline-flex rounded-lg border bg-card p-0.5">
                 <button
                   type="button"
-                  onClick={() => setParcelado(false)}
+                  onClick={() => { setParcelado(false); setDividido(false); }}
                   disabled={isEdit && !!editing?.parcelado}
                   className={cn(
                     "px-4 py-1.5 text-sm rounded-md transition-colors",
-                    !parcelado ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                    !parcelado && !dividido ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
                   )}
                 >
                   À vista
                 </button>
                 <button
                   type="button"
-                  onClick={() => setParcelado(true)}
+                  onClick={() => { setParcelado(true); setDividido(false); }}
                   className={cn(
                     "inline-flex items-center gap-1.5 px-4 py-1.5 text-sm rounded-md transition-colors",
                     parcelado ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
@@ -529,7 +529,20 @@ export function AtendimentoForm({
                 >
                   <CalendarClock className="h-3.5 w-3.5" /> Parcelado
                 </button>
+                <button
+                  type="button"
+                  onClick={() => { setDividido(true); setParcelado(false); }}
+                  disabled={isEdit}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 px-4 py-1.5 text-sm rounded-md transition-colors",
+                    dividido ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+                    isEdit && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  <Split className="h-3.5 w-3.5" /> Dividido
+                </button>
               </div>
+
 
               {parcelado ? (
                 <div className="space-y-2">
