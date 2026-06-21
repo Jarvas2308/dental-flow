@@ -249,6 +249,8 @@ export function AtendimentoForm({
   const [dividido, setDividido] = useState(false);
   const [valorInicial, setValorInicial] = useState("");
   const [formaInicial, setFormaInicial] = useState("");
+  const [segundaAgora, setSegundaAgora] = useState(false);
+  const [formaSegunda, setFormaSegunda] = useState("");
   const [saving, setSaving] = useState(false);
   const [showMore, setShowMore] = useState(false);
 
@@ -281,6 +283,8 @@ export function AtendimentoForm({
     setDividido(false);
     setValorInicial("");
     setFormaInicial("");
+    setSegundaAgora(false);
+    setFormaSegunda("");
     setShowMore(!!editing && (!!editing.parcelado || !!editing.nota_fiscal));
     if (editing?.id) {
       // Carrega itens existentes; fallback para o atendimento legado (1 linha).
@@ -330,6 +334,7 @@ export function AtendimentoForm({
       if (!(Number(valorInicial) > 0)) return toast.error("Informe o valor já recebido");
       if (!formaInicial) return toast.error("Selecione a forma de pagamento da parte recebida");
       if (Number(valorInicial) > totalBruto) return toast.error("Valor recebido não pode ser maior que o total do atendimento");
+      if (segundaAgora && !formaSegunda) return toast.error("Selecione a forma de pagamento da segunda parte");
     }
 
     const usarParcelas = parcelado && parcelasN > 1;
@@ -362,7 +367,7 @@ export function AtendimentoForm({
         valor_liquido: Number(valorLiquido.toFixed(2)),
         data: v.data,
         nota_fiscal: v.nota_fiscal,
-        status_pagamento: usarParcelas || dividido ? "pendente" : v.status_pagamento,
+        status_pagamento: usarParcelas || (dividido && !segundaAgora) ? "pendente" : v.status_pagamento,
         parcelado: dividido ? false : usarParcelas,
         parcelas_total: usarParcelas ? parcelasN : 1,
       };
@@ -395,6 +400,15 @@ export function AtendimentoForm({
           forma_pagamento: formaInicial,
           observacao: null,
         });
+        if (segundaAgora) {
+          await createRecebimento.mutateAsync({
+            atendimento_id: atendimentoId,
+            valor: Number((totalBruto - Number(valorInicial)).toFixed(2)),
+            data: v.data,
+            forma_pagamento: formaSegunda,
+            observacao: null,
+          });
+        }
       }
 
 
@@ -547,7 +561,9 @@ export function AtendimentoForm({
               {dividido ? (
                 <div className="rounded-lg bg-muted/40 p-3 space-y-3">
                   <p className="text-xs text-muted-foreground">
-                    Registre o valor já recebido agora. O restante fica pendente para receber depois, em Contas a Receber.
+                    {segundaAgora
+                      ? "As duas partes serão registradas agora. O atendimento já fica quitado."
+                      : "Registre o valor já recebido agora. O restante fica pendente para receber depois, em Contas a Receber."}
                   </p>
                   <div className="space-y-1.5">
                     <Label>Valor recebido agora (R$)</Label>
@@ -569,6 +585,29 @@ export function AtendimentoForm({
                   <p className="text-xs text-muted-foreground">
                     Restante: {brl(totalBruto - Number(valorInicial || 0))}
                   </p>
+                  <div className="flex items-center justify-between pt-1">
+                    <Label className="cursor-pointer text-xs">A segunda parte também foi paga agora?</Label>
+                    <Switch
+                      checked={segundaAgora}
+                      onCheckedChange={(c) => setSegundaAgora(c)}
+                    />
+                  </div>
+                  {segundaAgora && (
+                    <div className="space-y-1.5">
+                      <Label>Forma de pagamento (segunda parte)</Label>
+                      <div className="flex items-center gap-2">
+                        <Select value={formaSegunda} onValueChange={setFormaSegunda}>
+                          <SelectTrigger className="flex-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                          <SelectContent>
+                            {(formas.data ?? []).map((p) => <SelectItem key={p.id} value={p.nome}>{p.nome} ({p.taxa}%)</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                          Valor: {brl(totalBruto - Number(valorInicial || 0))}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : parcelado ? (
                 <div className="space-y-2">
