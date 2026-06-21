@@ -367,7 +367,7 @@ export function AtendimentoForm({
         valor_liquido: Number(valorLiquido.toFixed(2)),
         data: v.data,
         nota_fiscal: v.nota_fiscal,
-        status_pagamento: usarParcelas || dividido ? "pendente" : v.status_pagamento,
+        status_pagamento: usarParcelas || (dividido && !segundaAgora) ? "pendente" : v.status_pagamento,
         parcelado: dividido ? false : usarParcelas,
         parcelas_total: usarParcelas ? parcelasN : 1,
       };
