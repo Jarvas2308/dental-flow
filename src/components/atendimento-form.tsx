@@ -357,14 +357,22 @@ export function AtendimentoForm({
         }
       }
 
+      const taxaInicial = Number((formas.data ?? []).find((x) => x.nome === formaInicial)?.taxa ?? 0);
+      const taxaSegunda = Number((formas.data ?? []).find((x) => x.nome === formaSegunda)?.taxa ?? 0);
+      const taxaEfetiva = dividido
+        ? (segundaAgora
+          ? (Number(valorInicial) * taxaInicial + (totalBruto - Number(valorInicial)) * taxaSegunda) / totalBruto
+          : taxaInicial)
+        : Number(v.taxa);
+
       const payload = {
         paciente: nome,
         paciente_id: idResolvido,
         procedimento: procedimentoTexto,
         forma_pagamento: v.forma_pagamento,
         valor_bruto: Number(totalBruto.toFixed(2)),
-        taxa: Number(v.taxa),
-        valor_liquido: Number(valorLiquido.toFixed(2)),
+        taxa: Number(taxaEfetiva.toFixed(2)),
+        valor_liquido: dividido ? Number((totalBruto * (1 - taxaEfetiva / 100)).toFixed(2)) : Number(valorLiquido.toFixed(2)),
         data: v.data,
         nota_fiscal: v.nota_fiscal,
         status_pagamento: usarParcelas || (dividido && !segundaAgora) ? "pendente" : v.status_pagamento,
@@ -392,8 +400,6 @@ export function AtendimentoForm({
         await supabase.from("atendimento_procedimentos").insert(rows);
       }
 
-      const taxaInicial = Number((formas.data ?? []).find((x) => x.nome === formaInicial)?.taxa ?? 0);
-      const taxaSegunda = Number((formas.data ?? []).find((x) => x.nome === formaSegunda)?.taxa ?? 0);
 
       if (!isEdit && dividido && atendimentoId) {
         await createRecebimento.mutateAsync({
