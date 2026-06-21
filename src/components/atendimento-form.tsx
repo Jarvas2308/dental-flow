@@ -392,6 +392,9 @@ export function AtendimentoForm({
         await supabase.from("atendimento_procedimentos").insert(rows);
       }
 
+      const taxaInicial = Number((formas.data ?? []).find((x) => x.nome === formaInicial)?.taxa ?? 0);
+      const taxaSegunda = Number((formas.data ?? []).find((x) => x.nome === formaSegunda)?.taxa ?? 0);
+
       if (!isEdit && dividido && atendimentoId) {
         await createRecebimento.mutateAsync({
           atendimento_id: atendimentoId,
@@ -399,6 +402,8 @@ export function AtendimentoForm({
           data: v.data,
           forma_pagamento: formaInicial,
           observacao: null,
+          taxa: taxaInicial,
+          valor_liquido: Number((Number(valorInicial) * (1 - taxaInicial / 100)).toFixed(2)),
         });
         if (segundaAgora) {
           await createRecebimento.mutateAsync({
@@ -407,6 +412,8 @@ export function AtendimentoForm({
             data: v.data,
             forma_pagamento: formaSegunda,
             observacao: null,
+            taxa: taxaSegunda,
+            valor_liquido: Number(((totalBruto - Number(valorInicial)) * (1 - taxaSegunda / 100)).toFixed(2)),
           });
         }
       }
