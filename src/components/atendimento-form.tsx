@@ -284,6 +284,7 @@ export function AtendimentoForm({
     setDividido(false);
     setValorInicial("");
     setFormaInicial("");
+    setFormaInicialTocada(false);
     setSegundaAgora(false);
     setFormaSegunda("");
     setShowMore(!!editing && (!!editing.parcelado || !!editing.nota_fiscal));
