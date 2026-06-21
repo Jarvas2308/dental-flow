@@ -145,7 +145,7 @@ export function PacienteCombobox({
 }
 
 // Combobox de procedimento (com criação rápida embutida).
-function ProcedimentoCombobox({
+export function ProcedimentoCombobox({
   value, onChange, options,
 }: {
   value: string;
