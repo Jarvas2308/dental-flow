@@ -163,8 +163,12 @@ function Dashboard() {
         <Link to="/followup" className="block">
           <StatCard label="Follow-up hoje" value={String(pendentesFollowup)} tone={pendentesFollowup > 0 ? "warning" : "default"} icon={<PhoneCall className="h-4 w-4" />} hint={pendentesFollowup > 0 ? "Tratamentos aguardando contato" : "Nenhuma pendência hoje"} />
         </Link>
-        <StatCard label="Consultas hoje" value={String(previsao.hoje)} tone="primary" icon={<CalendarDays className="h-4 w-4" />} />
-        <StatCard label="Consultas na semana" value={String(previsao.semana)} icon={<CalendarClock className="h-4 w-4" />} />
+        <Link to="/consultas" className="block">
+          <StatCard label="Consultas hoje" value={String(previsao.hoje)} tone="primary" icon={<CalendarDays className="h-4 w-4" />} />
+        </Link>
+        <Link to="/consultas" className="block">
+          <StatCard label="Consultas na semana" value={String(previsao.semana)} icon={<CalendarClock className="h-4 w-4" />} />
+        </Link>
         <StatCard label="Valor previsto da semana" value={brl(previsao.valorSemana)} tone="success" icon={<CircleDollarSign className="h-4 w-4" />} hint="Estimado" />
       </div>
 
@@ -176,8 +180,12 @@ function Dashboard() {
         <div className="h-px flex-1 bg-border" />
       </div>
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
-        <StatCard label="Receita de Atendimentos" value={brl(totLiquidoAtend)} tone="primary" icon={<TrendingUp className="h-4 w-4" />} hint={`Bruto ${brl(totBruto)} · apenas pagos${variacao(totLiquidoAtend, totLiquidoAtendPrev)}`} />
-        <StatCard label="Receitas Extras" value={brl(totGanhos)} icon={<CircleDollarSign className="h-4 w-4" />} hint="Aluguel, rendimentos, etc." />
+        <Link to="/consultorio" className="block">
+          <StatCard label="Receita de Atendimentos" value={brl(totLiquidoAtend)} tone="primary" icon={<TrendingUp className="h-4 w-4" />} hint={`Bruto ${brl(totBruto)} · apenas pagos${variacao(totLiquidoAtend, totLiquidoAtendPrev)}`} />
+        </Link>
+        <Link to="/ganhos" className="block">
+          <StatCard label="Receitas Extras" value={brl(totGanhos)} icon={<CircleDollarSign className="h-4 w-4" />} hint="Aluguel, rendimentos, etc." />
+        </Link>
         <StatCard label="Receita Total" value={brl(totReceitaTotal)} tone="success" icon={<CircleDollarSign className="h-4 w-4" />} hint={`Atendimentos pagos + extras${variacao(totReceitaTotal, totReceitaTotalPrev)}`} />
       </div>
 
@@ -188,7 +196,9 @@ function Dashboard() {
       </div>
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Receita Recebida" value={brl(totLiquidoAtend)} tone="success" icon={<HandCoins className="h-4 w-4" />} hint={`${monthLabel(mes)} · caixa`} />
-        <StatCard label="Valores em Aberto" value={brl(totPendente)} tone={totPendente > 0 ? "warning" : "success"} icon={<Clock className="h-4 w-4" />} hint={`${qtdPendente} parcela(s) · todos os meses`} />
+        <Link to="/contas-receber" className="block">
+          <StatCard label="Valores em Aberto" value={brl(totPendente)} tone={totPendente > 0 ? "warning" : "success"} icon={<Clock className="h-4 w-4" />} hint={`${qtdPendente} parcela(s) · todos os meses`} />
+        </Link>
         <StatCard label="Receita Contratada" value={brl(totContratado)} tone="primary" icon={<FileSignature className="h-4 w-4" />} hint="Recebido + a receber" />
       </div>
 
@@ -204,9 +214,15 @@ function Dashboard() {
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
         <StatCard label="Lucro Operacional" value={brl(lucroOperacional)} tone={lucroOperacional >= 0 ? "success" : "destructive"} icon={<Wallet className="h-4 w-4" />} hint="Só consultório − despesas − lab" />
         <StatCard label="Lucro Geral" value={brl(lucroGeral)} tone={lucroGeral >= 0 ? "success" : "destructive"} icon={<Wallet className="h-4 w-4" />} hint={`Inclui receitas extras${variacao(lucroGeral, lucroGeralPrev)}`} />
-        <StatCard label="Despesas" value={brl(totDesp)} tone="warning" icon={<Receipt className="h-4 w-4" />} hint={`Pagas ${brl(totDespPagas)} · Pend. ${brl(totDespPendentes)}`} />
-        <StatCard label="Pendentes" value={brl(totDespPendentes)} tone={totDespPendentes > 0 ? "warning" : "success"} icon={<TrendingDown className="h-4 w-4" />} />
-        <StatCard label="Laboratório" value={brl(totLab)} icon={<FlaskConical className="h-4 w-4" />} />
+        <Link to="/contas" className="block">
+          <StatCard label="Despesas" value={brl(totDesp)} tone="warning" icon={<Receipt className="h-4 w-4" />} hint={`Pagas ${brl(totDespPagas)} · Pend. ${brl(totDespPendentes)}`} />
+        </Link>
+        <Link to="/contas" className="block">
+          <StatCard label="Pendentes" value={brl(totDespPendentes)} tone={totDespPendentes > 0 ? "warning" : "success"} icon={<TrendingDown className="h-4 w-4" />} />
+        </Link>
+        <Link to="/laboratorio" className="block">
+          <StatCard label="Laboratório" value={brl(totLab)} icon={<FlaskConical className="h-4 w-4" />} />
+        </Link>
       </div>
 
       <div
