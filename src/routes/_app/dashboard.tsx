@@ -51,6 +51,16 @@ function Dashboard() {
     return { hoje, semana: semana.length, valorSemana };
   }, [consultas.data]);
 
+  const pendentesFollowup = useMemo(() =>
+    (tratamentosPropostos.data ?? [])
+      .filter((t: any) => t.status === "acompanhando")
+      .filter((t: any) => {
+        const tts = (tentativasContato.data ?? []).filter((x: any) => x.tratamento_proposto_id === t.id);
+        return estaPendenteHoje(proximaTentativa(t, tts).dataPrevista);
+      }).length,
+    [tratamentosPropostos.data, tentativasContato.data]
+  );
+
   const filt = <T extends { data: string }>(rows: T[] = []) =>
     rows.filter((r) => monthKey(r.data) === mes);
 
