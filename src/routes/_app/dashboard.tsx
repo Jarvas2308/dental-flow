@@ -159,7 +159,10 @@ function Dashboard() {
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Próximas Consultas</h2>
         <div className="h-px flex-1 bg-border" />
       </div>
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-3 mb-6">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 mb-6">
+        <Link to="/followup" className="block">
+          <StatCard label="Follow-up hoje" value={String(pendentesFollowup)} tone={pendentesFollowup > 0 ? "warning" : "default"} icon={<PhoneCall className="h-4 w-4" />} hint={pendentesFollowup > 0 ? "Tratamentos aguardando contato" : "Nenhuma pendência hoje"} />
+        </Link>
         <StatCard label="Consultas hoje" value={String(previsao.hoje)} tone="primary" icon={<CalendarDays className="h-4 w-4" />} />
         <StatCard label="Consultas na semana" value={String(previsao.semana)} icon={<CalendarClock className="h-4 w-4" />} />
         <StatCard label="Valor previsto da semana" value={brl(previsao.valorSemana)} tone="success" icon={<CircleDollarSign className="h-4 w-4" />} hint="Estimado" />
