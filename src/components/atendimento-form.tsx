@@ -387,6 +387,18 @@ export function AtendimentoForm({
         await supabase.from("atendimento_procedimentos").insert(rows);
       }
 
+      if (!isEdit && dividido && atendimentoId) {
+        await createRecebimento.mutateAsync({
+          atendimento_id: atendimentoId,
+          valor: Number(valorInicial),
+          data: v.data,
+          forma_pagamento: formaInicial,
+          observacao: null,
+        });
+      }
+
+
+
       onSaved?.();
       setOpen(false);
       onClose?.();
