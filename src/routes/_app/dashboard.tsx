@@ -155,6 +155,18 @@ function Dashboard() {
         }
       />
 
+      {pendentesFollowup > 0 && (
+        <Link to="/followup" className="block mb-6">
+          <StatCard
+            label="Follow-up pendente"
+            value={String(pendentesFollowup)}
+            tone="warning"
+            icon={<PhoneCall className="h-5 w-5" />}
+            hint="Tratamentos propostos aguardando contato hoje"
+          />
+        </Link>
+      )}
+
       {/* Próximas consultas */}
       <div className="mb-2 flex items-center gap-2">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Próximas Consultas</h2>
