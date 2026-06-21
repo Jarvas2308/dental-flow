@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { Check, ChevronDown, ChevronsUpDown, Loader2, Pencil, Plus, CalendarClock, Wallet, Trash2, UserPlus } from "lucide-react";
+import { Check, ChevronDown, ChevronsUpDown, Loader2, Pencil, Plus, CalendarClock, Wallet, Trash2, UserPlus, Split } from "lucide-react";
 import { toast } from "sonner";
 
 function QuickAdd({
@@ -239,12 +239,16 @@ export function AtendimentoForm({
   const create = useCreate("atendimentos");
   const update = useUpdate("atendimentos");
   const createPaciente = useCreate("pacientes");
+  const createRecebimento = useCreate("recebimentos");
   const [open, setOpen] = useState(!!editing);
   const [v, setV] = useState<Atendimento>(editing ? { ...editing } : empty());
   const [pacienteId, setPacienteId] = useState<string | null>(editing?.paciente_id ?? null);
   const [items, setItems] = useState<ProcItem[]>([{ procedimento: "", valor: "" }]);
   const [parcelado, setParcelado] = useState<boolean>(!!editing?.parcelado);
   const [parcelasN, setParcelasN] = useState<number>(editing?.parcelas_total > 1 ? editing.parcelas_total : 3);
+  const [dividido, setDividido] = useState(false);
+  const [valorInicial, setValorInicial] = useState("");
+  const [formaInicial, setFormaInicial] = useState("");
   const [saving, setSaving] = useState(false);
   const [showMore, setShowMore] = useState(false);
 
@@ -274,6 +278,9 @@ export function AtendimentoForm({
     setPacienteId(editing?.paciente_id ?? null);
     setParcelado(!!editing?.parcelado);
     setParcelasN(editing?.parcelas_total > 1 ? editing.parcelas_total : 3);
+    setDividido(false);
+    setValorInicial("");
+    setFormaInicial("");
     setShowMore(!!editing && (!!editing.parcelado || !!editing.nota_fiscal));
     if (editing?.id) {
       // Carrega itens existentes; fallback para o atendimento legado (1 linha).
