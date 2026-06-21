@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard,
@@ -11,9 +12,11 @@ import {
   HandCoins,
   CalendarClock,
   Users,
+  Menu,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 
 const items = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -27,6 +30,12 @@ const items = [
   { to: "/laboratorio", label: "Laboratório", icon: FlaskConical },
   { to: "/cadastros", label: "Cadastros", icon: Settings },
 ] as const;
+
+const mobilePrimaryPaths = ["/dashboard", "/consultorio", "/fluxo-caixa", "/contas", "/contas-receber"] as const;
+
+const mobilePrimary = mobilePrimaryPaths.map((p) => items.find((i) => i.to === p)!);
+
+const mobileMore = items.filter((i) => !(mobilePrimaryPaths as readonly string[]).includes(i.to));
 
 export function AppSidebar() {
   const path = useRouterState({ select: (s) => s.location.pathname });
@@ -88,26 +97,73 @@ export function AppSidebar() {
 
 export function MobileNav() {
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const [open, setOpen] = useState(false);
+
+  const moreActive = mobileMore.some(
+    ({ to }) => path === to || path.startsWith(to + "/"),
+  );
+
   return (
-    <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t bg-card/95 backdrop-blur">
-      <div className="grid grid-cols-10">
-        {items.map(({ to, label, icon: Icon }) => {
-          const active = path === to || path.startsWith(to + "/");
-          return (
-            <Link
-              key={to}
-              to={to}
-              className={cn(
-                "flex flex-col items-center gap-1 py-2.5 text-[10px]",
-                active ? "text-primary" : "text-muted-foreground",
-              )}
-            >
-              <Icon className="h-4 w-4" />
-              {label}
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
+    <>
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t bg-card/95 backdrop-blur">
+        <div className="grid grid-cols-6">
+          {mobilePrimary.map(({ to, label, icon: Icon }) => {
+            const active = path === to || path.startsWith(to + "/");
+            return (
+              <Link
+                key={to}
+                to={to}
+                className={cn(
+                  "flex flex-col items-center gap-1 py-2.5 text-[10px]",
+                  active ? "text-primary" : "text-muted-foreground",
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </Link>
+            );
+          })}
+          <button
+            onClick={() => setOpen(true)}
+            className={cn(
+              "flex flex-col items-center gap-1 py-2.5 text-[10px]",
+              moreActive ? "text-primary" : "text-muted-foreground",
+            )}
+          >
+            <Menu className="h-4 w-4" />
+            Mais
+          </button>
+        </div>
+      </nav>
+
+      <Drawer open={open} onOpenChange={setOpen}>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>Mais opções</DrawerTitle>
+          </DrawerHeader>
+          <div className="grid grid-cols-3 gap-3 p-4">
+            {mobileMore.map(({ to, label, icon: Icon }) => {
+              const active = path === to || path.startsWith(to + "/");
+              return (
+                <Link
+                  key={to}
+                  to={to}
+                  onClick={() => setOpen(false)}
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-2 rounded-xl border p-4 text-xs",
+                    active
+                      ? "border-primary bg-primary/5 text-primary"
+                      : "border-muted bg-muted/40 text-muted-foreground",
+                  )}
+                >
+                  <Icon className="h-6 w-6" />
+                  {label}
+                </Link>
+              );
+            })}
+          </div>
+        </DrawerContent>
+      </Drawer>
+    </>
   );
 }
