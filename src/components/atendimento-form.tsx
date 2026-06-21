@@ -334,6 +334,7 @@ export function AtendimentoForm({
       if (!(Number(valorInicial) > 0)) return toast.error("Informe o valor já recebido");
       if (!formaInicial) return toast.error("Selecione a forma de pagamento da parte recebida");
       if (Number(valorInicial) > totalBruto) return toast.error("Valor recebido não pode ser maior que o total do atendimento");
+      if (segundaAgora && !formaSegunda) return toast.error("Selecione a forma de pagamento da segunda parte");
     }
 
     const usarParcelas = parcelado && parcelasN > 1;
