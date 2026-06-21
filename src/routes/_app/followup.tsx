@@ -353,6 +353,7 @@ function Followup() {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1">
+                    <EditarPropostaButton proposta={p} />
                     <ContatadoButton proposta={p} />
                     <FecharButton proposta={p} onFechado={() => marcarStatus(p.id, "fechado")} />
                     <ConfirmDelete
