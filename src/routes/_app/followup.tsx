@@ -53,6 +53,7 @@ const empty = (): Proposta => ({
 
 function NovaProposta() {
   const create = useCreate("tratamentos_propostos");
+  const procedimentos = useTable<any>("procedimentos", "nome", true);
   const [open, setOpen] = useState(false);
   const [v, setV] = useState<Proposta>(empty());
 
@@ -99,9 +100,7 @@ function NovaProposta() {
           </div>
           <div className="space-y-1.5">
             <Label>Tratamento</Label>
-            <Input required value={v.tratamento}
-              onChange={(e) => setV({ ...v, tratamento: e.target.value })}
-              placeholder="Ex.: Implante, clareamento..." />
+            <ProcedimentoCombobox value={v.tratamento} onChange={(nome) => setV((p) => ({ ...p, tratamento: nome }))} options={procedimentos.data ?? []} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
