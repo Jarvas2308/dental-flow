@@ -1,8 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTable } from "@/hooks/use-data";
 import { brl, monthOptions, monthLabel, currentMonthKey, monthKey, parseLocalDate, todayISO } from "@/lib/format";
 import { receitasRecebidas, valoresEmAberto } from "@/lib/finance";
+import { proximaTentativa, estaPendenteHoje } from "@/lib/followup";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -12,7 +13,7 @@ import {
 } from "recharts";
 import {
   TrendingUp, TrendingDown, Wallet, Receipt, FlaskConical, CircleDollarSign,
-  Clock, HandCoins, FileSignature, CalendarDays, CalendarClock,
+  Clock, HandCoins, FileSignature, CalendarDays, CalendarClock, PhoneCall,
 } from "lucide-react";
 import { ProceduresAnalytics } from "@/components/procedures-analytics";
 
