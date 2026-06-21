@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import {
-  Plus, Loader2, MessageCircle, CheckCircle2, XCircle, CalendarClock,
+  Plus, Loader2, MessageCircle, CheckCircle2, XCircle, CalendarClock, Pencil,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
