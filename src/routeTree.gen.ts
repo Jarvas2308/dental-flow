@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppPacientesRouteImport } from './routes/_app/pacientes'
 import { Route as AppLaboratorioRouteImport } from './routes/_app/laboratorio'
 import { Route as AppGanhosRouteImport } from './routes/_app/ganhos'
+import { Route as AppFollowupRouteImport } from './routes/_app/followup'
 import { Route as AppFluxoCaixaRouteImport } from './routes/_app/fluxo-caixa'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppContasReceberRouteImport } from './routes/_app/contas-receber'
@@ -50,6 +51,11 @@ const AppLaboratorioRoute = AppLaboratorioRouteImport.update({
 const AppGanhosRoute = AppGanhosRouteImport.update({
   id: '/ganhos',
   path: '/ganhos',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFollowupRoute = AppFollowupRouteImport.update({
+  id: '/followup',
+  path: '/followup',
   getParentRoute: () => AppRoute,
 } as any)
 const AppFluxoCaixaRoute = AppFluxoCaixaRouteImport.update({
@@ -98,6 +104,7 @@ export interface FileRoutesByFullPath {
   '/contas-receber': typeof AppContasReceberRoute
   '/dashboard': typeof AppDashboardRoute
   '/fluxo-caixa': typeof AppFluxoCaixaRoute
+  '/followup': typeof AppFollowupRoute
   '/ganhos': typeof AppGanhosRoute
   '/laboratorio': typeof AppLaboratorioRoute
   '/pacientes': typeof AppPacientesRoute
@@ -112,6 +119,7 @@ export interface FileRoutesByTo {
   '/contas-receber': typeof AppContasReceberRoute
   '/dashboard': typeof AppDashboardRoute
   '/fluxo-caixa': typeof AppFluxoCaixaRoute
+  '/followup': typeof AppFollowupRoute
   '/ganhos': typeof AppGanhosRoute
   '/laboratorio': typeof AppLaboratorioRoute
   '/pacientes': typeof AppPacientesRoute
@@ -128,6 +136,7 @@ export interface FileRoutesById {
   '/_app/contas-receber': typeof AppContasReceberRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/fluxo-caixa': typeof AppFluxoCaixaRoute
+  '/_app/followup': typeof AppFollowupRoute
   '/_app/ganhos': typeof AppGanhosRoute
   '/_app/laboratorio': typeof AppLaboratorioRoute
   '/_app/pacientes': typeof AppPacientesRoute
@@ -144,6 +153,7 @@ export interface FileRouteTypes {
     | '/contas-receber'
     | '/dashboard'
     | '/fluxo-caixa'
+    | '/followup'
     | '/ganhos'
     | '/laboratorio'
     | '/pacientes'
@@ -158,6 +168,7 @@ export interface FileRouteTypes {
     | '/contas-receber'
     | '/dashboard'
     | '/fluxo-caixa'
+    | '/followup'
     | '/ganhos'
     | '/laboratorio'
     | '/pacientes'
@@ -173,6 +184,7 @@ export interface FileRouteTypes {
     | '/_app/contas-receber'
     | '/_app/dashboard'
     | '/_app/fluxo-caixa'
+    | '/_app/followup'
     | '/_app/ganhos'
     | '/_app/laboratorio'
     | '/_app/pacientes'
@@ -226,6 +238,13 @@ declare module '@tanstack/react-router' {
       path: '/ganhos'
       fullPath: '/ganhos'
       preLoaderRoute: typeof AppGanhosRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/followup': {
+      id: '/_app/followup'
+      path: '/followup'
+      fullPath: '/followup'
+      preLoaderRoute: typeof AppFollowupRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/fluxo-caixa': {
@@ -288,6 +307,7 @@ interface AppRouteChildren {
   AppContasReceberRoute: typeof AppContasReceberRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppFluxoCaixaRoute: typeof AppFluxoCaixaRoute
+  AppFollowupRoute: typeof AppFollowupRoute
   AppGanhosRoute: typeof AppGanhosRoute
   AppLaboratorioRoute: typeof AppLaboratorioRoute
   AppPacientesRoute: typeof AppPacientesRoute
@@ -301,6 +321,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppContasReceberRoute: AppContasReceberRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppFluxoCaixaRoute: AppFluxoCaixaRoute,
+  AppFollowupRoute: AppFollowupRoute,
   AppGanhosRoute: AppGanhosRoute,
   AppLaboratorioRoute: AppLaboratorioRoute,
   AppPacientesRoute: AppPacientesRoute,
