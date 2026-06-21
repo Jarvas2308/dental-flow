@@ -561,7 +561,9 @@ export function AtendimentoForm({
               {dividido ? (
                 <div className="rounded-lg bg-muted/40 p-3 space-y-3">
                   <p className="text-xs text-muted-foreground">
-                    Registre o valor já recebido agora. O restante fica pendente para receber depois, em Contas a Receber.
+                    {segundaAgora
+                      ? "As duas partes serão registradas agora. O atendimento já fica quitado."
+                      : "Registre o valor já recebido agora. O restante fica pendente para receber depois, em Contas a Receber."}
                   </p>
                   <div className="space-y-1.5">
                     <Label>Valor recebido agora (R$)</Label>
@@ -583,6 +585,29 @@ export function AtendimentoForm({
                   <p className="text-xs text-muted-foreground">
                     Restante: {brl(totalBruto - Number(valorInicial || 0))}
                   </p>
+                  <div className="flex items-center justify-between pt-1">
+                    <Label className="cursor-pointer text-xs">A segunda parte também foi paga agora?</Label>
+                    <Switch
+                      checked={segundaAgora}
+                      onCheckedChange={(c) => setSegundaAgora(c)}
+                    />
+                  </div>
+                  {segundaAgora && (
+                    <div className="space-y-1.5">
+                      <Label>Forma de pagamento (segunda parte)</Label>
+                      <div className="flex items-center gap-2">
+                        <Select value={formaSegunda} onValueChange={setFormaSegunda}>
+                          <SelectTrigger className="flex-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                          <SelectContent>
+                            {(formas.data ?? []).map((p) => <SelectItem key={p.id} value={p.nome}>{p.nome} ({p.taxa}%)</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                          Valor: {brl(totalBruto - Number(valorInicial || 0))}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : parcelado ? (
                 <div className="space-y-2">
