@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { Check, ChevronDown, ChevronsUpDown, Loader2, Pencil, Plus, CalendarClock, Wallet, Trash2, UserPlus } from "lucide-react";
+import { Check, ChevronDown, ChevronsUpDown, Loader2, Pencil, Plus, CalendarClock, Wallet, Trash2, UserPlus, Split } from "lucide-react";
 import { toast } from "sonner";
 
 function QuickAdd({
@@ -239,12 +239,16 @@ export function AtendimentoForm({
   const create = useCreate("atendimentos");
   const update = useUpdate("atendimentos");
   const createPaciente = useCreate("pacientes");
+  const createRecebimento = useCreate("recebimentos");
   const [open, setOpen] = useState(!!editing);
   const [v, setV] = useState<Atendimento>(editing ? { ...editing } : empty());
   const [pacienteId, setPacienteId] = useState<string | null>(editing?.paciente_id ?? null);
   const [items, setItems] = useState<ProcItem[]>([{ procedimento: "", valor: "" }]);
   const [parcelado, setParcelado] = useState<boolean>(!!editing?.parcelado);
   const [parcelasN, setParcelasN] = useState<number>(editing?.parcelas_total > 1 ? editing.parcelas_total : 3);
+  const [dividido, setDividido] = useState(false);
+  const [valorInicial, setValorInicial] = useState("");
+  const [formaInicial, setFormaInicial] = useState("");
   const [saving, setSaving] = useState(false);
   const [showMore, setShowMore] = useState(false);
 
@@ -274,6 +278,9 @@ export function AtendimentoForm({
     setPacienteId(editing?.paciente_id ?? null);
     setParcelado(!!editing?.parcelado);
     setParcelasN(editing?.parcelas_total > 1 ? editing.parcelas_total : 3);
+    setDividido(false);
+    setValorInicial("");
+    setFormaInicial("");
     setShowMore(!!editing && (!!editing.parcelado || !!editing.nota_fiscal));
     if (editing?.id) {
       // Carrega itens existentes; fallback para o atendimento legado (1 linha).
@@ -319,6 +326,11 @@ export function AtendimentoForm({
     if (validItems.length === 0) return toast.error("Adicione ao menos um procedimento");
     if (!v.forma_pagamento) return toast.error("Selecione a forma de pagamento");
     if (totalBruto <= 0) return toast.error("Informe o valor dos procedimentos");
+    if (dividido) {
+      if (!(Number(valorInicial) > 0)) return toast.error("Informe o valor já recebido");
+      if (!formaInicial) return toast.error("Selecione a forma de pagamento da parte recebida");
+      if (Number(valorInicial) > totalBruto) return toast.error("Valor recebido não pode ser maior que o total do atendimento");
+    }
 
     const usarParcelas = parcelado && parcelasN > 1;
     const procedimentoTexto = validItems.map((it) => it.procedimento.trim()).join(", ");
@@ -350,8 +362,8 @@ export function AtendimentoForm({
         valor_liquido: Number(valorLiquido.toFixed(2)),
         data: v.data,
         nota_fiscal: v.nota_fiscal,
-        status_pagamento: usarParcelas ? "pendente" : v.status_pagamento,
-        parcelado: usarParcelas,
+        status_pagamento: usarParcelas || dividido ? "pendente" : v.status_pagamento,
+        parcelado: dividido ? false : usarParcelas,
         parcelas_total: usarParcelas ? parcelasN : 1,
       };
 
@@ -374,6 +386,18 @@ export function AtendimentoForm({
         }));
         await supabase.from("atendimento_procedimentos").insert(rows);
       }
+
+      if (!isEdit && dividido && atendimentoId) {
+        await createRecebimento.mutateAsync({
+          atendimento_id: atendimentoId,
+          valor: Number(valorInicial),
+          data: v.data,
+          forma_pagamento: formaInicial,
+          observacao: null,
+        });
+      }
+
+
 
       onSaved?.();
       setOpen(false);
@@ -486,18 +510,18 @@ export function AtendimentoForm({
               <div className="inline-flex rounded-lg border bg-card p-0.5">
                 <button
                   type="button"
-                  onClick={() => setParcelado(false)}
+                  onClick={() => { setParcelado(false); setDividido(false); }}
                   disabled={isEdit && !!editing?.parcelado}
                   className={cn(
                     "px-4 py-1.5 text-sm rounded-md transition-colors",
-                    !parcelado ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                    !parcelado && !dividido ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
                   )}
                 >
                   À vista
                 </button>
                 <button
                   type="button"
-                  onClick={() => setParcelado(true)}
+                  onClick={() => { setParcelado(true); setDividido(false); }}
                   className={cn(
                     "inline-flex items-center gap-1.5 px-4 py-1.5 text-sm rounded-md transition-colors",
                     parcelado ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
@@ -505,9 +529,48 @@ export function AtendimentoForm({
                 >
                   <CalendarClock className="h-3.5 w-3.5" /> Parcelado
                 </button>
+                <button
+                  type="button"
+                  onClick={() => { setDividido(true); setParcelado(false); }}
+                  disabled={isEdit}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 px-4 py-1.5 text-sm rounded-md transition-colors",
+                    dividido ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+                    isEdit && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  <Split className="h-3.5 w-3.5" /> Dividido
+                </button>
               </div>
 
-              {parcelado ? (
+
+              {dividido ? (
+                <div className="rounded-lg bg-muted/40 p-3 space-y-3">
+                  <p className="text-xs text-muted-foreground">
+                    Registre o valor já recebido agora. O restante fica pendente para receber depois, em Contas a Receber.
+                  </p>
+                  <div className="space-y-1.5">
+                    <Label>Valor recebido agora (R$)</Label>
+                    <Input
+                      type="number" step="0.01" placeholder="0,00"
+                      value={valorInicial}
+                      onChange={(e) => setValorInicial(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Forma de pagamento (desta parte)</Label>
+                    <Select value={formaInicial} onValueChange={setFormaInicial}>
+                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        {(formas.data ?? []).map((p) => <SelectItem key={p.id} value={p.nome}>{p.nome} ({p.taxa}%)</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Restante: {brl(totalBruto - Number(valorInicial || 0))}
+                  </p>
+                </div>
+              ) : parcelado ? (
                 <div className="space-y-2">
                   <div className="flex items-center gap-3">
                     <Label className="shrink-0">Parcelas combinadas</Label>
