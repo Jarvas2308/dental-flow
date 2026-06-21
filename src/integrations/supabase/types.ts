@@ -456,8 +456,10 @@ export type Database = {
           forma_pagamento: string | null
           id: string
           observacao: string | null
+          taxa: number
           user_id: string
           valor: number
+          valor_liquido: number
         }
         Insert: {
           atendimento_id: string
@@ -466,8 +468,10 @@ export type Database = {
           forma_pagamento?: string | null
           id?: string
           observacao?: string | null
+          taxa: number
           user_id: string
           valor?: number
+          valor_liquido: number
         }
         Update: {
           atendimento_id?: string
@@ -476,8 +480,10 @@ export type Database = {
           forma_pagamento?: string | null
           id?: string
           observacao?: string | null
+          taxa?: number
           user_id?: string
           valor?: number
+          valor_liquido?: number
         }
         Relationships: []
       }
