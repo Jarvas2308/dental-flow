@@ -92,11 +92,15 @@ export function resumoAtendimento(
   const qtd = recs.length + legacy.length;
   const status: StatusReceb = recebido <= 0.005 ? "aberto" : saldo <= 0.005 ? "quitado" : "parcial";
 
+  const recebidoLiquido =
+    recs.reduce((s, r) => s + (r.valor_liquido != null ? Number(r.valor_liquido) : Number(r.valor || 0) * f), 0) +
+    legacy.reduce((s, p) => s + liq(p), 0);
+
   return {
     total,
     recebido,
     saldo,
-    recebidoLiquido: Number((recebido * f).toFixed(2)),
+    recebidoLiquido: Number(recebidoLiquido.toFixed(2)),
     saldoLiquido: Number((saldo * f).toFixed(2)),
     qtd,
     parcelasCombinadas: Number(a.parcelas_total || 1),
