@@ -129,7 +129,7 @@ export function receitasRecebidas(
         out.push({
           data: r.data,
           valor_bruto: vb,
-          valor_liquido: Number((vb * f).toFixed(2)),
+          valor_liquido: r.valor_liquido != null ? Number(r.valor_liquido) : Number((vb * f).toFixed(2)),
           forma_pagamento: r.forma_pagamento || a.forma_pagamento || "",
           paciente: a.paciente ?? "",
           procedimento: a.procedimento ?? "",
