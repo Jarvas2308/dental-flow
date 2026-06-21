@@ -251,6 +251,7 @@ export function AtendimentoForm({
   const [formaInicial, setFormaInicial] = useState("");
   const [segundaAgora, setSegundaAgora] = useState(false);
   const [formaSegunda, setFormaSegunda] = useState("");
+  const [formaInicialTocada, setFormaInicialTocada] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showMore, setShowMore] = useState(false);
 
@@ -283,6 +284,7 @@ export function AtendimentoForm({
     setDividido(false);
     setValorInicial("");
     setFormaInicial("");
+    setFormaInicialTocada(false);
     setSegundaAgora(false);
     setFormaSegunda("");
     setShowMore(!!editing && (!!editing.parcelado || !!editing.nota_fiscal));
@@ -307,6 +309,12 @@ export function AtendimentoForm({
       setItems([{ procedimento: "", valor: "" }]);
     }
   }, [open, editing]);
+
+  useEffect(() => {
+    if (dividido && !formaInicialTocada) {
+      setFormaInicial(v.forma_pagamento);
+    }
+  }, [v.forma_pagamento, dividido, formaInicialTocada]);
 
   const isEdit = !!editing;
   const busy = create.isPending || update.isPending || saving;
@@ -558,7 +566,7 @@ export function AtendimentoForm({
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setDividido(true); setParcelado(false); }}
+                  onClick={() => { setDividido(true); setParcelado(false); if (!formaInicialTocada) setFormaInicial(v.forma_pagamento); }}
                   disabled={isEdit}
                   className={cn(
                     "inline-flex items-center gap-1.5 px-4 py-1.5 text-sm rounded-md transition-colors",
@@ -588,7 +596,7 @@ export function AtendimentoForm({
                   </div>
                   <div className="space-y-1.5">
                     <Label>Forma de pagamento (desta parte)</Label>
-                    <Select value={formaInicial} onValueChange={setFormaInicial}>
+                    <Select value={formaInicial} onValueChange={(val) => { setFormaInicial(val); setFormaInicialTocada(true); }}>
                       <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                       <SelectContent>
                         {(formas.data ?? []).map((p) => <SelectItem key={p.id} value={p.nome}>{p.nome} ({p.taxa}%)</SelectItem>)}
