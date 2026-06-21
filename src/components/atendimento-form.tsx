@@ -251,6 +251,7 @@ export function AtendimentoForm({
   const [formaInicial, setFormaInicial] = useState("");
   const [segundaAgora, setSegundaAgora] = useState(false);
   const [formaSegunda, setFormaSegunda] = useState("");
+  const [formaInicialTocada, setFormaInicialTocada] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showMore, setShowMore] = useState(false);
 
