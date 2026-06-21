@@ -32,6 +32,8 @@ function Dashboard() {
   const lab = useTable<any>("custos_laboratorio", "data");
   const ganhos = useTable<any>("receitas_extras", "data");
   const consultas = useTable<any>("consultas_previstas", "data_prevista", true);
+  const tratamentosPropostos = useTable<any>("tratamentos_propostos", "data_proposta", true);
+  const tentativasContato = useTable<any>("tentativas_contato", "data", true);
 
   // Previsão de consultas futuras (hoje / semana)
   const previsao = useMemo(() => {
