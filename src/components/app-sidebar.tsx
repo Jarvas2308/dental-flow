@@ -11,6 +11,7 @@ import {
   PiggyBank,
   HandCoins,
   CalendarClock,
+  MessageCircle,
   Users,
   Menu,
 } from "lucide-react";
@@ -27,6 +28,7 @@ const items = [
   { to: "/consultorio", label: "Consultório", icon: Stethoscope },
   { to: "/pacientes", label: "Pacientes", icon: Users },
   { to: "/consultas", label: "Consultas", icon: CalendarClock },
+  { to: "/followup", label: "Follow-up", icon: MessageCircle },
   { to: "/laboratorio", label: "Laboratório", icon: FlaskConical },
   { to: "/cadastros", label: "Cadastros", icon: Settings },
 ] as const;

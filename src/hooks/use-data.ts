@@ -18,7 +18,9 @@ type TableName =
   | "recebimentos"
   | "pacientes"
   | "atendimento_procedimentos"
-  | "consultas_previstas";
+  | "consultas_previstas"
+  | "tratamentos_propostos"
+  | "tentativas_contato";
 
 export function useTable<T = any>(table: TableName, orderBy = "created_at", asc = false) {
   const { user } = useAuth();
