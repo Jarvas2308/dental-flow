@@ -11,6 +11,7 @@ import {
   PiggyBank,
   HandCoins,
   CalendarClock,
+  MessageCircle,
   Users,
   Menu,
 } from "lucide-react";
