@@ -520,6 +520,41 @@ export type Database = {
         }
         Relationships: []
       }
+      tentativas_contato: {
+        Row: {
+          created_at: string
+          data: string
+          id: string
+          observacao: string | null
+          tratamento_proposto_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data: string
+          id?: string
+          observacao?: string | null
+          tratamento_proposto_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          id?: string
+          observacao?: string | null
+          tratamento_proposto_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tentativas_contato_tratamento_proposto_id_fkey"
+            columns: ["tratamento_proposto_id"]
+            isOneToOne: false
+            referencedRelation: "tratamentos_propostos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tipos_trabalho: {
         Row: {
           created_at: string
@@ -540,6 +575,68 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      tratamentos_propostos: {
+        Row: {
+          created_at: string
+          data_proposta: string
+          fase1_intervalo_dias: number
+          fase1_qtd: number
+          fase2_intervalo_dias: number
+          fase2_qtd: number
+          fase3_intervalo_dias: number
+          id: string
+          paciente: string
+          paciente_id: string | null
+          status: string
+          tentativas_feitas: number
+          tratamento: string
+          user_id: string
+          valor_estimado: number | null
+        }
+        Insert: {
+          created_at?: string
+          data_proposta: string
+          fase1_intervalo_dias?: number
+          fase1_qtd?: number
+          fase2_intervalo_dias?: number
+          fase2_qtd?: number
+          fase3_intervalo_dias?: number
+          id?: string
+          paciente: string
+          paciente_id?: string | null
+          status?: string
+          tentativas_feitas?: number
+          tratamento: string
+          user_id: string
+          valor_estimado?: number | null
+        }
+        Update: {
+          created_at?: string
+          data_proposta?: string
+          fase1_intervalo_dias?: number
+          fase1_qtd?: number
+          fase2_intervalo_dias?: number
+          fase2_qtd?: number
+          fase3_intervalo_dias?: number
+          id?: string
+          paciente?: string
+          paciente_id?: string | null
+          status?: string
+          tentativas_feitas?: number
+          tratamento?: string
+          user_id?: string
+          valor_estimado?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tratamentos_propostos_paciente_id_fkey"
+            columns: ["paciente_id"]
+            isOneToOne: false
+            referencedRelation: "pacientes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
