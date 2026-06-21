@@ -400,6 +400,15 @@ export function AtendimentoForm({
           forma_pagamento: formaInicial,
           observacao: null,
         });
+        if (segundaAgora) {
+          await createRecebimento.mutateAsync({
+            atendimento_id: atendimentoId,
+            valor: Number((totalBruto - Number(valorInicial)).toFixed(2)),
+            data: v.data,
+            forma_pagamento: formaSegunda,
+            observacao: null,
+          });
+        }
       }
 
 
