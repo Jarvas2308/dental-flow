@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import {
-  Plus, Loader2, MessageCircle, CheckCircle2, XCircle, CalendarClock, Pencil,
+  Plus, Loader2, MessageCircle, CheckCircle2, XCircle, CalendarClock, Pencil, CircleDollarSign,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -45,10 +45,10 @@ const empty = (): Proposta => ({
   valor_estimado: "",
   data_proposta: todayISO(),
   fase1_intervalo_dias: 3,
-  fase1_qtd: 3,
+  fase1_qtd: 1,
   fase2_intervalo_dias: 7,
-  fase2_qtd: 4,
-  fase3_intervalo_dias: 30,
+  fase2_qtd: 1,
+  fase3_intervalo_dias: 15,
 });
 
 function PropostaForm({ proposta, onClose }: { proposta?: any; onClose: () => void }) {
@@ -296,6 +296,7 @@ function Followup() {
   }, [props.data, allTentativas]);
 
   const pendentes = rows.filter((r) => r.pendente).length;
+  const valorTotal = rows.reduce((s, r) => s + (Number(r.p.valor_estimado) || 0), 0);
 
   const marcarStatus = (id: string, status: string) =>
     update.mutate({ id, values: { status } });
@@ -312,6 +313,8 @@ function Followup() {
         <StatCard label="Em acompanhamento" value={String(rows.length)} tone="primary"
           icon={<CalendarClock className="h-4 w-4" />} />
         <StatCard label="Pendentes hoje" value={String(pendentes)} tone={pendentes > 0 ? "destructive" : undefined} />
+        <StatCard label="Valor em acompanhamento" value={brl(valorTotal)} tone="success"
+          icon={<CircleDollarSign className="h-4 w-4" />} />
       </div>
 
       <div className="rounded-2xl border bg-card overflow-hidden" style={{ boxShadow: "var(--shadow-soft)" }}>
@@ -320,6 +323,7 @@ function Followup() {
             <TableRow>
               <TableHead>Paciente</TableHead>
               <TableHead>Tratamento</TableHead>
+              <TableHead className="text-right">Valor</TableHead>
               <TableHead>Fase</TableHead>
               <TableHead>Próxima tentativa</TableHead>
               <TableHead className="text-right">Ações</TableHead>
@@ -327,23 +331,21 @@ function Followup() {
           </TableHeader>
           <TableBody>
             {props.isLoading && (
-              <TableRow><TableCell colSpan={5} className="text-center py-12">
+              <TableRow><TableCell colSpan={6} className="text-center py-12">
                 <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
               </TableCell></TableRow>
             )}
             {!props.isLoading && rows.length === 0 && (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-12">
+              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-12">
                 Nenhum tratamento em acompanhamento.
               </TableCell></TableRow>
             )}
             {rows.map(({ p, prox, pendente }) => (
               <TableRow key={p.id}>
                 <TableCell className="font-medium">{p.paciente}</TableCell>
-                <TableCell>
-                  {p.tratamento}
-                  {Number(p.valor_estimado) > 0 && (
-                    <span className="block text-xs text-muted-foreground">{brl(p.valor_estimado)}</span>
-                  )}
+                <TableCell>{p.tratamento}</TableCell>
+                <TableCell className="text-right">
+                  {p.valor_estimado != null ? brl(p.valor_estimado) : "—"}
                 </TableCell>
                 <TableCell>
                   <Badge variant="outline">Fase {prox.fase} · tentativa {prox.numeroNaFase}</Badge>
