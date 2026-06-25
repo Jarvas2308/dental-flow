@@ -53,11 +53,18 @@ export function RegistrarRecebimento({
     if (v > resumo.saldo + 0.005) {
       return toast.error(`Valor acima do saldo pendente (${brl(resumo.saldo)})`);
     }
+    const formaPagamento = forma || atendimento.forma_pagamento || "";
+    const formaSelecionada = (formas.data ?? []).find((f) => f.nome === formaPagamento);
+    const taxaPercentual = formaSelecionada?.taxa_percentual ?? 0;
+    const valorLiquido = Math.round(v * (1 - taxaPercentual / 100) * 100) / 100;
+
     await create.mutateAsync({
       atendimento_id: atendimento.id,
       valor: v,
       data,
-      forma_pagamento: forma || atendimento.forma_pagamento || null,
+      forma_pagamento: formaPagamento || null,
+      taxa: taxaPercentual,
+      valor_liquido: valorLiquido,
       observacao: obs.trim() || null,
     });
     toast.success("Recebimento registrado");
