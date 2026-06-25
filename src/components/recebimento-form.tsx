@@ -46,6 +46,18 @@ export function RegistrarRecebimento({
 
   const pct = resumo.total > 0 ? Math.min(100, (resumo.recebido / resumo.total) * 100) : 0;
 
+  const selectedForma = useMemo(
+    () => (formas.data ?? []).find((f) => f.nome === forma),
+    [formas.data, forma],
+  );
+
+  const taxaPercentual = selectedForma?.taxa_percentual ?? 0;
+  const valorLiquido = useMemo(() => {
+    const v = Number(valor);
+    if (!v || v <= 0) return 0;
+    return Math.round(v * (1 - taxaPercentual / 100) * 100) / 100;
+  }, [valor, taxaPercentual]);
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const v = Number(valor);
@@ -53,16 +65,12 @@ export function RegistrarRecebimento({
     if (v > resumo.saldo + 0.005) {
       return toast.error(`Valor acima do saldo pendente (${brl(resumo.saldo)})`);
     }
-    const formaPagamento = forma || atendimento.forma_pagamento || "";
-    const formaSelecionada = (formas.data ?? []).find((f) => f.nome === formaPagamento);
-    const taxaPercentual = formaSelecionada?.taxa_percentual ?? 0;
-    const valorLiquido = Math.round(v * (1 - taxaPercentual / 100) * 100) / 100;
 
     await create.mutateAsync({
       atendimento_id: atendimento.id,
       valor: v,
       data,
-      forma_pagamento: formaPagamento || null,
+      forma_pagamento: forma || null,
       taxa: taxaPercentual,
       valor_liquido: valorLiquido,
       observacao: obs.trim() || null,
