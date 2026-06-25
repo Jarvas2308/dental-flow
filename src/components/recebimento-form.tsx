@@ -142,6 +142,18 @@ export function RegistrarRecebimento({
                 </SelectContent>
               </Select>
             </div>
+            {Number(valor) > 0 && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <div className="text-xs text-muted-foreground">Taxa</div>
+                  <div className="text-sm font-medium">{taxaPercentual}%</div>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-xs text-muted-foreground">Valor líquido</div>
+                  <div className="text-sm font-medium">{brl(valorLiquido)}</div>
+                </div>
+              </div>
+            )}
             <div className="space-y-1.5">
               <Label>Observação (opcional)</Label>
               <Input value={obs} onChange={(e) => setObs(e.target.value)} placeholder="Ex.: entrada, sinal..." />
