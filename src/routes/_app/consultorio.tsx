@@ -402,18 +402,13 @@ function Consultorio() {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
-                    {r.parcelado ? (
-                      <RegistrarRecebimento atendimento={r} />
-                    ) : pend && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 gap-1 border-success/40 text-success hover:bg-success/10"
-                        onClick={() => upd.mutate({ id: r.id, values: { status_pagamento: "pago" } })}
-                      >
-                        <CheckCircle2 className="h-4 w-4" /> Marcar pago
-                      </Button>
-                    )}
+                    {(() => {
+                      const rs = resumoMap.get(r.id);
+                      if (rs && rs.saldo > 0.005) {
+                        return <RegistrarRecebimento atendimento={r} />;
+                      }
+                      return null;
+                    })()}
 
                     <EditAtendimentoButton row={r} />
                     <ConfirmDelete
