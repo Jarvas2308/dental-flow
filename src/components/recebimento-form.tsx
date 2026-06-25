@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { useCallback } from "react";
 import { useCreate, useDelete, useTable } from "@/hooks/use-data";
 import { brl, formatDateBR, todayISO } from "@/lib/format";
 import { resumoAtendimento, STATUS_LABEL } from "@/lib/finance";
