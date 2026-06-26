@@ -60,6 +60,7 @@ export function RegistrarRecebimento({
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (create.isPending) return; // evita recebimentos duplicados por clique duplo
     const v = Number(valor);
     if (!v || v <= 0) return toast.error("Informe um valor válido");
     if (v > resumo.saldo + 0.005) {
