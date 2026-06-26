@@ -398,14 +398,27 @@ export function AtendimentoForm({
 
       if (atendimentoId) {
         // Substitui os itens do atendimento.
-        await supabase.from("atendimento_procedimentos").delete().eq("atendimento_id", atendimentoId);
+        const { error: delError } = await supabase
+          .from("atendimento_procedimentos")
+          .delete()
+          .eq("atendimento_id", atendimentoId);
+        if (delError) {
+          toast.error("Não foi possível atualizar os procedimentos do atendimento. Tente novamente.");
+          return;
+        }
         const rows = validItems.map((it) => ({
           user_id: user!.id,
           atendimento_id: atendimentoId,
           procedimento: it.procedimento.trim(),
           valor: Number(it.valor || 0),
         }));
-        await supabase.from("atendimento_procedimentos").insert(rows);
+        const { error: insError } = await supabase
+          .from("atendimento_procedimentos")
+          .insert(rows);
+        if (insError) {
+          toast.error("Não foi possível salvar os procedimentos do atendimento. Tente novamente.");
+          return;
+        }
       }
 
 
