@@ -486,6 +486,7 @@ export function AtendimentoForm({
       toast.error("Ocorreu um erro inesperado ao salvar. Tente novamente.");
     } finally {
       setSaving(false);
+      submitLock.current = false;
     }
   };
 
