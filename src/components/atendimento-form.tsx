@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useCreate, useTable, useUpdate } from "@/hooks/use-data";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -253,6 +253,7 @@ export function AtendimentoForm({
   const [formaSegunda, setFormaSegunda] = useState("");
   const [formaInicialTocada, setFormaInicialTocada] = useState(false);
   const [saving, setSaving] = useState(false);
+  const submitLock = useRef(false);
   const [showMore, setShowMore] = useState(false);
 
   // Procedimentos ordenados por frequência de uso, com fallback alfabético
@@ -334,7 +335,9 @@ export function AtendimentoForm({
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Proteção contra nova execução enquanto um salvamento está em andamento.
+    // Trava síncrona: impede dois submits antes da atualização do estado React.
+    if (submitLock.current) return;
+    // Proteção visual baseada no estado React.
     if (saving) return;
 
     const validItems = items.filter((it) => it.procedimento.trim());
@@ -352,6 +355,7 @@ export function AtendimentoForm({
     const procedimentoTexto = validItems.map((it) => it.procedimento.trim()).join(", ");
     const nome = v.paciente.trim();
 
+    submitLock.current = true;
     setSaving(true);
     try {
       // Resolve o paciente_id definitivo ANTES de salvar o atendimento.
@@ -482,6 +486,7 @@ export function AtendimentoForm({
       toast.error("Ocorreu um erro inesperado ao salvar. Tente novamente.");
     } finally {
       setSaving(false);
+      submitLock.current = false;
     }
   };
 
