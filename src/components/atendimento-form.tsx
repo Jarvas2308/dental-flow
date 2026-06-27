@@ -334,6 +334,9 @@ export function AtendimentoForm({
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Proteção contra nova execução enquanto um salvamento está em andamento.
+    if (saving) return;
+
     const validItems = items.filter((it) => it.procedimento.trim());
     if (validItems.length === 0) return toast.error("Adicione ao menos um procedimento");
     if (!v.forma_pagamento) return toast.error("Selecione a forma de pagamento");
@@ -360,7 +363,15 @@ export function AtendimentoForm({
         if (existente) {
           idResolvido = existente.id;
         } else {
-          const novo = await createPaciente.mutateAsync({ nome });
+          // Criação de paciente.
+          let novo: any;
+          try {
+            novo = await createPaciente.mutateAsync({ nome });
+          } catch (err) {
+            console.error("[AtendimentoForm] Erro ao criar paciente:", err);
+            toast.error("Não foi possível cadastrar o paciente. Tente novamente.");
+            return;
+          }
           idResolvido = novo?.id ?? null;
         }
       }
@@ -388,24 +399,33 @@ export function AtendimentoForm({
         parcelas_total: usarParcelas ? parcelasN : 1,
       };
 
+      // Criação ou atualização do atendimento.
       let atendimentoId = editing?.id;
-      if (isEdit) {
-        await update.mutateAsync({ id: editing.id, values: payload });
-      } else {
-        const created = await create.mutateAsync(payload);
-        atendimentoId = created?.id;
+      try {
+        if (isEdit) {
+          await update.mutateAsync({ id: editing.id, values: payload });
+        } else {
+          const created = await create.mutateAsync(payload);
+          atendimentoId = created?.id;
+        }
+      } catch (err) {
+        console.error("[AtendimentoForm] Erro ao salvar o atendimento:", err);
+        toast.error("Não foi possível salvar o atendimento. Tente novamente.");
+        return;
       }
 
       if (atendimentoId) {
-        // Substitui os itens do atendimento.
+        // Exclusão dos procedimentos atuais do atendimento.
         const { error: delError } = await supabase
           .from("atendimento_procedimentos")
           .delete()
           .eq("atendimento_id", atendimentoId);
         if (delError) {
+          console.error("[AtendimentoForm] Erro ao excluir procedimentos:", delError);
           toast.error("Não foi possível atualizar os procedimentos do atendimento. Tente novamente.");
           return;
         }
+        // Inserção dos novos procedimentos.
         const rows = validItems.map((it) => ({
           user_id: user!.id,
           atendimento_id: atendimentoId,
@@ -416,40 +436,50 @@ export function AtendimentoForm({
           .from("atendimento_procedimentos")
           .insert(rows);
         if (insError) {
+          console.error("[AtendimentoForm] Erro ao inserir procedimentos:", insError);
           toast.error("Não foi possível salvar os procedimentos do atendimento. Tente novamente.");
           return;
         }
       }
 
-
+      // Criação dos recebimentos do modo dividido.
       if (!isEdit && dividido && atendimentoId) {
-        await createRecebimento.mutateAsync({
-          atendimento_id: atendimentoId,
-          valor: Number(valorInicial),
-          data: v.data,
-          forma_pagamento: formaInicial,
-          observacao: null,
-          taxa: taxaInicial,
-          valor_liquido: Number((Number(valorInicial) * (1 - taxaInicial / 100)).toFixed(2)),
-        });
-        if (segundaAgora) {
+        try {
           await createRecebimento.mutateAsync({
             atendimento_id: atendimentoId,
-            valor: Number((totalBruto - Number(valorInicial)).toFixed(2)),
+            valor: Number(valorInicial),
             data: v.data,
-            forma_pagamento: formaSegunda,
+            forma_pagamento: formaInicial,
             observacao: null,
-            taxa: taxaSegunda,
-            valor_liquido: Number(((totalBruto - Number(valorInicial)) * (1 - taxaSegunda / 100)).toFixed(2)),
+            taxa: taxaInicial,
+            valor_liquido: Number((Number(valorInicial) * (1 - taxaInicial / 100)).toFixed(2)),
           });
+          if (segundaAgora) {
+            await createRecebimento.mutateAsync({
+              atendimento_id: atendimentoId,
+              valor: Number((totalBruto - Number(valorInicial)).toFixed(2)),
+              data: v.data,
+              forma_pagamento: formaSegunda,
+              observacao: null,
+              taxa: taxaSegunda,
+              valor_liquido: Number(((totalBruto - Number(valorInicial)) * (1 - taxaSegunda / 100)).toFixed(2)),
+            });
+          }
+        } catch (err) {
+          console.error("[AtendimentoForm] Erro ao registrar recebimento:", err);
+          toast.error("Não foi possível registrar o recebimento inicial. Tente novamente.");
+          return;
         }
       }
 
-
-
+      // Todas as operações concluídas com sucesso.
+      toast.success("Atendimento salvo com sucesso");
       onSaved?.();
       setOpen(false);
       onClose?.();
+    } catch (err) {
+      console.error("[AtendimentoForm] Erro inesperado ao salvar atendimento:", err);
+      toast.error("Ocorreu um erro inesperado ao salvar. Tente novamente.");
     } finally {
       setSaving(false);
     }
