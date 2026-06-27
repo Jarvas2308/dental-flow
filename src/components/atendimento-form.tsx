@@ -335,7 +335,9 @@ export function AtendimentoForm({
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Proteção contra nova execução enquanto um salvamento está em andamento.
+    // Trava síncrona: impede dois submits antes da atualização do estado React.
+    if (submitLock.current) return;
+    // Proteção visual baseada no estado React.
     if (saving) return;
 
     const validItems = items.filter((it) => it.procedimento.trim());
@@ -353,6 +355,7 @@ export function AtendimentoForm({
     const procedimentoTexto = validItems.map((it) => it.procedimento.trim()).join(", ");
     const nome = v.paciente.trim();
 
+    submitLock.current = true;
     setSaving(true);
     try {
       // Resolve o paciente_id definitivo ANTES de salvar o atendimento.
