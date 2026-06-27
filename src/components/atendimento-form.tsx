@@ -253,6 +253,7 @@ export function AtendimentoForm({
   const [formaSegunda, setFormaSegunda] = useState("");
   const [formaInicialTocada, setFormaInicialTocada] = useState(false);
   const [saving, setSaving] = useState(false);
+  const submitLock = useRef(false);
   const [showMore, setShowMore] = useState(false);
 
   // Procedimentos ordenados por frequência de uso, com fallback alfabético
