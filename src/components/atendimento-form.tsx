@@ -353,7 +353,9 @@ export function AtendimentoForm({
 
     const usarParcelas = parcelado && parcelasN > 1;
     const procedimentoTexto = validItems.map((it) => it.procedimento.trim()).join(", ");
-    const nome = v.paciente.trim();
+    // Normaliza o nome: remove espaços nas pontas e colapsa espaços internos.
+    const nome = v.paciente.replace(/\s+/g, " ").trim();
+    const nomeKey = nome.toLowerCase();
 
     submitLock.current = true;
     setSaving(true);
