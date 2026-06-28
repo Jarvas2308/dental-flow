@@ -318,7 +318,7 @@ export function AtendimentoForm({
   }, [v.forma_pagamento, dividido, formaInicialTocada]);
 
   const isEdit = !!editing;
-  const busy = create.isPending || update.isPending || saving;
+  const busy = saving;
 
   const onForma = (val: string) => {
     const f = (formas.data ?? []).find((x) => x.nome === val);
