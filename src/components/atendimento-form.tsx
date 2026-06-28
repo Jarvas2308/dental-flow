@@ -237,10 +237,9 @@ export function AtendimentoForm({
   const formas = useTable<any>("formas_pagamento", "nome", true);
   const atendimentos = useTable<any>("atendimentos", "data");
   const pacientes = useTable<any>("pacientes", "nome", true);
-  const create = useCreate("atendimentos");
-  const update = useUpdate("atendimentos");
-  const createPaciente = useCreate("pacientes");
-  const createRecebimento = useCreate("recebimentos");
+  const qc = useQueryClient();
+  // Inserções feitas diretamente via supabase para controlar o toast de sucesso
+  // (os hooks useCreate disparam um toast próprio em cada insert).
   const [open, setOpen] = useState(!!editing);
   const [v, setV] = useState<Atendimento>(editing ? { ...editing } : empty());
   const [pacienteId, setPacienteId] = useState<string | null>(editing?.paciente_id ?? null);
