@@ -392,7 +392,13 @@ export function AtendimentoForm({
           if (!idResolvido) {
             let novo: any;
             try {
-              novo = await createPaciente.mutateAsync({ nome });
+              const { data, error } = await supabase
+                .from("pacientes")
+                .insert({ nome, user_id: user!.id })
+                .select()
+                .single();
+              if (error) throw error;
+              novo = data;
             } catch (err) {
               console.error("[AtendimentoForm] Erro ao criar paciente:", err);
               toast.error("Não foi possível cadastrar o paciente. Tente novamente.");
