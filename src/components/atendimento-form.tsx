@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCreate, useTable, useUpdate } from "@/hooks/use-data";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -236,10 +237,9 @@ export function AtendimentoForm({
   const formas = useTable<any>("formas_pagamento", "nome", true);
   const atendimentos = useTable<any>("atendimentos", "data");
   const pacientes = useTable<any>("pacientes", "nome", true);
-  const create = useCreate("atendimentos");
-  const update = useUpdate("atendimentos");
-  const createPaciente = useCreate("pacientes");
-  const createRecebimento = useCreate("recebimentos");
+  const qc = useQueryClient();
+  // Inserções feitas diretamente via supabase para controlar o toast de sucesso
+  // (os hooks useCreate disparam um toast próprio em cada insert).
   const [open, setOpen] = useState(!!editing);
   const [v, setV] = useState<Atendimento>(editing ? { ...editing } : empty());
   const [pacienteId, setPacienteId] = useState<string | null>(editing?.paciente_id ?? null);
@@ -318,7 +318,7 @@ export function AtendimentoForm({
   }, [v.forma_pagamento, dividido, formaInicialTocada]);
 
   const isEdit = !!editing;
-  const busy = create.isPending || update.isPending || saving;
+  const busy = saving;
 
   const onForma = (val: string) => {
     const f = (formas.data ?? []).find((x) => x.nome === val);
@@ -392,7 +392,13 @@ export function AtendimentoForm({
           if (!idResolvido) {
             let novo: any;
             try {
-              novo = await createPaciente.mutateAsync({ nome });
+              const { data, error } = await supabase
+                .from("pacientes")
+                .insert({ nome, user_id: user!.id })
+                .select()
+                .single();
+              if (error) throw error;
+              novo = data;
             } catch (err) {
               console.error("[AtendimentoForm] Erro ao criar paciente:", err);
               toast.error("Não foi possível cadastrar o paciente. Tente novamente.");
@@ -436,9 +442,18 @@ export function AtendimentoForm({
       let atendimentoId = editing?.id;
       try {
         if (isEdit) {
-          await update.mutateAsync({ id: editing.id, values: payload });
+          const { error } = await supabase
+            .from("atendimentos")
+            .update(payload)
+            .eq("id", editing.id);
+          if (error) throw error;
         } else {
-          const created = await create.mutateAsync(payload);
+          const { data: created, error } = await supabase
+            .from("atendimentos")
+            .insert({ ...payload, user_id: user!.id })
+            .select()
+            .single();
+          if (error) throw error;
           atendimentoId = created?.id;
         }
       } catch (err) {
@@ -476,9 +491,12 @@ export function AtendimentoForm({
       }
 
       // Criação dos recebimentos do modo dividido.
+      // Cada recebimento grava sua própria forma, taxa e valor líquido.
       if (!isEdit && dividido && atendimentoId) {
+        // Primeiro recebimento (parte já recebida).
         try {
-          await createRecebimento.mutateAsync({
+          const { error } = await supabase.from("recebimentos").insert({
+            user_id: user!.id,
             atendimento_id: atendimentoId,
             valor: Number(valorInicial),
             data: v.data,
@@ -487,8 +505,17 @@ export function AtendimentoForm({
             taxa: taxaInicial,
             valor_liquido: Number((Number(valorInicial) * (1 - taxaInicial / 100)).toFixed(2)),
           });
-          if (segundaAgora) {
-            await createRecebimento.mutateAsync({
+          if (error) throw error;
+        } catch (err) {
+          console.error("[AtendimentoForm] Erro ao registrar o primeiro recebimento:", err);
+          toast.error("Não foi possível registrar o recebimento inicial. Tente novamente.");
+          return;
+        }
+        // Segundo recebimento (parte restante paga agora).
+        if (segundaAgora) {
+          try {
+            const { error } = await supabase.from("recebimentos").insert({
+              user_id: user!.id,
               atendimento_id: atendimentoId,
               valor: Number((totalBruto - Number(valorInicial)).toFixed(2)),
               data: v.data,
@@ -497,13 +524,21 @@ export function AtendimentoForm({
               taxa: taxaSegunda,
               valor_liquido: Number(((totalBruto - Number(valorInicial)) * (1 - taxaSegunda / 100)).toFixed(2)),
             });
+            if (error) throw error;
+          } catch (err) {
+            console.error("[AtendimentoForm] Erro ao registrar o segundo recebimento:", err);
+            // O primeiro recebimento já foi salvo; sem transação SQL não há rollback.
+            toast.error("O primeiro recebimento foi salvo, mas não foi possível registrar a segunda parte. Registre-a manualmente.");
+            return;
           }
-        } catch (err) {
-          console.error("[AtendimentoForm] Erro ao registrar recebimento:", err);
-          toast.error("Não foi possível registrar o recebimento inicial. Tente novamente.");
-          return;
         }
       }
+
+      // Atualiza os caches das listas afetadas.
+      qc.invalidateQueries({ queryKey: ["pacientes"] });
+      qc.invalidateQueries({ queryKey: ["atendimentos"] });
+      qc.invalidateQueries({ queryKey: ["atendimento_procedimentos"] });
+      qc.invalidateQueries({ queryKey: ["recebimentos"] });
 
       // Todas as operações concluídas com sucesso.
       toast.success("Atendimento salvo com sucesso");
