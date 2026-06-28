@@ -491,9 +491,12 @@ export function AtendimentoForm({
       }
 
       // Criação dos recebimentos do modo dividido.
+      // Cada recebimento grava sua própria forma, taxa e valor líquido.
       if (!isEdit && dividido && atendimentoId) {
+        // Primeiro recebimento (parte já recebida).
         try {
-          await createRecebimento.mutateAsync({
+          const { error } = await supabase.from("recebimentos").insert({
+            user_id: user!.id,
             atendimento_id: atendimentoId,
             valor: Number(valorInicial),
             data: v.data,
@@ -502,8 +505,17 @@ export function AtendimentoForm({
             taxa: taxaInicial,
             valor_liquido: Number((Number(valorInicial) * (1 - taxaInicial / 100)).toFixed(2)),
           });
-          if (segundaAgora) {
-            await createRecebimento.mutateAsync({
+          if (error) throw error;
+        } catch (err) {
+          console.error("[AtendimentoForm] Erro ao registrar o primeiro recebimento:", err);
+          toast.error("Não foi possível registrar o recebimento inicial. Tente novamente.");
+          return;
+        }
+        // Segundo recebimento (parte restante paga agora).
+        if (segundaAgora) {
+          try {
+            const { error } = await supabase.from("recebimentos").insert({
+              user_id: user!.id,
               atendimento_id: atendimentoId,
               valor: Number((totalBruto - Number(valorInicial)).toFixed(2)),
               data: v.data,
@@ -512,13 +524,21 @@ export function AtendimentoForm({
               taxa: taxaSegunda,
               valor_liquido: Number(((totalBruto - Number(valorInicial)) * (1 - taxaSegunda / 100)).toFixed(2)),
             });
+            if (error) throw error;
+          } catch (err) {
+            console.error("[AtendimentoForm] Erro ao registrar o segundo recebimento:", err);
+            // O primeiro recebimento já foi salvo; sem transação SQL não há rollback.
+            toast.error("O primeiro recebimento foi salvo, mas não foi possível registrar a segunda parte. Registre-a manualmente.");
+            return;
           }
-        } catch (err) {
-          console.error("[AtendimentoForm] Erro ao registrar recebimento:", err);
-          toast.error("Não foi possível registrar o recebimento inicial. Tente novamente.");
-          return;
         }
       }
+
+      // Atualiza os caches das listas afetadas.
+      qc.invalidateQueries({ queryKey: ["pacientes"] });
+      qc.invalidateQueries({ queryKey: ["atendimentos"] });
+      qc.invalidateQueries({ queryKey: ["atendimento_procedimentos"] });
+      qc.invalidateQueries({ queryKey: ["recebimentos"] });
 
       // Todas as operações concluídas com sucesso.
       toast.success("Atendimento salvo com sucesso");
