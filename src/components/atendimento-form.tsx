@@ -363,24 +363,51 @@ export function AtendimentoForm({
       // Resolve o paciente_id definitivo ANTES de salvar o atendimento.
       let idResolvido = pacienteId;
       if (!idResolvido && nome) {
+        // 1) Busca na lista já carregada usando o nome normalizado.
         const existente = (pacientes.data ?? []).find(
-          (p) => (p.nome ?? "").trim().toLowerCase() === nome.toLowerCase(),
+          (p) => (p.nome ?? "").replace(/\s+/g, " ").trim().toLowerCase() === nomeKey,
         );
         if (existente) {
           idResolvido = existente.id;
         } else {
-          // Criação de paciente.
-          let novo: any;
+          // 2) Confirmação pontual no banco antes de criar (evita falso "inexistente"
+          //    quando a lista ainda não carregou ou houve erro de consulta).
           try {
-            novo = await createPaciente.mutateAsync({ nome });
+            const { data: encontrados, error: buscaError } = await supabase
+              .from("pacientes")
+              .select("id, nome")
+              .ilike("nome", nome);
+            if (buscaError) throw buscaError;
+            const match = (encontrados ?? []).find(
+              (p: any) => (p.nome ?? "").replace(/\s+/g, " ").trim().toLowerCase() === nomeKey,
+            );
+            if (match) idResolvido = match.id;
           } catch (err) {
-            console.error("[AtendimentoForm] Erro ao criar paciente:", err);
-            toast.error("Não foi possível cadastrar o paciente. Tente novamente.");
+            console.error("[AtendimentoForm] Erro ao buscar paciente:", err);
+            toast.error("Não foi possível verificar o paciente. Tente novamente.");
             return;
           }
-          idResolvido = novo?.id ?? null;
+
+          // 3) Cria o paciente apenas se nenhuma correspondência foi encontrada.
+          if (!idResolvido) {
+            let novo: any;
+            try {
+              novo = await createPaciente.mutateAsync({ nome });
+            } catch (err) {
+              console.error("[AtendimentoForm] Erro ao criar paciente:", err);
+              toast.error("Não foi possível cadastrar o paciente. Tente novamente.");
+              return;
+            }
+            idResolvido = novo?.id ?? null;
+            if (!idResolvido) {
+              console.error("[AtendimentoForm] Criação de paciente não retornou ID.");
+              toast.error("Não foi possível cadastrar o paciente. Tente novamente.");
+              return;
+            }
+          }
         }
       }
+
 
       const taxaInicial = Number((formas.data ?? []).find((x) => x.nome === formaInicial)?.taxa ?? 0);
       const taxaSegunda = Number((formas.data ?? []).find((x) => x.nome === formaSegunda)?.taxa ?? 0);
