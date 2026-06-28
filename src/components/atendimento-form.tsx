@@ -442,9 +442,18 @@ export function AtendimentoForm({
       let atendimentoId = editing?.id;
       try {
         if (isEdit) {
-          await update.mutateAsync({ id: editing.id, values: payload });
+          const { error } = await supabase
+            .from("atendimentos")
+            .update(payload)
+            .eq("id", editing.id);
+          if (error) throw error;
         } else {
-          const created = await create.mutateAsync(payload);
+          const { data: created, error } = await supabase
+            .from("atendimentos")
+            .insert({ ...payload, user_id: user!.id })
+            .select()
+            .single();
+          if (error) throw error;
           atendimentoId = created?.id;
         }
       } catch (err) {
