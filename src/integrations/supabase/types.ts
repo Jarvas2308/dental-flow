@@ -643,7 +643,26 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      salvar_atendimento_completo: {
+        Args: {
+          p_atendimento_id?: string
+          p_data?: string
+          p_forma_pagamento?: string
+          p_nota_fiscal?: boolean
+          p_paciente?: string
+          p_paciente_id?: string
+          p_parcelado?: boolean
+          p_parcelas_total?: number
+          p_procedimento?: string
+          p_procedimentos?: Json
+          p_recebimentos?: Json
+          p_status_pagamento?: string
+          p_taxa?: number
+          p_valor_bruto?: number
+          p_valor_liquido?: number
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
