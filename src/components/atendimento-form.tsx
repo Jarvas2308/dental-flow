@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCreate, useTable, useUpdate } from "@/hooks/use-data";
+import { useCreate, useTable } from "@/hooks/use-data";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { brl, todayISO } from "@/lib/format";
