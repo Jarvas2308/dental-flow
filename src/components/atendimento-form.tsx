@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCreate, useTable, useUpdate } from "@/hooks/use-data";
+import { useCreate, useTable } from "@/hooks/use-data";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { brl, todayISO } from "@/lib/format";
@@ -423,115 +423,58 @@ export function AtendimentoForm({
           : taxaInicial)
         : Number(v.taxa);
 
-      const payload = {
-        paciente: nome,
-        paciente_id: idResolvido,
-        procedimento: procedimentoTexto,
-        forma_pagamento: v.forma_pagamento,
-        valor_bruto: Number(totalBruto.toFixed(2)),
-        taxa: Number(taxaEfetiva.toFixed(2)),
-        valor_liquido: dividido ? Number((totalBruto * (1 - taxaEfetiva / 100)).toFixed(2)) : Number(valorLiquido.toFixed(2)),
-        data: v.data,
-        nota_fiscal: v.nota_fiscal,
-        status_pagamento: usarParcelas || (dividido && !segundaAgora) ? "pendente" : v.status_pagamento,
-        parcelado: dividido ? false : usarParcelas,
-        parcelas_total: usarParcelas ? parcelasN : 1,
-      };
+      // Procedimentos enviados para a RPC.
+      const procedimentos = validItems.map((it) => ({
+        procedimento: it.procedimento.trim(),
+        valor: Number(it.valor || 0),
+      }));
 
-      // Criação ou atualização do atendimento.
-      let atendimentoId = editing?.id;
-      try {
-        if (isEdit) {
-          const { error } = await supabase
-            .from("atendimentos")
-            .update(payload)
-            .eq("id", editing.id);
-          if (error) throw error;
-        } else {
-          const { data: created, error } = await supabase
-            .from("atendimentos")
-            .insert({ ...payload, user_id: user!.id })
-            .select()
-            .single();
-          if (error) throw error;
-          atendimentoId = created?.id;
+      // Recebimentos iniciais: apenas em criação no modo dividido.
+      // Em edição enviamos [] para não duplicar o histórico.
+      const recebimentos: any[] = [];
+      if (!isEdit && dividido) {
+        recebimentos.push({
+          valor: Number(valorInicial),
+          data: v.data,
+          forma_pagamento: formaInicial,
+          observacao: null,
+          taxa: taxaInicial,
+          valor_liquido: Number((Number(valorInicial) * (1 - taxaInicial / 100)).toFixed(2)),
+        });
+        if (segundaAgora) {
+          recebimentos.push({
+            valor: Number((totalBruto - Number(valorInicial)).toFixed(2)),
+            data: v.data,
+            forma_pagamento: formaSegunda,
+            observacao: null,
+            taxa: taxaSegunda,
+            valor_liquido: Number(((totalBruto - Number(valorInicial)) * (1 - taxaSegunda / 100)).toFixed(2)),
+          });
         }
-      } catch (err) {
-        console.error("[AtendimentoForm] Erro ao salvar o atendimento:", err);
+      }
+
+      // Chamada única transacional à RPC.
+      const { error: rpcError } = await supabase.rpc("salvar_atendimento_completo", {
+        p_atendimento_id: editing?.id ?? undefined,
+        p_paciente: nome,
+        p_paciente_id: idResolvido ?? undefined,
+        p_procedimento: procedimentoTexto,
+        p_valor_bruto: Number(totalBruto.toFixed(2)),
+        p_forma_pagamento: v.forma_pagamento,
+        p_taxa: Number(taxaEfetiva.toFixed(2)),
+        p_valor_liquido: dividido ? Number((totalBruto * (1 - taxaEfetiva / 100)).toFixed(2)) : Number(valorLiquido.toFixed(2)),
+        p_nota_fiscal: v.nota_fiscal,
+        p_data: v.data,
+        p_status_pagamento: usarParcelas || (dividido && !segundaAgora) ? "pendente" : v.status_pagamento,
+        p_parcelado: dividido ? false : usarParcelas,
+        p_parcelas_total: usarParcelas ? parcelasN : 1,
+        p_procedimentos: procedimentos,
+        p_recebimentos: recebimentos,
+      });
+      if (rpcError) {
+        console.error("[AtendimentoForm] Erro ao salvar o atendimento (RPC):", rpcError);
         toast.error("Não foi possível salvar o atendimento. Tente novamente.");
         return;
-      }
-
-      if (atendimentoId) {
-        // Exclusão dos procedimentos atuais do atendimento.
-        const { error: delError } = await supabase
-          .from("atendimento_procedimentos")
-          .delete()
-          .eq("atendimento_id", atendimentoId);
-        if (delError) {
-          console.error("[AtendimentoForm] Erro ao excluir procedimentos:", delError);
-          toast.error("Não foi possível atualizar os procedimentos do atendimento. Tente novamente.");
-          return;
-        }
-        // Inserção dos novos procedimentos.
-        const rows = validItems.map((it) => ({
-          user_id: user!.id,
-          atendimento_id: atendimentoId,
-          procedimento: it.procedimento.trim(),
-          valor: Number(it.valor || 0),
-        }));
-        const { error: insError } = await supabase
-          .from("atendimento_procedimentos")
-          .insert(rows);
-        if (insError) {
-          console.error("[AtendimentoForm] Erro ao inserir procedimentos:", insError);
-          toast.error("Não foi possível salvar os procedimentos do atendimento. Tente novamente.");
-          return;
-        }
-      }
-
-      // Criação dos recebimentos do modo dividido.
-      // Cada recebimento grava sua própria forma, taxa e valor líquido.
-      if (!isEdit && dividido && atendimentoId) {
-        // Primeiro recebimento (parte já recebida).
-        try {
-          const { error } = await supabase.from("recebimentos").insert({
-            user_id: user!.id,
-            atendimento_id: atendimentoId,
-            valor: Number(valorInicial),
-            data: v.data,
-            forma_pagamento: formaInicial,
-            observacao: null,
-            taxa: taxaInicial,
-            valor_liquido: Number((Number(valorInicial) * (1 - taxaInicial / 100)).toFixed(2)),
-          });
-          if (error) throw error;
-        } catch (err) {
-          console.error("[AtendimentoForm] Erro ao registrar o primeiro recebimento:", err);
-          toast.error("Não foi possível registrar o recebimento inicial. Tente novamente.");
-          return;
-        }
-        // Segundo recebimento (parte restante paga agora).
-        if (segundaAgora) {
-          try {
-            const { error } = await supabase.from("recebimentos").insert({
-              user_id: user!.id,
-              atendimento_id: atendimentoId,
-              valor: Number((totalBruto - Number(valorInicial)).toFixed(2)),
-              data: v.data,
-              forma_pagamento: formaSegunda,
-              observacao: null,
-              taxa: taxaSegunda,
-              valor_liquido: Number(((totalBruto - Number(valorInicial)) * (1 - taxaSegunda / 100)).toFixed(2)),
-            });
-            if (error) throw error;
-          } catch (err) {
-            console.error("[AtendimentoForm] Erro ao registrar o segundo recebimento:", err);
-            // O primeiro recebimento já foi salvo; sem transação SQL não há rollback.
-            toast.error("O primeiro recebimento foi salvo, mas não foi possível registrar a segunda parte. Registre-a manualmente.");
-            return;
-          }
-        }
       }
 
       // Atualiza os caches das listas afetadas.
@@ -545,6 +488,7 @@ export function AtendimentoForm({
       onSaved?.();
       setOpen(false);
       onClose?.();
+
     } catch (err) {
       console.error("[AtendimentoForm] Erro inesperado ao salvar atendimento:", err);
       toast.error("Ocorreu um erro inesperado ao salvar. Tente novamente.");
