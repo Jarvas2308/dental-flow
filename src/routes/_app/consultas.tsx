@@ -141,7 +141,7 @@ function Consultas() {
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
                       {!c.realizada && (
-                        <RealizarConsulta consulta={c} onRealizada={() => upd.mutate({ id: c.id, values: { realizada: true } })} />
+                        <RealizarConsulta consulta={c} upd={upd} />
                       )}
                       {c.realizada && (
                         <Button variant="ghost" size="sm" className="h-8 text-muted-foreground"
@@ -163,15 +163,19 @@ function Consultas() {
   );
 }
 
-function RealizarConsulta({ consulta, onRealizada }: { consulta: any; onRealizada: () => void }) {
-  const [saved, setSaved] = useState(false);
+function RealizarConsulta({ consulta, upd }: { consulta: any; upd: ReturnType<typeof useUpdate> }) {
   return (
     <AtendimentoForm
       initialData={{ paciente: consulta.paciente, valorEstimado: Number(consulta.valor_estimado) || undefined }}
-      onSaved={() => setSaved(true)}
-      onClose={() => {
-        if (saved) onRealizada();
-        setSaved(false);
+      onSaved={async () => {
+        try {
+          // Marca a consulta como realizada e aguarda a confirmação antes de
+          // encerrar o fluxo. Em caso de falha, a consulta permanece como não
+          // realizada e o erro é exibido pelo onError do useUpdate.
+          await upd.mutateAsync({ id: consulta.id, values: { realizada: true } });
+        } catch {
+          // Erro já tratado pelo onError do useUpdate; nada a fazer aqui.
+        }
       }}
       trigger={
         <Button variant="ghost" size="sm" className="h-8 gap-1 text-success hover:bg-success/10">
