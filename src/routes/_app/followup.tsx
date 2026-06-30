@@ -258,15 +258,17 @@ function ContatadoButton({ proposta }: { proposta: any }) {
   );
 }
 
-function FecharButton({ proposta, onFechado }: { proposta: any; onFechado: () => void }) {
-  const [saved, setSaved] = useState(false);
+function FecharButton({ proposta }: { proposta: any }) {
+  const update = useUpdate("tratamentos_propostos");
   return (
     <AtendimentoForm
       initialData={{ paciente: proposta.paciente, valorEstimado: Number(proposta.valor_estimado) || undefined }}
-      onSaved={() => setSaved(true)}
-      onClose={() => {
-        if (saved) onFechado();
-        setSaved(false);
+      onSaved={async () => {
+        try {
+          await update.mutateAsync({ id: proposta.id, values: { status: "fechado" } });
+        } catch {
+          // Erro já tratado pelo onError do useUpdate.
+        }
       }}
       trigger={
         <Button variant="ghost" size="sm" className="h-8 gap-1 text-success hover:bg-success/10">
