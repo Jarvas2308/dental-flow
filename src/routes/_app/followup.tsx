@@ -359,7 +359,7 @@ function Followup() {
                   <div className="flex items-center justify-end gap-1">
                     <EditarPropostaButton proposta={p} />
                     <ContatadoButton proposta={p} />
-                    <FecharButton proposta={p} onFechado={() => marcarStatus(p.id, "fechado")} />
+                    <FecharButton proposta={p} />
                     <ConfirmDelete
                       title="Marcar como recusado?"
                       description={`"${p.tratamento}" de ${p.paciente} sairá do acompanhamento.`}
