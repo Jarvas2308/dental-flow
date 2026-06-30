@@ -141,7 +141,7 @@ function Consultas() {
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
                       {!c.realizada && (
-                        <RealizarConsulta consulta={c} onRealizada={() => upd.mutate({ id: c.id, values: { realizada: true } })} />
+                        <RealizarConsulta consulta={c} upd={upd} />
                       )}
                       {c.realizada && (
                         <Button variant="ghost" size="sm" className="h-8 text-muted-foreground"
