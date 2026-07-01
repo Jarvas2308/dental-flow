@@ -56,6 +56,7 @@ export type Database = {
           forma_pagamento: string
           id: string
           nota_fiscal: boolean
+          nota_fiscal_status: string
           paciente: string
           paciente_id: string | null
           parcelado: boolean
@@ -73,6 +74,7 @@ export type Database = {
           forma_pagamento: string
           id?: string
           nota_fiscal?: boolean
+          nota_fiscal_status?: string
           paciente: string
           paciente_id?: string | null
           parcelado?: boolean
@@ -90,6 +92,7 @@ export type Database = {
           forma_pagamento?: string
           id?: string
           nota_fiscal?: boolean
+          nota_fiscal_status?: string
           paciente?: string
           paciente_id?: string | null
           parcelado?: boolean
@@ -648,7 +651,7 @@ export type Database = {
           p_atendimento_id?: string
           p_data?: string
           p_forma_pagamento?: string
-          p_nota_fiscal?: boolean
+          p_nota_fiscal_status?: string
           p_paciente?: string
           p_paciente_id?: string
           p_parcelado?: boolean
