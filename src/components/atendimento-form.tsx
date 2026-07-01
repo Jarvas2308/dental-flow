@@ -207,20 +207,22 @@ export function ProcedimentoCombobox({
 
 type ProcItem = { procedimento: string; valor: string };
 
+type NotaFiscalStatus = "pendente" | "emitida" | "nao_emitida" | "nao_se_aplica";
+
 type Atendimento = {
   id?: string;
   paciente: string;
   forma_pagamento: string;
   taxa: number | string;
   data: string;
-  nota_fiscal: boolean;
+  nota_fiscal_status: NotaFiscalStatus;
   status_pagamento: string;
 };
 
 const empty = (): Atendimento => ({
   paciente: "", forma_pagamento: "",
   taxa: 0, data: todayISO(),
-  nota_fiscal: false, status_pagamento: "pago",
+  nota_fiscal_status: "pendente", status_pagamento: "pago",
 });
 
 export function AtendimentoForm({
