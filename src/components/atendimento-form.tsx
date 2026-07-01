@@ -207,20 +207,22 @@ export function ProcedimentoCombobox({
 
 type ProcItem = { procedimento: string; valor: string };
 
+type NotaFiscalStatus = "pendente" | "emitida" | "nao_emitida" | "nao_se_aplica";
+
 type Atendimento = {
   id?: string;
   paciente: string;
   forma_pagamento: string;
   taxa: number | string;
   data: string;
-  nota_fiscal: boolean;
+  nota_fiscal_status: NotaFiscalStatus;
   status_pagamento: string;
 };
 
 const empty = (): Atendimento => ({
   paciente: "", forma_pagamento: "",
   taxa: 0, data: todayISO(),
-  nota_fiscal: false, status_pagamento: "pago",
+  nota_fiscal_status: "pendente", status_pagamento: "pago",
 });
 
 export function AtendimentoForm({
@@ -288,7 +290,7 @@ export function AtendimentoForm({
     setFormaInicialTocada(false);
     setSegundaAgora(false);
     setFormaSegunda("");
-    setShowMore(!!editing && (!!editing.parcelado || !!editing.nota_fiscal));
+    setShowMore(!!editing && (!!editing.parcelado || (editing.nota_fiscal_status && editing.nota_fiscal_status !== "pendente")));
     if (editing?.id) {
       // Carrega itens existentes; fallback para o atendimento legado (1 linha).
       supabase
@@ -463,7 +465,7 @@ export function AtendimentoForm({
         p_forma_pagamento: v.forma_pagamento,
         p_taxa: Number(taxaEfetiva.toFixed(2)),
         p_valor_liquido: dividido ? Number((totalBruto * (1 - taxaEfetiva / 100)).toFixed(2)) : Number(valorLiquido.toFixed(2)),
-        p_nota_fiscal: v.nota_fiscal,
+        p_nota_fiscal_status: v.nota_fiscal_status,
         p_data: v.data,
         p_status_pagamento: usarParcelas || (dividido && !segundaAgora) ? "pendente" : v.status_pagamento,
         p_parcelado: dividido ? false : usarParcelas,
@@ -725,12 +727,22 @@ export function AtendimentoForm({
               )}
             </div>
 
-            <div className="sm:col-span-2 flex items-center justify-between p-3 rounded-lg bg-muted/40">
-              <div>
-                <Label className="cursor-pointer">Nota fiscal emitida</Label>
-                <p className="text-xs text-muted-foreground">Marque se a NF já foi gerada</p>
-              </div>
-              <Switch checked={v.nota_fiscal} onCheckedChange={(c) => setV({ ...v, nota_fiscal: c })} />
+            <div className="sm:col-span-2 space-y-1.5 p-3 rounded-lg bg-muted/40">
+              <Label>Nota fiscal</Label>
+              <Select
+                value={v.nota_fiscal_status}
+                onValueChange={(val) => setV({ ...v, nota_fiscal_status: val as NotaFiscalStatus })}
+              >
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pendente">Pendente</SelectItem>
+                  <SelectItem value="emitida">Emitida</SelectItem>
+                  <SelectItem value="nao_emitida">Não emitida</SelectItem>
+                  {v.nota_fiscal_status === "nao_se_aplica" && (
+                    <SelectItem value="nao_se_aplica">Não se aplica (legado)</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
             </div>
             </>
             )}
