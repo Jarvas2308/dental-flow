@@ -290,7 +290,7 @@ export function AtendimentoForm({
     setFormaInicialTocada(false);
     setSegundaAgora(false);
     setFormaSegunda("");
-    setShowMore(!!editing && (!!editing.parcelado || !!editing.nota_fiscal));
+    setShowMore(!!editing && (!!editing.parcelado || (editing.nota_fiscal_status && editing.nota_fiscal_status !== "pendente")));
     if (editing?.id) {
       // Carrega itens existentes; fallback para o atendimento legado (1 linha).
       supabase
