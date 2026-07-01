@@ -465,7 +465,7 @@ export function AtendimentoForm({
         p_forma_pagamento: v.forma_pagamento,
         p_taxa: Number(taxaEfetiva.toFixed(2)),
         p_valor_liquido: dividido ? Number((totalBruto * (1 - taxaEfetiva / 100)).toFixed(2)) : Number(valorLiquido.toFixed(2)),
-        p_nota_fiscal: v.nota_fiscal,
+        p_nota_fiscal_status: v.nota_fiscal_status,
         p_data: v.data,
         p_status_pagamento: usarParcelas || (dividido && !segundaAgora) ? "pendente" : v.status_pagamento,
         p_parcelado: dividido ? false : usarParcelas,
