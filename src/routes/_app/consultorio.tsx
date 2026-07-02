@@ -400,11 +400,35 @@ function Consultorio() {
                   })()}
                 </TableCell>
                 <TableCell>
-                  <button onClick={() => upd.mutate({ id: r.id, values: { nota_fiscal: !r.nota_fiscal } })}>
-                    {r.nota_fiscal
+                  {(() => {
+                    const status = (r.nota_fiscal_status ?? "pendente") as string;
+                    const label = status === "emitida" ? "Emitida"
+                      : status === "nao_emitida" ? "Não emitida"
+                      : status === "nao_se_aplica" ? "Não se aplica"
+                      : "Pendente";
+                    const badge = status === "emitida"
                       ? <Badge className="bg-success text-success-foreground hover:bg-success/90">Emitida</Badge>
-                      : <Badge variant="outline">Pendente</Badge>}
-                  </button>
+                      : <Badge variant="outline">{label}</Badge>;
+                    return (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button>{badge}</button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-40">
+                          <DropdownMenuLabel>Nota fiscal</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuRadioGroup
+                            value={["emitida", "pendente", "nao_emitida"].includes(status) ? status : ""}
+                            onValueChange={(v) => upd.mutate({ id: r.id, values: { nota_fiscal_status: v } })}
+                          >
+                            <DropdownMenuRadioItem value="emitida">Emitida</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="pendente">Pendente</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="nao_emitida">Não emitida</DropdownMenuRadioItem>
+                          </DropdownMenuRadioGroup>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    );
+                  })()}
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
