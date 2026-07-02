@@ -207,7 +207,13 @@ function Consultorio() {
   const totPendente = rows.reduce((s, r) => s + (resumoMap.get(r.id)?.saldoLiquido ?? 0), 0);
   const pagas = rows.filter((r) => !isPendente(r));
   const abertas = rows.filter((r) => isPendente(r));
-  const totNF = pagas.filter((r) => r.nota_fiscal_status === "emitida").length;
+  // Totais de nota fiscal no período/filtro selecionado.
+  const nfCount = (status: string) =>
+    rows.filter((r) => (r.nota_fiscal_status ?? "pendente") === status).length;
+  const nfEmitidas = nfCount("emitida");
+  const nfPendentes = nfCount("pendente");
+  const nfNaoEmitidas = nfCount("nao_emitida");
+  const nfNaoSeAplica = nfCount("nao_se_aplica");
 
 
   const hasActiveFilter = filter !== "todos" || procFilter !== "__all__" || q.length > 0 || statusPag !== "todos";
