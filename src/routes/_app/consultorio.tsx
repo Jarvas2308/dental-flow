@@ -207,7 +207,7 @@ function Consultorio() {
   const totPendente = rows.reduce((s, r) => s + (resumoMap.get(r.id)?.saldoLiquido ?? 0), 0);
   const pagas = rows.filter((r) => !isPendente(r));
   const abertas = rows.filter((r) => isPendente(r));
-  const totNF = pagas.filter((r) => r.nota_fiscal).length;
+  const totNF = pagas.filter((r) => r.nota_fiscal_status === "emitida").length;
 
 
   const hasActiveFilter = filter !== "todos" || procFilter !== "__all__" || q.length > 0 || statusPag !== "todos";
