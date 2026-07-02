@@ -35,7 +35,7 @@ type SortKey =
   | "bruto_desc" | "liquido_desc"
   | "nf" | "lucrativos" | "frequentes";
 
-type QuickFilter = "todos" | "hoje" | "semana" | "mes" | "emitidos" | "pendentes" | "cartao" | "pix" | "dinheiro";
+type QuickFilter = "todos" | "hoje" | "semana" | "mes" | "emitidos" | "pendentes" | "nao_emitidos" | "nao_se_aplica" | "cartao" | "pix" | "dinheiro";
 
 type StatusPag = "todos" | "pagos" | "abertos";
 
@@ -66,6 +66,8 @@ const FILTER_LABELS: Record<QuickFilter, string> = {
   mes: "Este mês",
   emitidos: "NF Emitidas",
   pendentes: "NF Pendentes",
+  nao_emitidos: "NF Não emitidas",
+  nao_se_aplica: "NF Não se aplica",
   cartao: "Cartão",
   pix: "PIX",
   dinheiro: "Dinheiro",
@@ -142,9 +144,13 @@ function Consultorio() {
     } else if (filter === "mes" || filter === "todos") {
       r = r.filter(inMonth);
     } else if (filter === "emitidos") {
-      r = r.filter((x) => inMonth(x) && x.nota_fiscal);
+      r = r.filter((x) => inMonth(x) && x.nota_fiscal_status === "emitida");
     } else if (filter === "pendentes") {
-      r = r.filter((x) => inMonth(x) && !x.nota_fiscal);
+      r = r.filter((x) => inMonth(x) && (x.nota_fiscal_status ?? "pendente") === "pendente");
+    } else if (filter === "nao_emitidos") {
+      r = r.filter((x) => inMonth(x) && x.nota_fiscal_status === "nao_emitida");
+    } else if (filter === "nao_se_aplica") {
+      r = r.filter((x) => inMonth(x) && x.nota_fiscal_status === "nao_se_aplica");
     } else if (filter === "cartao") {
       r = r.filter((x) => inMonth(x) && /cart[ãa]o|cr[eé]dito|d[eé]bito/i.test(x.forma_pagamento ?? ""));
     } else if (filter === "pix") {
@@ -179,7 +185,7 @@ function Consultorio() {
         case "bruto_desc": return Number(b.valor_bruto || 0) - Number(a.valor_bruto || 0);
         case "liquido_desc": return Number(b.valor_liquido || 0) - Number(a.valor_liquido || 0);
         case "lucrativos": return Number(b.valor_liquido || 0) - Number(a.valor_liquido || 0);
-        case "nf": return Number(b.nota_fiscal) - Number(a.nota_fiscal);
+        case "nf": return (b.nota_fiscal_status === "emitida" ? 1 : 0) - (a.nota_fiscal_status === "emitida" ? 1 : 0);
         case "frequentes": return (freqMap.get(b.procedimento) ?? 0) - (freqMap.get(a.procedimento) ?? 0);
         default: return 0;
       }
@@ -201,7 +207,7 @@ function Consultorio() {
   const totPendente = rows.reduce((s, r) => s + (resumoMap.get(r.id)?.saldoLiquido ?? 0), 0);
   const pagas = rows.filter((r) => !isPendente(r));
   const abertas = rows.filter((r) => isPendente(r));
-  const totNF = pagas.filter((r) => r.nota_fiscal).length;
+  const totNF = pagas.filter((r) => r.nota_fiscal_status === "emitida").length;
 
 
   const hasActiveFilter = filter !== "todos" || procFilter !== "__all__" || q.length > 0 || statusPag !== "todos";
@@ -232,7 +238,7 @@ function Consultorio() {
           />
         </div>
 
-        <Select value={mes} onValueChange={setMes} disabled={!["todos", "mes", "emitidos", "pendentes", "cartao", "pix", "dinheiro"].includes(filter)}>
+        <Select value={mes} onValueChange={setMes} disabled={!["todos", "mes", "emitidos", "pendentes", "nao_emitidos", "nao_se_aplica", "cartao", "pix", "dinheiro"].includes(filter)}>
           <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
           <SelectContent>
             {monthOptions(12).map((m) => <SelectItem key={m} value={m} className="capitalize">{monthLabel(m)}</SelectItem>)}
@@ -394,11 +400,35 @@ function Consultorio() {
                   })()}
                 </TableCell>
                 <TableCell>
-                  <button onClick={() => upd.mutate({ id: r.id, values: { nota_fiscal: !r.nota_fiscal } })}>
-                    {r.nota_fiscal
+                  {(() => {
+                    const status = (r.nota_fiscal_status ?? "pendente") as string;
+                    const label = status === "emitida" ? "Emitida"
+                      : status === "nao_emitida" ? "Não emitida"
+                      : status === "nao_se_aplica" ? "Não se aplica"
+                      : "Pendente";
+                    const badge = status === "emitida"
                       ? <Badge className="bg-success text-success-foreground hover:bg-success/90">Emitida</Badge>
-                      : <Badge variant="outline">Pendente</Badge>}
-                  </button>
+                      : <Badge variant="outline">{label}</Badge>;
+                    return (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button>{badge}</button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-40">
+                          <DropdownMenuLabel>Nota fiscal</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuRadioGroup
+                            value={["emitida", "pendente", "nao_emitida"].includes(status) ? status : ""}
+                            onValueChange={(v) => upd.mutate({ id: r.id, values: { nota_fiscal_status: v } })}
+                          >
+                            <DropdownMenuRadioItem value="emitida">Emitida</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="pendente">Pendente</DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="nao_emitida">Não emitida</DropdownMenuRadioItem>
+                          </DropdownMenuRadioGroup>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    );
+                  })()}
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
