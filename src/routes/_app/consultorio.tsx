@@ -144,9 +144,13 @@ function Consultorio() {
     } else if (filter === "mes" || filter === "todos") {
       r = r.filter(inMonth);
     } else if (filter === "emitidos") {
-      r = r.filter((x) => inMonth(x) && x.nota_fiscal);
+      r = r.filter((x) => inMonth(x) && x.nota_fiscal_status === "emitida");
     } else if (filter === "pendentes") {
-      r = r.filter((x) => inMonth(x) && !x.nota_fiscal);
+      r = r.filter((x) => inMonth(x) && (x.nota_fiscal_status ?? "pendente") === "pendente");
+    } else if (filter === "nao_emitidos") {
+      r = r.filter((x) => inMonth(x) && x.nota_fiscal_status === "nao_emitida");
+    } else if (filter === "nao_se_aplica") {
+      r = r.filter((x) => inMonth(x) && x.nota_fiscal_status === "nao_se_aplica");
     } else if (filter === "cartao") {
       r = r.filter((x) => inMonth(x) && /cart[ãa]o|cr[eé]dito|d[eé]bito/i.test(x.forma_pagamento ?? ""));
     } else if (filter === "pix") {
