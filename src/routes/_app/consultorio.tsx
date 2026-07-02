@@ -238,7 +238,7 @@ function Consultorio() {
           />
         </div>
 
-        <Select value={mes} onValueChange={setMes} disabled={!["todos", "mes", "emitidos", "pendentes", "cartao", "pix", "dinheiro"].includes(filter)}>
+        <Select value={mes} onValueChange={setMes} disabled={!["todos", "mes", "emitidos", "pendentes", "nao_emitidos", "nao_se_aplica", "cartao", "pix", "dinheiro"].includes(filter)}>
           <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
           <SelectContent>
             {monthOptions(12).map((m) => <SelectItem key={m} value={m} className="capitalize">{monthLabel(m)}</SelectItem>)}
