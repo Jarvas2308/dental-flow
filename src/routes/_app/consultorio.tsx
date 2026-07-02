@@ -207,7 +207,13 @@ function Consultorio() {
   const totPendente = rows.reduce((s, r) => s + (resumoMap.get(r.id)?.saldoLiquido ?? 0), 0);
   const pagas = rows.filter((r) => !isPendente(r));
   const abertas = rows.filter((r) => isPendente(r));
-  const totNF = pagas.filter((r) => r.nota_fiscal_status === "emitida").length;
+  // Totais de nota fiscal no período/filtro selecionado.
+  const nfCount = (status: string) =>
+    rows.filter((r) => (r.nota_fiscal_status ?? "pendente") === status).length;
+  const nfEmitidas = nfCount("emitida");
+  const nfPendentes = nfCount("pendente");
+  const nfNaoEmitidas = nfCount("nao_emitida");
+  const nfNaoSeAplica = nfCount("nao_se_aplica");
 
 
   const hasActiveFilter = filter !== "todos" || procFilter !== "__all__" || q.length > 0 || statusPag !== "todos";
@@ -222,7 +228,7 @@ function Consultorio() {
         <StatCard label="Recebido (líquido)" value={brl(totLiq)} tone="success" hint={`${pagas.length} pagos · bruto ${brl(totBruto)}`} />
         <StatCard label="Em aberto" value={brl(totPendente)} tone={totPendente > 0 ? "destructive" : "success"} icon={<Clock className="h-4 w-4" />} hint={`${abertas.length} pendentes`} />
         <StatCard label="Previsto após receber" value={brl(totLiq + totPendente)} tone="primary" hint="Recebido + pendente" />
-        <StatCard label="NFs emitidas" value={`${totNF} de ${pagas.length}`} icon={<FileCheck2 className="h-4 w-4" />} />
+        <StatCard label="NFs no período" value={`${nfEmitidas} emitidas`} icon={<FileCheck2 className="h-4 w-4" />} hint={`${nfPendentes} pendentes · ${nfNaoEmitidas} não emitidas · ${nfNaoSeAplica} não se aplica`} />
       </div>
 
 
