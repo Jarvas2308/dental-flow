@@ -185,7 +185,7 @@ function Consultorio() {
         case "bruto_desc": return Number(b.valor_bruto || 0) - Number(a.valor_bruto || 0);
         case "liquido_desc": return Number(b.valor_liquido || 0) - Number(a.valor_liquido || 0);
         case "lucrativos": return Number(b.valor_liquido || 0) - Number(a.valor_liquido || 0);
-        case "nf": return Number(b.nota_fiscal) - Number(a.nota_fiscal);
+        case "nf": return (b.nota_fiscal_status === "emitida" ? 1 : 0) - (a.nota_fiscal_status === "emitida" ? 1 : 0);
         case "frequentes": return (freqMap.get(b.procedimento) ?? 0) - (freqMap.get(a.procedimento) ?? 0);
         default: return 0;
       }
