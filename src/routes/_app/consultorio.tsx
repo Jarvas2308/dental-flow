@@ -35,7 +35,7 @@ type SortKey =
   | "bruto_desc" | "liquido_desc"
   | "nf" | "lucrativos" | "frequentes";
 
-type QuickFilter = "todos" | "hoje" | "semana" | "mes" | "emitidos" | "pendentes" | "cartao" | "pix" | "dinheiro";
+type QuickFilter = "todos" | "hoje" | "semana" | "mes" | "emitidos" | "pendentes" | "nao_emitidos" | "nao_se_aplica" | "cartao" | "pix" | "dinheiro";
 
 type StatusPag = "todos" | "pagos" | "abertos";
 
