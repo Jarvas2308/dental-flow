@@ -66,6 +66,8 @@ const FILTER_LABELS: Record<QuickFilter, string> = {
   mes: "Este mês",
   emitidos: "NF Emitidas",
   pendentes: "NF Pendentes",
+  nao_emitidos: "NF Não emitidas",
+  nao_se_aplica: "NF Não se aplica",
   cartao: "Cartão",
   pix: "PIX",
   dinheiro: "Dinheiro",
