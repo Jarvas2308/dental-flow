@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useTable, useCreate, useUpdate } from "@/hooks/use-data";
 import { brl, formatDateBR, todayISO } from "@/lib/format";
 import { proximaTentativa, estaPendenteHoje } from "@/lib/followup";
@@ -221,6 +221,8 @@ function ContatadoButton({ proposta }: { proposta: any }) {
   const [obs, setObs] = useState("");
 
   const confirmar = async () => {
+    // Ignora cliques repetidos enquanto o registro está sendo salvo.
+    if (create.isPending || update.isPending) return;
     await create.mutateAsync({
       tratamento_proposto_id: proposta.id,
       data: todayISO(),
@@ -260,14 +262,20 @@ function ContatadoButton({ proposta }: { proposta: any }) {
 
 function FecharButton({ proposta }: { proposta: any }) {
   const update = useUpdate("tratamentos_propostos");
+  // Garante que a proposta seja fechada uma única vez, mesmo com cliques
+  // repetidos. Em caso de falha, libera para nova tentativa.
+  const done = useRef(false);
   return (
     <AtendimentoForm
       initialData={{ paciente: proposta.paciente, valorEstimado: Number(proposta.valor_estimado) || undefined }}
       onSaved={async () => {
+        if (done.current) return;
+        done.current = true;
         try {
           await update.mutateAsync({ id: proposta.id, values: { status: "fechado" } });
-        } catch {
-          // Erro já tratado pelo onError do useUpdate.
+        } catch (e) {
+          done.current = false;
+          throw e;
         }
       }}
       trigger={

@@ -230,7 +230,7 @@ export function AtendimentoForm({
 }: {
   editing?: any;
   onClose?: () => void;
-  onSaved?: () => void;
+  onSaved?: () => void | Promise<void>;
   trigger?: React.ReactNode;
   initialData?: { paciente?: string; valorEstimado?: number };
 }) {
@@ -485,9 +485,18 @@ export function AtendimentoForm({
       qc.invalidateQueries({ queryKey: ["atendimento_procedimentos"] });
       qc.invalidateQueries({ queryKey: ["recebimentos"] });
 
-      // Todas as operações concluídas com sucesso.
+      // Todas as operações do atendimento concluídas com sucesso.
       toast.success("Atendimento salvo com sucesso");
-      onSaved?.();
+
+      // Aguarda o callback do fluxo pai (ex.: marcar consulta/proposta) antes
+      // de fechar o modal. Se ele falhar, mantém o modal aberto para nova
+      // tentativa — o erro já é sinalizado pelo próprio callback.
+      try {
+        await onSaved?.();
+      } catch (savedErr) {
+        console.error("[AtendimentoForm] Erro no callback onSaved:", savedErr);
+        return;
+      }
       setOpen(false);
       onClose?.();
 
