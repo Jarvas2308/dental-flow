@@ -230,7 +230,7 @@ export function AtendimentoForm({
 }: {
   editing?: any;
   onClose?: () => void;
-  onSaved?: () => void;
+  onSaved?: () => void | Promise<void>;
   trigger?: React.ReactNode;
   initialData?: { paciente?: string; valorEstimado?: number };
 }) {
