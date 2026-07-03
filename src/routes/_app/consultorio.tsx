@@ -228,7 +228,7 @@ function Consultorio() {
   // Acumulado (todos os recebimentos das linhas) — preservado para "Previsto após receber".
   const totLiqAcumulado = rows.reduce((s, r) => s + (resumoMap.get(r.id)?.recebidoLiquido ?? 0), 0);
   const totPendente = rows.reduce((s, r) => s + (resumoMap.get(r.id)?.saldoLiquido ?? 0), 0);
-  const pagas = rows.filter((r) => !isPendente(r));
+  
   const abertas = rows.filter((r) => isPendente(r));
 
   // Totais de nota fiscal no período/filtro selecionado.
