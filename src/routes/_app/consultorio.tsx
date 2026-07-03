@@ -249,9 +249,9 @@ function Consultorio() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-6">
-        <StatCard label="Recebido (líquido)" value={brl(totLiq)} tone="success" hint={`${pagas.length} pagos · bruto ${brl(totBruto)}`} />
+        <StatCard label="Recebido no período (líquido)" value={brl(totLiq)} tone="success" hint={`${qtdReceb} recebimento${qtdReceb === 1 ? "" : "s"} · bruto ${brl(totBruto)}`} />
         <StatCard label="Em aberto" value={brl(totPendente)} tone={totPendente > 0 ? "destructive" : "success"} icon={<Clock className="h-4 w-4" />} hint={`${abertas.length} pendentes`} />
-        <StatCard label="Previsto após receber" value={brl(totLiq + totPendente)} tone="primary" hint="Recebido + pendente" />
+        <StatCard label="Previsto após receber" value={brl(totLiqAcumulado + totPendente)} tone="primary" hint="Recebido + pendente" />
         <StatCard label="NFs no período" value={`${nfEmitidas} emitidas`} icon={<FileCheck2 className="h-4 w-4" />} hint={`${nfPendentes} pendentes · ${nfNaoEmitidas} não emitidas · ${nfNaoSeAplica} não se aplica`} />
       </div>
 
