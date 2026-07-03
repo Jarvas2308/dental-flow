@@ -201,12 +201,36 @@ function Consultorio() {
   }, [allData, mes, q, sort, filter, procFilter, statusPag, freqMap]);
 
 
-  // Faturamento real: apenas valores efetivamente recebidos contam.
-  const totLiq = rows.reduce((s, r) => s + (resumoMap.get(r.id)?.recebidoLiquido ?? 0), 0);
-  const totBruto = rows.reduce((s, r) => s + (resumoMap.get(r.id)?.recebido ?? 0), 0);
+  // Predicado de período (data do RECEBIMENTO), espelhando o filtro temporal da tabela.
+  const inPeriodo = (dateStr: string) => {
+    const d = parseLocalDate(dateStr);
+    if (!d) return false;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    if (filter === "hoje") {
+      const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+      return d >= today && d < tomorrow;
+    }
+    if (filter === "semana") return d >= startOfWeek(today);
+    return monthKey(dateStr) === mes;
+  };
+
+  // "Recebido no período": soma somente recebimentos cuja DATA pertence ao período,
+  // usando os próprios campos (bruto/líquido) de cada recebimento. Não usa o
+  // acumulado de resumoAtendimento.
+  const recebPeriodo = useMemo(
+    () => receitasRecebidas(rows, recebimentos.data ?? [], parcelas.data ?? []).filter((e) => inPeriodo(e.data)),
+    [rows, recebimentos.data, parcelas.data, filter, mes],
+  );
+  const totBruto = recebPeriodo.reduce((s, e) => s + e.valor_bruto, 0);
+  const totLiq = recebPeriodo.reduce((s, e) => s + e.valor_liquido, 0);
+  const qtdReceb = recebPeriodo.length;
+
+  // Acumulado (todos os recebimentos das linhas) — preservado para "Previsto após receber".
+  const totLiqAcumulado = rows.reduce((s, r) => s + (resumoMap.get(r.id)?.recebidoLiquido ?? 0), 0);
   const totPendente = rows.reduce((s, r) => s + (resumoMap.get(r.id)?.saldoLiquido ?? 0), 0);
   const pagas = rows.filter((r) => !isPendente(r));
   const abertas = rows.filter((r) => isPendente(r));
+
   // Totais de nota fiscal no período/filtro selecionado.
   const nfCount = (status: string) =>
     rows.filter((r) => (r.nota_fiscal_status ?? "pendente") === status).length;
