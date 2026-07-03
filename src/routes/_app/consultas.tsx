@@ -164,17 +164,23 @@ function Consultas() {
 }
 
 function RealizarConsulta({ consulta, upd }: { consulta: any; upd: ReturnType<typeof useUpdate> }) {
+  // Garante que a consulta seja marcada como realizada uma única vez, mesmo
+  // com cliques repetidos. Em caso de falha, libera para nova tentativa.
+  const done = useRef(false);
   return (
     <AtendimentoForm
       initialData={{ paciente: consulta.paciente, valorEstimado: Number(consulta.valor_estimado) || undefined }}
       onSaved={async () => {
+        if (done.current) return;
+        done.current = true;
         try {
           // Marca a consulta como realizada e aguarda a confirmação antes de
           // encerrar o fluxo. Em caso de falha, a consulta permanece como não
-          // realizada e o erro é exibido pelo onError do useUpdate.
+          // realizada e o modal permanece aberto para nova tentativa.
           await upd.mutateAsync({ id: consulta.id, values: { realizada: true } });
-        } catch {
-          // Erro já tratado pelo onError do useUpdate; nada a fazer aqui.
+        } catch (e) {
+          done.current = false;
+          throw e;
         }
       }}
       trigger={
