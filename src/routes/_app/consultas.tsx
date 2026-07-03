@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useTable, useUpdate, useDelete } from "@/hooks/use-data";
 import { brl, formatDateBR, parseLocalDate, todayISO } from "@/lib/format";
 import { PageHeader, StatCard } from "@/components/ui-kit";
