@@ -221,6 +221,8 @@ function ContatadoButton({ proposta }: { proposta: any }) {
   const [obs, setObs] = useState("");
 
   const confirmar = async () => {
+    // Ignora cliques repetidos enquanto o registro está sendo salvo.
+    if (create.isPending || update.isPending) return;
     await create.mutateAsync({
       tratamento_proposto_id: proposta.id,
       data: todayISO(),
