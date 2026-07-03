@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { AtendimentoForm, EditAtendimentoButton } from "@/components/atendimento-form";
 import { RegistrarRecebimento } from "@/components/recebimento-form";
-import { resumoAtendimento, STATUS_LABEL } from "@/lib/finance";
+import { resumoAtendimento, receitasRecebidas, STATUS_LABEL } from "@/lib/finance";
 import { Progress } from "@/components/ui/progress";
 
 export const Route = createFileRoute("/_app/consultorio")({
@@ -201,12 +201,36 @@ function Consultorio() {
   }, [allData, mes, q, sort, filter, procFilter, statusPag, freqMap]);
 
 
-  // Faturamento real: apenas valores efetivamente recebidos contam.
-  const totLiq = rows.reduce((s, r) => s + (resumoMap.get(r.id)?.recebidoLiquido ?? 0), 0);
-  const totBruto = rows.reduce((s, r) => s + (resumoMap.get(r.id)?.recebido ?? 0), 0);
+  // Predicado de período (data do RECEBIMENTO), espelhando o filtro temporal da tabela.
+  const inPeriodo = (dateStr: string) => {
+    const d = parseLocalDate(dateStr);
+    if (!d) return false;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    if (filter === "hoje") {
+      const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+      return d >= today && d < tomorrow;
+    }
+    if (filter === "semana") return d >= startOfWeek(today);
+    return monthKey(dateStr) === mes;
+  };
+
+  // "Recebido no período": soma somente recebimentos cuja DATA pertence ao período,
+  // usando os próprios campos (bruto/líquido) de cada recebimento. Não usa o
+  // acumulado de resumoAtendimento.
+  const recebPeriodo = useMemo(
+    () => receitasRecebidas(rows, recebimentos.data ?? [], parcelas.data ?? []).filter((e) => inPeriodo(e.data)),
+    [rows, recebimentos.data, parcelas.data, filter, mes],
+  );
+  const totBruto = recebPeriodo.reduce((s, e) => s + e.valor_bruto, 0);
+  const totLiq = recebPeriodo.reduce((s, e) => s + e.valor_liquido, 0);
+  const qtdReceb = recebPeriodo.length;
+
+  // Acumulado (todos os recebimentos das linhas) — preservado para "Previsto após receber".
+  const totLiqAcumulado = rows.reduce((s, r) => s + (resumoMap.get(r.id)?.recebidoLiquido ?? 0), 0);
   const totPendente = rows.reduce((s, r) => s + (resumoMap.get(r.id)?.saldoLiquido ?? 0), 0);
-  const pagas = rows.filter((r) => !isPendente(r));
+  
   const abertas = rows.filter((r) => isPendente(r));
+
   // Totais de nota fiscal no período/filtro selecionado.
   const nfCount = (status: string) =>
     rows.filter((r) => (r.nota_fiscal_status ?? "pendente") === status).length;
@@ -225,9 +249,9 @@ function Consultorio() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-6">
-        <StatCard label="Recebido (líquido)" value={brl(totLiq)} tone="success" hint={`${pagas.length} pagos · bruto ${brl(totBruto)}`} />
+        <StatCard label="Recebido no período (líquido)" value={brl(totLiq)} tone="success" hint={`${qtdReceb} recebimento${qtdReceb === 1 ? "" : "s"} · bruto ${brl(totBruto)}`} />
         <StatCard label="Em aberto" value={brl(totPendente)} tone={totPendente > 0 ? "destructive" : "success"} icon={<Clock className="h-4 w-4" />} hint={`${abertas.length} pendentes`} />
-        <StatCard label="Previsto após receber" value={brl(totLiq + totPendente)} tone="primary" hint="Recebido + pendente" />
+        <StatCard label="Previsto após receber" value={brl(totLiqAcumulado + totPendente)} tone="primary" hint="Recebido + pendente" />
         <StatCard label="NFs no período" value={`${nfEmitidas} emitidas`} icon={<FileCheck2 className="h-4 w-4" />} hint={`${nfPendentes} pendentes · ${nfNaoEmitidas} não emitidas · ${nfNaoSeAplica} não se aplica`} />
       </div>
 
