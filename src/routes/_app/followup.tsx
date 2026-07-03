@@ -262,14 +262,20 @@ function ContatadoButton({ proposta }: { proposta: any }) {
 
 function FecharButton({ proposta }: { proposta: any }) {
   const update = useUpdate("tratamentos_propostos");
+  // Garante que a proposta seja fechada uma única vez, mesmo com cliques
+  // repetidos. Em caso de falha, libera para nova tentativa.
+  const done = useRef(false);
   return (
     <AtendimentoForm
       initialData={{ paciente: proposta.paciente, valorEstimado: Number(proposta.valor_estimado) || undefined }}
       onSaved={async () => {
+        if (done.current) return;
+        done.current = true;
         try {
           await update.mutateAsync({ id: proposta.id, values: { status: "fechado" } });
-        } catch {
-          // Erro já tratado pelo onError do useUpdate.
+        } catch (e) {
+          done.current = false;
+          throw e;
         }
       }}
       trigger={
