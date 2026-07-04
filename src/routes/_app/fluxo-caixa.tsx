@@ -72,16 +72,26 @@ function FluxoCaixa() {
     return [...a, ...g];
   }, [recebidas, ganhos.data, mes, pagamento, isClinica]);
 
-  // Saídas: clínica = apenas custos de laboratório. Geral = despesas + lab.
+  // Despesas no caixa realizado: somente as efetivamente pagas, posicionadas
+  // na data_pagamento (data da saída real). Pendentes/atrasadas não pagas ficam de fora.
+  const despesasPagas = useMemo(
+    () =>
+      (despesas.data ?? [])
+        .filter((r) => r.status === "pago" && r.data_pagamento)
+        .map((r) => ({ ...r, data: r.data_pagamento, _origem: "Despesa" })),
+    [despesas.data],
+  );
+
+  // Saídas: clínica = apenas custos de laboratório. Geral = despesas pagas + lab.
   const sai = useMemo(() => {
     const all = isClinica
       ? (lab.data ?? []).map((r) => ({ ...r, _origem: "Laboratório" }))
       : [
-          ...(despesas.data ?? []).map((r) => ({ ...r, data: r.vencimento, _origem: "Despesa" })),
+          ...despesasPagas,
           ...(lab.data ?? []).map((r) => ({ ...r, _origem: "Laboratório" })),
         ];
     return all.filter((r) => monthKey(r.data) === mes);
-  }, [despesas.data, lab.data, mes, isClinica]);
+  }, [despesasPagas, lab.data, mes, isClinica]);
 
   const totalEntradas = ent.reduce((s, r) => s + Number(r.valor || 0), 0);
   const totalSaidas = sai.reduce((s, r) => s + Number(r.valor || 0), 0);
@@ -94,10 +104,10 @@ function FluxoCaixa() {
       recebidas.filter((r) => (parseLocalDate(r.data) ?? new Date(0)) <= limite).reduce((s, r) => s + r.valor_liquido, 0)
       + (isClinica ? 0 : (ganhos.data ?? []).filter((r) => new Date(r.data) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0));
     const sds =
-      (isClinica ? 0 : (despesas.data ?? []).filter((r) => new Date(r.vencimento) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0)) +
+      (isClinica ? 0 : despesasPagas.filter((r) => (parseLocalDate(r.data) ?? new Date(0)) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0)) +
       (lab.data ?? []).filter((r) => new Date(r.data) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0);
     return ents - sds;
-  }, [recebidas, despesas.data, lab.data, ganhos.data, year, monthNum, diasNoMes, isClinica]);
+  }, [recebidas, despesasPagas, lab.data, ganhos.data, year, monthNum, diasNoMes, isClinica]);
 
   // Saldo atual (até hoje, considerando todos os meses)
   const saldoAtual = useMemo(() => {
@@ -105,10 +115,10 @@ function FluxoCaixa() {
       recebidas.filter((r) => (parseLocalDate(r.data) ?? new Date(0)) <= hoje).reduce((s, r) => s + r.valor_liquido, 0)
       + (isClinica ? 0 : (ganhos.data ?? []).filter((r) => new Date(r.data) <= hoje).reduce((s, r) => s + Number(r.valor || 0), 0));
     const sds =
-      (isClinica ? 0 : (despesas.data ?? []).filter((r) => new Date(r.vencimento) <= hoje).reduce((s, r) => s + Number(r.valor || 0), 0)) +
+      (isClinica ? 0 : despesasPagas.filter((r) => (parseLocalDate(r.data) ?? new Date(0)) <= hoje).reduce((s, r) => s + Number(r.valor || 0), 0)) +
       (lab.data ?? []).filter((r) => new Date(r.data) <= hoje).reduce((s, r) => s + Number(r.valor || 0), 0);
     return ents - sds;
-  }, [recebidas, despesas.data, lab.data, ganhos.data, isClinica]);
+  }, [recebidas, despesasPagas, lab.data, ganhos.data, isClinica]);
 
   // Dias do mês com agregados
   const diario = useMemo(() => {
