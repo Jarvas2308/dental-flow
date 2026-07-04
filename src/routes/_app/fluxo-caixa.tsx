@@ -104,10 +104,10 @@ function FluxoCaixa() {
       recebidas.filter((r) => (parseLocalDate(r.data) ?? new Date(0)) <= limite).reduce((s, r) => s + r.valor_liquido, 0)
       + (isClinica ? 0 : (ganhos.data ?? []).filter((r) => new Date(r.data) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0));
     const sds =
-      (isClinica ? 0 : (despesas.data ?? []).filter((r) => new Date(r.vencimento) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0)) +
+      (isClinica ? 0 : despesasPagas.filter((r) => (parseLocalDate(r.data) ?? new Date(0)) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0)) +
       (lab.data ?? []).filter((r) => new Date(r.data) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0);
     return ents - sds;
-  }, [recebidas, despesas.data, lab.data, ganhos.data, year, monthNum, diasNoMes, isClinica]);
+  }, [recebidas, despesasPagas, lab.data, ganhos.data, year, monthNum, diasNoMes, isClinica]);
 
   // Saldo atual (até hoje, considerando todos os meses)
   const saldoAtual = useMemo(() => {
