@@ -221,13 +221,13 @@ function Dashboard() {
         <div className="h-px flex-1 bg-border" />
       </div>
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
-        <StatCard label="Lucro Operacional" value={brl(lucroOperacional)} tone={lucroOperacional >= 0 ? "success" : "destructive"} icon={<Wallet className="h-4 w-4" />} hint="Só consultório − despesas − lab" />
-        <StatCard label="Lucro Geral" value={brl(lucroGeral)} tone={lucroGeral >= 0 ? "success" : "destructive"} icon={<Wallet className="h-4 w-4" />} hint={`Inclui receitas extras${variacao(lucroGeral, lucroGeralPrev)}`} />
+        <StatCard label="Caixa Realizado" value={brl(caixaRealizado)} tone={caixaRealizado >= 0 ? "success" : "destructive"} icon={<Wallet className="h-4 w-4" />} hint={`Recebido − despesas pagas${variacao(caixaRealizado, caixaRealizadoPrev)}`} />
+        <StatCard label="Resultado Previsto" value={brl(resultadoPrevisto)} tone={resultadoPrevisto >= 0 ? "success" : "destructive"} icon={<Wallet className="h-4 w-4" />} hint={`Caixa − despesas pendentes${variacao(resultadoPrevisto, resultadoPrevistoPrev)}`} />
         <Link to="/contas" className="block">
-          <StatCard label="Despesas" value={brl(totDesp)} tone="warning" icon={<Receipt className="h-4 w-4" />} hint={`Pagas ${brl(totDespPagas)} · Pend. ${brl(totDespPendentes)}`} />
+          <StatCard label="Despesas Pagas" value={brl(totDespPagas)} tone="warning" icon={<Receipt className="h-4 w-4" />} hint={`${monthLabel(mes)} · por data de pagamento`} />
         </Link>
         <Link to="/contas" className="block">
-          <StatCard label="Pendentes" value={brl(totDespPendentes)} tone={totDespPendentes > 0 ? "warning" : "success"} icon={<TrendingDown className="h-4 w-4" />} />
+          <StatCard label="Despesas Pendentes" value={brl(totDespPendentes)} tone={totDespPendentes > 0 ? "warning" : "success"} icon={<TrendingDown className="h-4 w-4" />} hint="Não reduzem o caixa realizado" />
         </Link>
         <Link to="/laboratorio" className="block">
           <StatCard label="Laboratório" value={brl(totLab)} icon={<FlaskConical className="h-4 w-4" />} />
