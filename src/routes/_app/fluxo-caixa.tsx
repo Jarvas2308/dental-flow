@@ -72,16 +72,26 @@ function FluxoCaixa() {
     return [...a, ...g];
   }, [recebidas, ganhos.data, mes, pagamento, isClinica]);
 
-  // Saídas: clínica = apenas custos de laboratório. Geral = despesas + lab.
+  // Despesas no caixa realizado: somente as efetivamente pagas, posicionadas
+  // na data_pagamento (data da saída real). Pendentes/atrasadas não pagas ficam de fora.
+  const despesasPagas = useMemo(
+    () =>
+      (despesas.data ?? [])
+        .filter((r) => r.status === "pago" && r.data_pagamento)
+        .map((r) => ({ ...r, data: r.data_pagamento, _origem: "Despesa" })),
+    [despesas.data],
+  );
+
+  // Saídas: clínica = apenas custos de laboratório. Geral = despesas pagas + lab.
   const sai = useMemo(() => {
     const all = isClinica
       ? (lab.data ?? []).map((r) => ({ ...r, _origem: "Laboratório" }))
       : [
-          ...(despesas.data ?? []).map((r) => ({ ...r, data: r.vencimento, _origem: "Despesa" })),
+          ...despesasPagas,
           ...(lab.data ?? []).map((r) => ({ ...r, _origem: "Laboratório" })),
         ];
     return all.filter((r) => monthKey(r.data) === mes);
-  }, [despesas.data, lab.data, mes, isClinica]);
+  }, [despesasPagas, lab.data, mes, isClinica]);
 
   const totalEntradas = ent.reduce((s, r) => s + Number(r.valor || 0), 0);
   const totalSaidas = sai.reduce((s, r) => s + Number(r.valor || 0), 0);
