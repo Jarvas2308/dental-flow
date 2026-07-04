@@ -64,10 +64,8 @@ function Dashboard() {
   const filt = <T extends { data: string }>(rows: T[] = []) =>
     rows.filter((r) => monthKey(r.data) === mes);
 
-  const filtDesp = (rows: any[] = []) =>
-    rows.filter((r) => monthKey(r.vencimento) === mes);
-
-  // Receita recebida (caixa): atendimentos pagos + parcelas pagas
+  // Receita recebida (caixa): atendimentos pagos + parcelas pagas, posicionados
+  // pela data do recebimento.
   const recebidas = useMemo(
     () => receitasRecebidas(atendimentos.data ?? [], recebimentos.data ?? [], parcelas.data ?? []),
     [atendimentos.data, recebimentos.data, parcelas.data],
@@ -88,16 +86,25 @@ function Dashboard() {
   const totContratado = totRecebidoGeral + totPendente;
 
   const totGanhos = filt(ganhos.data).reduce((s, r: any) => s + Number(r.valor || 0), 0);
+  // Receitas recebidas totais do período (atendimentos + ganhos extras).
   const totReceitaTotal = totLiquidoAtend + totGanhos;
-  const totDesp = filtDesp(despesas.data ?? []).reduce((s, r: any) => s + Number(r.valor || 0), 0);
-  const totDespPagas = filtDesp(despesas.data ?? []).filter((r: any) => r.status === "pago").reduce((s, r: any) => s + Number(r.valor || 0), 0);
-  const totDespPendentes = totDesp - totDespPagas;
+
+  // Despesas pagas: somente status pago, posicionadas pela data_pagamento efetiva.
+  const totDespPagas = (despesas.data ?? [])
+    .filter((r: any) => r.status === "pago" && r.data_pagamento && monthKey(r.data_pagamento) === mes)
+    .reduce((s, r: any) => s + Number(r.valor || 0), 0);
+  // Despesas pendentes: ainda não pagas, posicionadas pelo vencimento.
+  const totDespPendentes = (despesas.data ?? [])
+    .filter((r: any) => r.status !== "pago" && monthKey(r.vencimento) === mes)
+    .reduce((s, r: any) => s + Number(r.valor || 0), 0);
   const totLab = filt(lab.data).reduce((s, r: any) => s + Number(r.valor || 0), 0);
 
-  // Lucro operacional = só consultório (receita atend - despesas - lab)
-  const lucroOperacional = totLiquidoAtend - totDesp - totLab;
-  // Lucro geral = inclui ganhos extras
-  const lucroGeral = totReceitaTotal - totDesp - totLab;
+  // Caixa realizado = recebimentos efetivos − despesas pagas (inclui custos de
+  // laboratório realizados). Despesas pendentes NÃO reduzem o caixa realizado.
+  const caixaRealizado = totReceitaTotal - totDespPagas - totLab;
+  // Resultado previsto = caixa realizado menos as despesas ainda pendentes.
+  const resultadoPrevisto = caixaRealizado - totDespPendentes;
+
 
   // Mês anterior ao mês selecionado (não ao calendário) para comparação
   const prevMes = useMemo(() => {
@@ -108,9 +115,11 @@ function Dashboard() {
   const totLiquidoAtendPrev = recebidas.filter((r) => monthKey(r.data) === prevMes).reduce((s, r) => s + r.valor_liquido, 0);
   const totGanhosPrev = (ganhos.data ?? []).filter((r: any) => monthKey(r.data) === prevMes).reduce((s, r: any) => s + Number(r.valor || 0), 0);
   const totReceitaTotalPrev = totLiquidoAtendPrev + totGanhosPrev;
-  const totDespPrev = (despesas.data ?? []).filter((r: any) => monthKey(r.vencimento) === prevMes).reduce((s, r: any) => s + Number(r.valor || 0), 0);
+  const totDespPagasPrev = (despesas.data ?? []).filter((r: any) => r.status === "pago" && r.data_pagamento && monthKey(r.data_pagamento) === prevMes).reduce((s, r: any) => s + Number(r.valor || 0), 0);
+  const totDespPendentesPrev = (despesas.data ?? []).filter((r: any) => r.status !== "pago" && monthKey(r.vencimento) === prevMes).reduce((s, r: any) => s + Number(r.valor || 0), 0);
   const totLabPrev = (lab.data ?? []).filter((r: any) => monthKey(r.data) === prevMes).reduce((s, r: any) => s + Number(r.valor || 0), 0);
-  const lucroGeralPrev = totReceitaTotalPrev - totDespPrev - totLabPrev;
+  const caixaRealizadoPrev = totReceitaTotalPrev - totDespPagasPrev - totLabPrev;
+  const resultadoPrevistoPrev = caixaRealizadoPrev - totDespPendentesPrev;
 
   const variacao = (cur: number, prev: number) => {
     if (prev === 0) return "";
@@ -126,7 +135,7 @@ function Dashboard() {
       const recExtra = (ganhos.data ?? []).filter((r: any) => monthKey(r.data) === m)
         .reduce((s, r: any) => s + Number(r.valor || 0), 0);
       const desp =
-        (despesas.data ?? []).filter((r: any) => monthKey(r.vencimento) === m).reduce((s, r: any) => s + Number(r.valor || 0), 0) +
+        (despesas.data ?? []).filter((r: any) => r.status === "pago" && r.data_pagamento && monthKey(r.data_pagamento) === m).reduce((s, r: any) => s + Number(r.valor || 0), 0) +
         (lab.data ?? []).filter((r: any) => monthKey(r.data) === m).reduce((s, r: any) => s + Number(r.valor || 0), 0);
       return {
         mes: monthLabel(m).replace(" de ", "/"),
@@ -212,13 +221,13 @@ function Dashboard() {
         <div className="h-px flex-1 bg-border" />
       </div>
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
-        <StatCard label="Lucro Operacional" value={brl(lucroOperacional)} tone={lucroOperacional >= 0 ? "success" : "destructive"} icon={<Wallet className="h-4 w-4" />} hint="Só consultório − despesas − lab" />
-        <StatCard label="Lucro Geral" value={brl(lucroGeral)} tone={lucroGeral >= 0 ? "success" : "destructive"} icon={<Wallet className="h-4 w-4" />} hint={`Inclui receitas extras${variacao(lucroGeral, lucroGeralPrev)}`} />
+        <StatCard label="Caixa Realizado" value={brl(caixaRealizado)} tone={caixaRealizado >= 0 ? "success" : "destructive"} icon={<Wallet className="h-4 w-4" />} hint={`Recebido − despesas pagas${variacao(caixaRealizado, caixaRealizadoPrev)}`} />
+        <StatCard label="Resultado Previsto" value={brl(resultadoPrevisto)} tone={resultadoPrevisto >= 0 ? "success" : "destructive"} icon={<Wallet className="h-4 w-4" />} hint={`Caixa − despesas pendentes${variacao(resultadoPrevisto, resultadoPrevistoPrev)}`} />
         <Link to="/contas" className="block">
-          <StatCard label="Despesas" value={brl(totDesp)} tone="warning" icon={<Receipt className="h-4 w-4" />} hint={`Pagas ${brl(totDespPagas)} · Pend. ${brl(totDespPendentes)}`} />
+          <StatCard label="Despesas Pagas" value={brl(totDespPagas)} tone="warning" icon={<Receipt className="h-4 w-4" />} hint={`${monthLabel(mes)} · por data de pagamento`} />
         </Link>
         <Link to="/contas" className="block">
-          <StatCard label="Pendentes" value={brl(totDespPendentes)} tone={totDespPendentes > 0 ? "warning" : "success"} icon={<TrendingDown className="h-4 w-4" />} />
+          <StatCard label="Despesas Pendentes" value={brl(totDespPendentes)} tone={totDespPendentes > 0 ? "warning" : "success"} icon={<TrendingDown className="h-4 w-4" />} hint="Não reduzem o caixa realizado" />
         </Link>
         <Link to="/laboratorio" className="block">
           <StatCard label="Laboratório" value={brl(totLab)} icon={<FlaskConical className="h-4 w-4" />} />
