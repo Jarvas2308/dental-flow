@@ -64,10 +64,8 @@ function Dashboard() {
   const filt = <T extends { data: string }>(rows: T[] = []) =>
     rows.filter((r) => monthKey(r.data) === mes);
 
-  const filtDesp = (rows: any[] = []) =>
-    rows.filter((r) => monthKey(r.vencimento) === mes);
-
-  // Receita recebida (caixa): atendimentos pagos + parcelas pagas
+  // Receita recebida (caixa): atendimentos pagos + parcelas pagas, posicionados
+  // pela data do recebimento.
   const recebidas = useMemo(
     () => receitasRecebidas(atendimentos.data ?? [], recebimentos.data ?? [], parcelas.data ?? []),
     [atendimentos.data, recebimentos.data, parcelas.data],
@@ -88,16 +86,25 @@ function Dashboard() {
   const totContratado = totRecebidoGeral + totPendente;
 
   const totGanhos = filt(ganhos.data).reduce((s, r: any) => s + Number(r.valor || 0), 0);
+  // Receitas recebidas totais do período (atendimentos + ganhos extras).
   const totReceitaTotal = totLiquidoAtend + totGanhos;
-  const totDesp = filtDesp(despesas.data ?? []).reduce((s, r: any) => s + Number(r.valor || 0), 0);
-  const totDespPagas = filtDesp(despesas.data ?? []).filter((r: any) => r.status === "pago").reduce((s, r: any) => s + Number(r.valor || 0), 0);
-  const totDespPendentes = totDesp - totDespPagas;
+
+  // Despesas pagas: somente status pago, posicionadas pela data_pagamento efetiva.
+  const totDespPagas = (despesas.data ?? [])
+    .filter((r: any) => r.status === "pago" && r.data_pagamento && monthKey(r.data_pagamento) === mes)
+    .reduce((s, r: any) => s + Number(r.valor || 0), 0);
+  // Despesas pendentes: ainda não pagas, posicionadas pelo vencimento.
+  const totDespPendentes = (despesas.data ?? [])
+    .filter((r: any) => r.status !== "pago" && monthKey(r.vencimento) === mes)
+    .reduce((s, r: any) => s + Number(r.valor || 0), 0);
   const totLab = filt(lab.data).reduce((s, r: any) => s + Number(r.valor || 0), 0);
 
-  // Lucro operacional = só consultório (receita atend - despesas - lab)
-  const lucroOperacional = totLiquidoAtend - totDesp - totLab;
-  // Lucro geral = inclui ganhos extras
-  const lucroGeral = totReceitaTotal - totDesp - totLab;
+  // Caixa realizado = recebimentos efetivos − despesas pagas (inclui custos de
+  // laboratório realizados). Despesas pendentes NÃO reduzem o caixa realizado.
+  const caixaRealizado = totReceitaTotal - totDespPagas - totLab;
+  // Resultado previsto = caixa realizado menos as despesas ainda pendentes.
+  const resultadoPrevisto = caixaRealizado - totDespPendentes;
+
 
   // Mês anterior ao mês selecionado (não ao calendário) para comparação
   const prevMes = useMemo(() => {
