@@ -16,7 +16,7 @@ function AppLayout() {
       </div>
     );
   }
-  if (!session) return <Navigate to="/login" />;
+  if (!session) return <Navigate to="/login" search={{ next: "" }} />;
 
   return (
     <div className="min-h-screen flex bg-background">

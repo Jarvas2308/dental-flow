@@ -1,0 +1,103 @@
+{
+  "version": 1,
+  "sdk_version": "0.20.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://tsvgweufuczlzskeoqma.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "odonto-financeiro-mcp",
+      "version": "0.1.0",
+      "title": "Odonto Financeiro MCP"
+    },
+    "tools": [
+      {
+        "name": "list_atendimentos",
+        "title": "Listar atendimentos",
+        "description": "Lista os atendimentos do consultório do usuário autenticado, opcionalmente filtrados por mês (AAAA-MM) e/ou status de pagamento.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "month": {
+              "description": "Filtro de mês no formato AAAA-MM, por exemplo 2026-07.",
+              "type": "string"
+            },
+            "status_pagamento": {
+              "description": "Filtro por status de pagamento, por exemplo 'pago' ou 'pendente'.",
+              "type": "string"
+            },
+            "limit": {
+              "description": "Número máximo de registros a retornar (padrão 50).",
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_despesas",
+        "title": "Listar despesas",
+        "description": "Lista as despesas do usuário autenticado, opcionalmente filtradas por status (pago, pendente, atrasado).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "status": {
+              "description": "Filtro por status: 'pago', 'pendente' ou 'atrasado'.",
+              "type": "string"
+            },
+            "limit": {
+              "description": "Número máximo de registros a retornar (padrão 50).",
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "resumo_financeiro",
+        "title": "Resumo financeiro do mês",
+        "description": "Retorna o resumo financeiro de um mês (AAAA-MM): recebimentos efetivos, despesas pagas, despesas pendentes e caixa realizado.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "month": {
+              "type": "string",
+              "description": "Mês no formato AAAA-MM, por exemplo 2026-07."
+            }
+          },
+          "required": [
+            "month"
+          ]
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}

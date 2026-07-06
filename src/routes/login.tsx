@@ -8,20 +8,33 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/login")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    next: typeof s.next === "string" ? s.next : "",
+  }),
   component: LoginPage,
 });
+
+// Only allow same-origin relative paths as redirect targets.
+function safeNext(next: string) {
+  return next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
+}
 
 function LoginPage() {
   const { signIn, signUp, session, loading } = useAuth();
   const navigate = useNavigate();
+  const { next } = Route.useSearch();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (session) navigate({ to: "/dashboard" });
-  }, [session, navigate]);
+    if (session) {
+      const target = safeNext(next);
+      if (target.startsWith("/dashboard")) navigate({ to: "/dashboard" });
+      else window.location.href = target;
+    }
+  }, [session, navigate, next]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
