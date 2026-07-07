@@ -121,6 +121,7 @@ export type Database = {
           id: string
           observacao: string | null
           paciente: string
+          paciente_id: string | null
           realizada: boolean
           user_id: string
           valor_estimado: number
@@ -131,6 +132,7 @@ export type Database = {
           id?: string
           observacao?: string | null
           paciente: string
+          paciente_id?: string | null
           realizada?: boolean
           user_id: string
           valor_estimado?: number
@@ -141,11 +143,20 @@ export type Database = {
           id?: string
           observacao?: string | null
           paciente?: string
+          paciente_id?: string | null
           realizada?: boolean
           user_id?: string
           valor_estimado?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "consultas_previstas_paciente_id_fkey"
+            columns: ["paciente_id"]
+            isOneToOne: false
+            referencedRelation: "pacientes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       custos_laboratorio: {
         Row: {
