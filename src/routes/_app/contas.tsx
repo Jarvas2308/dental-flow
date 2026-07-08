@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useTable, useCreate, useDelete, useUpdate } from "@/hooks/use-data";
-import { useEnsureRecurring } from "@/hooks/use-recurring";
+import { useGerarRecorrentes } from "@/hooks/use-recurring";
 import { brl, currentMonthKey, monthKey, monthLabel, monthOptions } from "@/lib/format";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import {
@@ -209,7 +209,7 @@ function EditDespesa({ row }: { row: any }) {
 }
 
 function Contas() {
-  useEnsureRecurring();
+  const { gerar, loading: gerando } = useGerarRecorrentes();
   const [mes, setMes] = useState(currentMonthKey());
   const [aba, setAba] = useState<"todas" | "pendente" | "aguardando" | "atrasado" | "pago">("todas");
   const [q, setQ] = useState("");
@@ -246,7 +246,15 @@ function Contas() {
   return (
     <>
       <PageHeader title="Despesas" description="Controle de contas e gastos do consultório"
-        actions={<DespesaForm />}
+        actions={
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => gerar(mes)} disabled={gerando}>
+              {gerando ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCw className="h-4 w-4" />}
+              Gerar recorrentes
+            </Button>
+            <DespesaForm />
+          </div>
+        }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-6">
