@@ -246,7 +246,15 @@ function Contas() {
   return (
     <>
       <PageHeader title="Despesas" description="Controle de contas e gastos do consultório"
-        actions={<DespesaForm />}
+        actions={
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => gerar(mes)} disabled={gerando}>
+              {gerando ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCw className="h-4 w-4" />}
+              Gerar recorrentes
+            </Button>
+            <DespesaForm />
+          </div>
+        }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-6">
