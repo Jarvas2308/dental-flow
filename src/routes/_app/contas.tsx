@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useTable, useCreate, useDelete, useUpdate } from "@/hooks/use-data";
-import { useEnsureRecurring } from "@/hooks/use-recurring";
+import { useGerarRecorrentes } from "@/hooks/use-recurring";
 import { brl, currentMonthKey, monthKey, monthLabel, monthOptions } from "@/lib/format";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import {
