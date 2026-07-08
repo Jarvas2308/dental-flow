@@ -209,7 +209,7 @@ function EditDespesa({ row }: { row: any }) {
 }
 
 function Contas() {
-  useEnsureRecurring();
+  const { gerar, loading: gerando } = useGerarRecorrentes();
   const [mes, setMes] = useState(currentMonthKey());
   const [aba, setAba] = useState<"todas" | "pendente" | "aguardando" | "atrasado" | "pago">("todas");
   const [q, setQ] = useState("");
