@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
-import { useCreate, useUpdate } from "@/hooks/use-data";
+import { useCreate, useUpdate, useTable } from "@/hooks/use-data";
+import { useAuth } from "@/hooks/use-auth";
+import { useQueryClient } from "@tanstack/react-query";
 import { todayISO } from "@/lib/format";
+import { resolvePacienteId } from "@/lib/pacientes";
 import { PacienteCombobox } from "@/components/atendimento-form";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
@@ -15,6 +18,7 @@ import { toast } from "sonner";
 type Consulta = {
   id?: string;
   paciente: string;
+  paciente_id?: string | null;
   data_prevista: string;
   valor_estimado: number | string;
   observacao: string;
@@ -33,11 +37,19 @@ export function ConsultaForm({
 }) {
   const create = useCreate("consultas_previstas");
   const update = useUpdate("consultas_previstas");
+  const pacientes = useTable<any>("pacientes", "nome", true);
+  const { user } = useAuth();
+  const qc = useQueryClient();
   const [open, setOpen] = useState(!!editing);
   const [v, setV] = useState<Consulta>(editing ? { ...editing } : empty());
+  // Guarda o id vindo do combobox quando um paciente existente é selecionado.
+  const [pacienteId, setPacienteId] = useState<string | null>(editing?.paciente_id ?? null);
 
   useEffect(() => {
-    if (open) setV(editing ? { ...editing } : empty());
+    if (open) {
+      setV(editing ? { ...editing } : empty());
+      setPacienteId(editing?.paciente_id ?? null);
+    }
   }, [open, editing]);
 
   const isEdit = !!editing;
@@ -48,8 +60,24 @@ export function ConsultaForm({
     if (!v.paciente.trim()) return toast.error("Informe o paciente");
     if (!v.data_prevista) return toast.error("Informe a data prevista");
 
+    // Resolve/crie o paciente_id preservando o texto do nome para compatibilidade.
+    let idResolvido: string | null = pacienteId;
+    try {
+      idResolvido = await resolvePacienteId({
+        nome: v.paciente,
+        userId: user!.id,
+        knownId: pacienteId,
+        cache: pacientes.data ?? [],
+      });
+    } catch (err) {
+      console.error("[ConsultaForm] Erro ao resolver paciente:", err);
+      toast.error("Não foi possível vincular o paciente. Tente novamente.");
+      return;
+    }
+
     const payload = {
       paciente: v.paciente.trim(),
+      paciente_id: idResolvido,
       data_prevista: v.data_prevista,
       valor_estimado: Number(v.valor_estimado || 0),
       observacao: v.observacao.trim() || null,
@@ -58,6 +86,7 @@ export function ConsultaForm({
     if (isEdit) await update.mutateAsync({ id: editing.id, values: payload });
     else await create.mutateAsync(payload);
 
+    qc.invalidateQueries({ queryKey: ["pacientes"] });
     setOpen(false);
     onClose?.();
   };
@@ -77,7 +106,7 @@ export function ConsultaForm({
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-1.5">
             <Label>Paciente</Label>
-            <PacienteCombobox value={v.paciente} onChange={(nome, _id) => setV((p) => ({ ...p, paciente: nome }))} />
+            <PacienteCombobox value={v.paciente} onChange={(nome, id) => { setV((p) => ({ ...p, paciente: nome })); setPacienteId(id); }} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
