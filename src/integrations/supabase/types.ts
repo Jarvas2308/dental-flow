@@ -657,6 +657,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      gerar_despesas_recorrentes: {
+        Args: { p_competencia: string }
+        Returns: Json
+      }
       salvar_atendimento_completo: {
         Args: {
           p_atendimento_id?: string
