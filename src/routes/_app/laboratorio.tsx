@@ -136,7 +136,7 @@ function Laboratorio() {
                 <TableCell className="text-right font-medium">{brl(r.valor)}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
-                    <EditCustoButton row={{ ...r, procedimento: r.procedimento ?? "" }} />>
+                    <EditCustoButton row={{ ...r, procedimento: r.procedimento ?? "" }} />
                     <ConfirmDelete
                       title="Excluir custo?"
                       description={`Custo de ${r.laboratorio} será removido permanentemente.`}
