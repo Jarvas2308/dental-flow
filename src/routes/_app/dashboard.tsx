@@ -115,11 +115,11 @@ function Dashboard() {
   const totLiquidoAtendPrev = recebidas.filter((r) => monthKey(r.data) === prevMes).reduce((s, r) => s + r.valor_liquido, 0);
   const totGanhosPrev = (ganhos.data ?? []).filter((r: any) => monthKey(r.data) === prevMes).reduce((s, r: any) => s + Number(r.valor || 0), 0);
   const totReceitaTotalPrev = totLiquidoAtendPrev + totGanhosPrev;
-  const totDespPagasPrev = (despesas.data ?? []).filter((r: any) => r.status === "pago" && r.data_pagamento && monthKey(r.data_pagamento) === prevMes).reduce((s, r: any) => s + Number(r.valor || 0), 0);
-  const totDespPendentesPrev = (despesas.data ?? []).filter((r: any) => r.status !== "pago" && monthKey(r.vencimento) === prevMes).reduce((s, r: any) => s + Number(r.valor || 0), 0);
+  const totDespPagasPrev = totalDespesasPagasNoMes(despesas.data ?? [], prevMes);
+  const totDespPendentesPrev = totalDespesasPendentesNoMes(despesas.data ?? [], prevMes);
   const totLabPrev = (lab.data ?? []).filter((r: any) => monthKey(r.data) === prevMes).reduce((s, r: any) => s + Number(r.valor || 0), 0);
-  const caixaRealizadoPrev = totReceitaTotalPrev - totDespPagasPrev - totLabPrev;
-  const resultadoPrevistoPrev = caixaRealizadoPrev - totDespPendentesPrev;
+  const caixaRealizadoPrev = calcCaixaRealizado(totReceitaTotalPrev, totDespPagasPrev + totLabPrev);
+  const resultadoPrevistoPrev = calcResultadoPrevisto(caixaRealizadoPrev, totDespPendentesPrev);
 
   const variacao = (cur: number, prev: number) => {
     if (prev === 0) return "";
