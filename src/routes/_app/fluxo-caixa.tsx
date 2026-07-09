@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTable } from "@/hooks/use-data";
 import { brl, currentMonthKey, monthKey, monthLabel, monthOptions, parseLocalDate } from "@/lib/format";
-import { receitasRecebidas } from "@/lib/finance";
+import { receitasRecebidas, despesasPagas as despesasPagasFn } from "@/lib/finance";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -75,10 +75,7 @@ function FluxoCaixa() {
   // Despesas no caixa realizado: somente as efetivamente pagas, posicionadas
   // na data_pagamento (data da saída real). Pendentes/atrasadas não pagas ficam de fora.
   const despesasPagas = useMemo(
-    () =>
-      (despesas.data ?? [])
-        .filter((r) => r.status === "pago" && r.data_pagamento)
-        .map((r) => ({ ...r, data: r.data_pagamento, _origem: "Despesa" })),
+    () => despesasPagasFn(despesas.data ?? []).map((r) => ({ ...r, _origem: "Despesa" })),
     [despesas.data],
   );
 

@@ -2,7 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTable } from "@/hooks/use-data";
 import { brl, monthOptions, monthLabel, currentMonthKey, monthKey, parseLocalDate, todayISO } from "@/lib/format";
-import { receitasRecebidas, valoresEmAberto } from "@/lib/finance";
+import {
+  receitasRecebidas, valoresEmAberto,
+  totalDespesasPagasNoMes, totalDespesasPendentesNoMes,
+  caixaRealizado as calcCaixaRealizado, resultadoPrevisto as calcResultadoPrevisto,
+} from "@/lib/finance";
 import { proximaTentativa, estaPendenteHoje } from "@/lib/followup";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import {
@@ -90,20 +94,16 @@ function Dashboard() {
   const totReceitaTotal = totLiquidoAtend + totGanhos;
 
   // Despesas pagas: somente status pago, posicionadas pela data_pagamento efetiva.
-  const totDespPagas = (despesas.data ?? [])
-    .filter((r: any) => r.status === "pago" && r.data_pagamento && monthKey(r.data_pagamento) === mes)
-    .reduce((s, r: any) => s + Number(r.valor || 0), 0);
+  const totDespPagas = totalDespesasPagasNoMes(despesas.data ?? [], mes);
   // Despesas pendentes: ainda não pagas, posicionadas pelo vencimento.
-  const totDespPendentes = (despesas.data ?? [])
-    .filter((r: any) => r.status !== "pago" && monthKey(r.vencimento) === mes)
-    .reduce((s, r: any) => s + Number(r.valor || 0), 0);
+  const totDespPendentes = totalDespesasPendentesNoMes(despesas.data ?? [], mes);
   const totLab = filt(lab.data).reduce((s, r: any) => s + Number(r.valor || 0), 0);
 
   // Caixa realizado = recebimentos efetivos − despesas pagas (inclui custos de
   // laboratório realizados). Despesas pendentes NÃO reduzem o caixa realizado.
-  const caixaRealizado = totReceitaTotal - totDespPagas - totLab;
+  const caixaRealizado = calcCaixaRealizado(totReceitaTotal, totDespPagas + totLab);
   // Resultado previsto = caixa realizado menos as despesas ainda pendentes.
-  const resultadoPrevisto = caixaRealizado - totDespPendentes;
+  const resultadoPrevisto = calcResultadoPrevisto(caixaRealizado, totDespPendentes);
 
 
   // Mês anterior ao mês selecionado (não ao calendário) para comparação
@@ -115,11 +115,11 @@ function Dashboard() {
   const totLiquidoAtendPrev = recebidas.filter((r) => monthKey(r.data) === prevMes).reduce((s, r) => s + r.valor_liquido, 0);
   const totGanhosPrev = (ganhos.data ?? []).filter((r: any) => monthKey(r.data) === prevMes).reduce((s, r: any) => s + Number(r.valor || 0), 0);
   const totReceitaTotalPrev = totLiquidoAtendPrev + totGanhosPrev;
-  const totDespPagasPrev = (despesas.data ?? []).filter((r: any) => r.status === "pago" && r.data_pagamento && monthKey(r.data_pagamento) === prevMes).reduce((s, r: any) => s + Number(r.valor || 0), 0);
-  const totDespPendentesPrev = (despesas.data ?? []).filter((r: any) => r.status !== "pago" && monthKey(r.vencimento) === prevMes).reduce((s, r: any) => s + Number(r.valor || 0), 0);
+  const totDespPagasPrev = totalDespesasPagasNoMes(despesas.data ?? [], prevMes);
+  const totDespPendentesPrev = totalDespesasPendentesNoMes(despesas.data ?? [], prevMes);
   const totLabPrev = (lab.data ?? []).filter((r: any) => monthKey(r.data) === prevMes).reduce((s, r: any) => s + Number(r.valor || 0), 0);
-  const caixaRealizadoPrev = totReceitaTotalPrev - totDespPagasPrev - totLabPrev;
-  const resultadoPrevistoPrev = caixaRealizadoPrev - totDespPendentesPrev;
+  const caixaRealizadoPrev = calcCaixaRealizado(totReceitaTotalPrev, totDespPagasPrev + totLabPrev);
+  const resultadoPrevistoPrev = calcResultadoPrevisto(caixaRealizadoPrev, totDespPendentesPrev);
 
   const variacao = (cur: number, prev: number) => {
     if (prev === 0) return "";
@@ -135,7 +135,7 @@ function Dashboard() {
       const recExtra = (ganhos.data ?? []).filter((r: any) => monthKey(r.data) === m)
         .reduce((s, r: any) => s + Number(r.valor || 0), 0);
       const desp =
-        (despesas.data ?? []).filter((r: any) => r.status === "pago" && r.data_pagamento && monthKey(r.data_pagamento) === m).reduce((s, r: any) => s + Number(r.valor || 0), 0) +
+        totalDespesasPagasNoMes(despesas.data ?? [], m) +
         (lab.data ?? []).filter((r: any) => monthKey(r.data) === m).reduce((s, r: any) => s + Number(r.valor || 0), 0);
       return {
         mes: monthLabel(m).replace(" de ", "/"),

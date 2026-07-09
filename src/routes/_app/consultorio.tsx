@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { AtendimentoForm, EditAtendimentoButton } from "@/components/atendimento-form";
 import { RegistrarRecebimento } from "@/components/recebimento-form";
-import { resumoAtendimento, receitasRecebidas, STATUS_LABEL } from "@/lib/finance";
+import { resumoAtendimento, receitasRecebidas, noMes, STATUS_LABEL } from "@/lib/finance";
 import { Progress } from "@/components/ui/progress";
 
 export const Route = createFileRoute("/_app/consultorio")({
@@ -211,7 +211,7 @@ function Consultorio() {
       return d >= today && d < tomorrow;
     }
     if (filter === "semana") return d >= startOfWeek(today);
-    return monthKey(dateStr) === mes;
+    return noMes(dateStr, mes);
   };
 
   // "Recebido no período": soma somente recebimentos cuja DATA pertence ao período,
