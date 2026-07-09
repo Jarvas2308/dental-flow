@@ -366,7 +366,7 @@ function Contas() {
         </div>
       </div>
 
-      <Tabs value={aba} onValueChange={(v) => setAba(v as any)}>
+      <Tabs value={aba} onValueChange={(v) => setAba(v as typeof aba)}>
         <TabsList>
           <TabsTrigger value="todas">Todas ({totMes.length})</TabsTrigger>
           <TabsTrigger value="pendente">Pendentes</TabsTrigger>
