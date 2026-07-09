@@ -718,6 +718,7 @@ function Consultorio() {
                         return null;
                       })()}
 
+                      <VerPacienteButton nome={r.paciente} label="" />
                       <EditAtendimentoButton row={r} />
                       <ConfirmDelete
                         title="Excluir atendimento?"
