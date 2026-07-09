@@ -456,6 +456,16 @@ function Followup() {
         />
       </div>
 
+      {pendentes > 0 && (
+        <AlertBanner
+          tone="destructive"
+          icon={<AlertTriangle className="h-5 w-5" />}
+          title={`${pendentes} follow-up(s) pendente(s) hoje`}
+          description="Tratamentos em acompanhamento com contato previsto para hoje ou atrasado."
+        />
+      )}
+
+
       <div
         className="rounded-2xl border bg-card overflow-hidden"
         style={{ boxShadow: "var(--shadow-soft)" }}
