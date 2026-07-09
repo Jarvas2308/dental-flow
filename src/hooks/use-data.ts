@@ -109,8 +109,7 @@ export function useCreate(table: TableName) {
       qc.invalidateQueries({ queryKey: ["consultorio"] });
       toast.success("Salvo com sucesso");
     },
-    onError: (e: unknown) =>
-      toast.error(e instanceof Error ? e.message : "Erro ao salvar"),
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Erro ao salvar"),
   });
 }
 
@@ -128,8 +127,7 @@ export function useUpdate(table: TableName) {
       qc.invalidateQueries({ queryKey: [table] });
       qc.invalidateQueries({ queryKey: ["consultorio"] });
     },
-    onError: (e: unknown) =>
-      toast.error(e instanceof Error ? e.message : "Erro ao atualizar"),
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Erro ao atualizar"),
   });
 }
 
@@ -145,7 +143,6 @@ export function useDelete(table: TableName) {
       qc.invalidateQueries({ queryKey: ["consultorio"] });
       toast.success("Excluído");
     },
-    onError: (e: unknown) =>
-      toast.error(e instanceof Error ? e.message : "Erro ao excluir"),
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Erro ao excluir"),
   });
 }

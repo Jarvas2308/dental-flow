@@ -429,10 +429,7 @@ export function despesasPagasNoMes(despesas: DespesaRow[] = [], mes: string): De
 }
 
 export function totalDespesasPagasNoMes(despesas: DespesaRow[] = [], mes: string): number {
-  return despesasPagasNoMes(despesas, mes).reduce(
-    (s, r) => s + Number(r.valor || 0),
-    0,
-  );
+  return despesasPagasNoMes(despesas, mes).reduce((s, r) => s + Number(r.valor || 0), 0);
 }
 
 // Despesas pendentes: ainda não pagas. Posicionadas pelo vencimento.
@@ -446,10 +443,7 @@ export function despesasPendentesNoMes(despesas: DespesaRow[] = [], mes: string)
 }
 
 export function totalDespesasPendentesNoMes(despesas: DespesaRow[] = [], mes: string): number {
-  return despesasPendentesNoMes(despesas, mes).reduce(
-    (s, r) => s + Number(r.valor || 0),
-    0,
-  );
+  return despesasPendentesNoMes(despesas, mes).reduce((s, r) => s + Number(r.valor || 0), 0);
 }
 
 // Caixa realizado = entradas efetivamente recebidas − saídas efetivamente pagas.
