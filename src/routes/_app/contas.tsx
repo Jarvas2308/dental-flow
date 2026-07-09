@@ -406,7 +406,7 @@ function Contas() {
                     </TableCell>
                   </TableRow>
                 )}
-                {rowsMes.map((r) => (
+                {pag.pageItems.map((r) => (
                   <TableRow key={r.id}>
                     <TableCell className="text-muted-foreground">
                       {new Date(r.vencimento + "T00:00:00").toLocaleDateString("pt-BR")}
