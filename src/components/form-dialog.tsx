@@ -20,6 +20,9 @@ import {
 } from "@/components/ui/select";
 import { Plus, Loader2 } from "lucide-react";
 
+export type FormValue = string | number | boolean | null | undefined;
+export type FormValues = Record<string, FormValue>;
+
 export type FieldDef =
   | {
       name: string;
