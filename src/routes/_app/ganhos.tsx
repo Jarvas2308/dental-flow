@@ -188,8 +188,8 @@ function ReceitaForm({ editing, onClose }: { editing?: ReceitaRow; onClose?: () 
   );
 }
 
-function EditReceita({ row }: { row: any }) {
-  const [editing, setEditing] = useState<any | null>(null);
+function EditReceita({ row }: { row: ReceitaRow }) {
+  const [editing, setEditing] = useState<ReceitaRow | null>(null);
   return (
     <>
       <Button variant="ghost" size="icon" aria-label="Editar" onClick={() => setEditing(row)}>
