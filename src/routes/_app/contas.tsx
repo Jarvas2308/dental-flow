@@ -273,7 +273,7 @@ function Contas() {
     "todas",
   );
   const [q, setQ] = useState("");
-  const list = useTable<any>("despesas", "vencimento", true);
+  const list = useTable<Despesa>("despesas", "vencimento", true);
   const upd = useUpdate("despesas");
   const del = useDelete("despesas");
 
