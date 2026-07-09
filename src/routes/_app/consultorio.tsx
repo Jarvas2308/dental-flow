@@ -378,12 +378,12 @@ function Consultorio() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {list.isLoading && (
+            {consultorio.isLoading && (
               <TableRow><TableCell colSpan={9} className="text-center py-12">
                 <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
               </TableCell></TableRow>
             )}
-            {!list.isLoading && rows.length === 0 && (
+            {!consultorio.isLoading && rows.length === 0 && (
               <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-12">Nenhum atendimento encontrado.</TableCell></TableRow>
             )}
             {rows.map((r) => {
