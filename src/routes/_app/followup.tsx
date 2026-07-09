@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
 import { useTable, useCreate, useUpdate } from "@/hooks/use-data";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/hooks/use-auth-context";
 import { useQueryClient } from "@tanstack/react-query";
 import { resolvePacienteId } from "@/lib/pacientes";
 import { brl, formatDateBR, todayISO } from "@/lib/format";

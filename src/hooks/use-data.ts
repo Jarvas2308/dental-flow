@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "./use-auth";
+import { useAuth } from "./use-auth-context";
 import { toast } from "sonner";
 import type { AtendimentoRow, RecebimentoRow, ParcelaRow } from "@/lib/finance";
 

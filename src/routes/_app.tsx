@@ -1,5 +1,5 @@
 import { createFileRoute, Navigate, Outlet } from "@tanstack/react-router";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/hooks/use-auth-context";
 import { AppSidebar, MobileNav } from "@/components/app-sidebar";
 import { Loader2 } from "lucide-react";
 
