@@ -258,7 +258,7 @@ function Consultorio() {
       );
     }
 
-    const cmp = (a: any, b: any) => {
+    const cmp = (a: AtendimentoView, b: AtendimentoView) => {
       switch (sort) {
         case "data_desc":
           return +parseLocalDate(b.data)! - +parseLocalDate(a.data)!;
