@@ -54,3 +54,32 @@ export async function resolvePacienteId(opts: {
   if (error) throw error;
   return data?.id ?? null;
 }
+
+/**
+ * Constrói um contador de registros por paciente que prioriza `paciente_id`
+ * e usa o nome normalizado apenas como fallback para registros antigos sem id.
+ * As duas chaves são disjuntas por registro, evitando dupla contagem.
+ *
+ * Aceita várias fontes (atendimentos, consultas, propostas) que exponham
+ * `paciente_id` e/ou `paciente` (texto).
+ */
+export function buildPacienteHistoryCounter(
+  sources: Array<Array<{ paciente_id?: string | null; paciente?: string | null }> | undefined>,
+) {
+  const byId: Record<string, number> = {};
+  const byName: Record<string, number> = {};
+  for (const source of sources) {
+    for (const r of source ?? []) {
+      if (r.paciente_id) {
+        byId[r.paciente_id] = (byId[r.paciente_id] ?? 0) + 1;
+      } else {
+        const k = normalizePacienteNome(r.paciente ?? "").toLowerCase();
+        if (!k) continue;
+        byName[k] = (byName[k] ?? 0) + 1;
+      }
+    }
+  }
+  return (p: { id: string; nome?: string | null }) =>
+    (byId[p.id] ?? 0) +
+    (byName[normalizePacienteNome(p.nome ?? "").toLowerCase()] ?? 0);
+}
