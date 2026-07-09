@@ -1,5 +1,6 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
+import { createElement, type ReactNode } from "react";
 import { afterEach, vi } from "vitest";
 
 // Substitui o cliente Supabase real pelo mock seguro em todos os testes.
