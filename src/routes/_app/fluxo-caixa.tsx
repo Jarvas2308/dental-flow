@@ -61,12 +61,12 @@ function FluxoCaixa() {
   const [visao, setVisao] = useState<Visao>("geral");
   const isClinica = visao === "clinica";
 
-  const atendimentos = useTable<any>("atendimentos", "data");
-  const recebimentos = useTable<any>("recebimentos", "data", true);
-  const parcelas = useTable<any>("parcelas", "vencimento", true);
-  const despesas = useTable<any>("despesas", "vencimento");
-  const lab = useTable<any>("custos_laboratorio", "data");
-  const ganhos = useTable<any>("receitas_extras", "data");
+  const atendimentos = useTable<Tables<"atendimentos">>("atendimentos", "data");
+  const recebimentos = useTable<Tables<"recebimentos">>("recebimentos", "data", true);
+  const parcelas = useTable<Tables<"parcelas">>("parcelas", "vencimento", true);
+  const despesas = useTable<Tables<"despesas">>("despesas", "vencimento");
+  const lab = useTable<Tables<"custos_laboratorio">>("custos_laboratorio", "data");
+  const ganhos = useTable<Tables<"receitas_extras">>("receitas_extras", "data");
 
   const isLoading =
     atendimentos.isLoading ||
