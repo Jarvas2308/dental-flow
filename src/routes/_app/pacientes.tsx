@@ -26,6 +26,13 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Loader2, Search } from "lucide-react";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { toast } from "sonner";
+import type { Database } from "@/integrations/supabase/types";
+
+type Tables<T extends keyof Database["public"]["Tables"]> = Database["public"]["Tables"][T]["Row"];
+type PacienteRow = Tables<"pacientes">;
+type AtendimentoRow = Tables<"atendimentos">;
+type ConsultaRow = Tables<"consultas_previstas">;
+type PropostaRow = Tables<"tratamentos_propostos">;
 
 export const Route = createFileRoute("/_app/pacientes")({
   component: Pacientes,
@@ -36,8 +43,8 @@ function PacienteForm({
   editing,
   onClose,
 }: {
-  pacientes: any[];
-  editing?: any;
+  pacientes: PacienteRow[];
+  editing?: PacienteRow;
   onClose?: () => void;
 }) {
   const create = useCreate("pacientes");
