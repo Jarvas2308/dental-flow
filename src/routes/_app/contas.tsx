@@ -292,6 +292,9 @@ function Contas() {
     [enriched, mes, aba, q],
   );
 
+  // Paginação só para renderização; os totais/rodapé continuam sobre rowsMes.
+  const pag = usePagination(rowsMes, 20);
+
   const totMes = enriched.filter((r) => monthKey(r.vencimento) === mes);
   const totalPago = totMes
     .filter((r) => r.status === "pago")
