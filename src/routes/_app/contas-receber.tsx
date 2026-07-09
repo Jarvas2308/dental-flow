@@ -10,6 +10,7 @@ import {
   type RecebimentoRow,
   type ParcelaRow,
 } from "@/lib/finance";
+import type { Database } from "@/integrations/supabase/types";
 import { RegistrarRecebimento } from "@/components/recebimento-form";
 import { EditAtendimentoButton } from "@/components/atendimento-form";
 import { VerPacienteButton } from "@/components/paciente-link";
