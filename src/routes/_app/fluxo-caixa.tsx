@@ -121,7 +121,7 @@ function FluxoCaixa() {
     const all = isClinica
       ? (lab.data ?? []).map((r) => ({ ...r, _origem: "Laboratório" }))
       : [...despesasPagas, ...(lab.data ?? []).map((r) => ({ ...r, _origem: "Laboratório" }))];
-    return all.filter((r) => monthKey(r.data) === mes);
+    return all.filter((r) => monthKey(r.data ?? "") === mes);
   }, [despesasPagas, lab.data, mes, isClinica]);
 
   const totalEntradas = ent.reduce((s, r) => s + Number(r.valor || 0), 0);
