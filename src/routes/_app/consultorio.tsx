@@ -288,7 +288,7 @@ function Consultorio() {
       return cmp(a, b);
     });
     return r;
-  }, [allData, mes, q, sort, filter, procFilter, statusPag, freqMap]);
+  }, [allData, mes, q, sort, filter, procFilter, statusPag, freqMap, isPendente]);
 
   // Predicado de período (data do RECEBIMENTO), espelhando o filtro temporal da tabela.
   const inPeriodo = useCallback(
