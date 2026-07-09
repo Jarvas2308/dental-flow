@@ -53,12 +53,19 @@ const empty = (): Custo => ({
   data: new Date().toISOString().slice(0, 10),
 });
 
+type AtendimentoOption = {
+  id: string;
+  paciente?: string | null;
+  procedimento?: string | null;
+  data: string;
+};
+
 function AtendimentoCombobox({
   atendimentos,
   value,
   onChange,
 }: {
-  atendimentos: any[];
+  atendimentos: AtendimentoOption[];
   value: string | null;
   onChange: (id: string | null) => void;
 }) {
@@ -139,10 +146,10 @@ function AtendimentoCombobox({
   );
 }
 
-export function CustoLabForm({ editing, onClose }: { editing?: any; onClose?: () => void }) {
-  const labs = useTable<any>("laboratorios", "nome", true);
-  const tipos = useTable<any>("tipos_trabalho", "nome", true);
-  const atendimentos = useTable<any>("atendimentos", "data");
+export function CustoLabForm({ editing, onClose }: { editing?: Custo; onClose?: () => void }) {
+  const labs = useTable<{ id: string; nome: string }>("laboratorios", "nome", true);
+  const tipos = useTable<{ id: string; nome: string }>("tipos_trabalho", "nome", true);
+  const atendimentos = useTable<AtendimentoOption>("atendimentos", "data");
   const create = useCreate("custos_laboratorio");
   const update = useUpdate("custos_laboratorio");
 
@@ -161,7 +168,7 @@ export function CustoLabForm({ editing, onClose }: { editing?: any; onClose?: ()
       setV((p) => ({ ...p, atendimento_id: null }));
       return;
     }
-    const a = (atendimentos.data ?? []).find((x: any) => x.id === id);
+    const a = (atendimentos.data ?? []).find((x) => x.id === id);
     setV((p) => ({
       ...p,
       atendimento_id: id,
@@ -220,7 +227,7 @@ export function CustoLabForm({ editing, onClose }: { editing?: any; onClose?: ()
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
-                  {(labs.data ?? []).map((l: any) => (
+                  {(labs.data ?? []).map((l) => (
                     <SelectItem key={l.id} value={l.nome}>
                       {l.nome}
                     </SelectItem>
@@ -238,7 +245,7 @@ export function CustoLabForm({ editing, onClose }: { editing?: any; onClose?: ()
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
-                  {(tipos.data ?? []).map((l: any) => (
+                  {(tipos.data ?? []).map((l) => (
                     <SelectItem key={l.id} value={l.nome}>
                       {l.nome}
                     </SelectItem>
@@ -301,8 +308,8 @@ export function CustoLabForm({ editing, onClose }: { editing?: any; onClose?: ()
   );
 }
 
-export function EditCustoButton({ row }: { row: any }) {
-  const [editing, setEditing] = useState<any | null>(null);
+export function EditCustoButton({ row }: { row: Custo }) {
+  const [editing, setEditing] = useState<Custo | null>(null);
   return (
     <>
       <Button variant="ghost" size="icon" aria-label="Editar" onClick={() => setEditing(row)}>
