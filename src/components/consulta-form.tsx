@@ -41,13 +41,13 @@ export function ConsultaForm({
   onClose,
   trigger,
 }: {
-  editing?: any;
+  editing?: Consulta;
   onClose?: () => void;
   trigger?: React.ReactNode;
 }) {
   const create = useCreate("consultas_previstas");
   const update = useUpdate("consultas_previstas");
-  const pacientes = useTable<any>("pacientes", "nome", true);
+  const pacientes = useTable<{ id: string; nome: string }>("pacientes", "nome", true);
   const { user } = useAuth();
   const qc = useQueryClient();
   const [open, setOpen] = useState(!!editing);
