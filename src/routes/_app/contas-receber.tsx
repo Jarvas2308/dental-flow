@@ -1,18 +1,22 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTable } from "@/hooks/use-data";
-import { brl, formatDateBR } from "@/lib/format";
+import { brl, formatDateBR, todayISO } from "@/lib/format";
 import {
   contasAReceber,
+  valoresEmAberto,
   STATUS_LABEL,
   type AtendimentoRow,
   type RecebimentoRow,
   type ParcelaRow,
 } from "@/lib/finance";
 import { RegistrarRecebimento } from "@/components/recebimento-form";
-import { PageHeader, StatCard } from "@/components/ui-kit";
+import { EditAtendimentoButton } from "@/components/atendimento-form";
+import { VerPacienteButton } from "@/components/paciente-link";
+import { PageHeader, StatCard, AlertBanner, EmptyState } from "@/components/ui-kit";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
   Search,
@@ -23,6 +27,7 @@ import {
   CalendarClock,
   Layers,
   Users,
+  AlertTriangle,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_app/contas-receber")({
@@ -41,6 +46,17 @@ function ContasReceber() {
     () => contasAReceber(atendimentos.data ?? [], recebimentos.data ?? [], parcelas.data ?? []),
     [atendimentos.data, recebimentos.data, parcelas.data],
   );
+
+  // Itens efetivamente vencidos (vencimento anterior a hoje) — apenas para o
+  // alerta visual; não altera nenhum cálculo financeiro.
+  const vencidas = useMemo(() => {
+    const hoje = todayISO();
+    return valoresEmAberto(atendimentos.data ?? [], recebimentos.data ?? [], parcelas.data ?? [])
+      .filter((v) => v.vencimento && v.vencimento < hoje);
+  }, [atendimentos.data, recebimentos.data, parcelas.data]);
+
+  const totalVencido = vencidas.reduce((s, v) => s + v.valor_liquido, 0);
+
 
   const rows = useMemo(() => {
     if (!q) return contas;
