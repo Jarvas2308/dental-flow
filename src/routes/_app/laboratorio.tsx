@@ -29,6 +29,9 @@ import { Input } from "@/components/ui/input";
 import { Search, Loader2 } from "lucide-react";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { CustoLabForm, EditCustoButton } from "@/components/custo-lab-form";
+import type { Database } from "@/integrations/supabase/types";
+
+type CustoLabRow = Database["public"]["Tables"]["custos_laboratorio"]["Row"];
 
 export const Route = createFileRoute("/_app/laboratorio")({
   component: Laboratorio,
@@ -37,7 +40,7 @@ export const Route = createFileRoute("/_app/laboratorio")({
 function Laboratorio() {
   const [mes, setMes] = useState(currentMonthKey());
   const [q, setQ] = useState("");
-  const list = useTable<any>("custos_laboratorio", "data");
+  const list = useTable<CustoLabRow>("custos_laboratorio", "data");
   const del = useDelete("custos_laboratorio");
 
   const rows = useMemo(
@@ -133,7 +136,7 @@ function Laboratorio() {
                 <TableCell className="text-right font-medium">{brl(r.valor)}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
-                    <EditCustoButton row={r} />
+                    <EditCustoButton row={{ ...r, procedimento: r.procedimento ?? "" }} />
                     <ConfirmDelete
                       title="Excluir custo?"
                       description={`Custo de ${r.laboratorio} será removido permanentemente.`}
