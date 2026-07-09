@@ -31,8 +31,8 @@ export function useGerarRecorrentes() {
 
       await qc.invalidateQueries({ queryKey: ["despesas"] });
       toast.success(`${criadas} criada(s), ${existentes} já existente(s)`);
-    } catch (e: any) {
-      toast.error(e?.message || "Erro ao gerar despesas recorrentes");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Erro ao gerar despesas recorrentes");
     } finally {
       setLoading(false);
     }
