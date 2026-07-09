@@ -73,7 +73,7 @@ function FluxoCaixa() {
 
   const [year, monthNum] = mes.split("-").map(Number);
   const diasNoMes = new Date(year, monthNum, 0).getDate();
-  const hoje = new Date();
+  const hoje = useMemo(() => new Date(), []);
   const ehMesAtual = currentMonthKey() === mes;
   const diaAtual = ehMesAtual ? Math.min(hoje.getDate(), diasNoMes) : diasNoMes;
 
