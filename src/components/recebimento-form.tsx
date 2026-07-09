@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useCreate, useDelete, useTable } from "@/hooks/use-data";
 import { brl, formatDateBR, todayISO } from "@/lib/format";
 import { resumoAtendimento, STATUS_LABEL } from "@/lib/finance";
+import type { AtendimentoRow, RecebimentoRow } from "@/lib/finance";
 import {
   Dialog,
   DialogContent,
@@ -25,15 +26,18 @@ import { Badge } from "@/components/ui/badge";
 import { HandCoins, Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
+type FormaPagamento = { id: string; nome: string; taxa_percentual?: number | null };
+type RecebimentoRegistro = RecebimentoRow & { observacao?: string | null };
+
 export function RegistrarRecebimento({
   atendimento,
   trigger,
 }: {
-  atendimento: any;
+  atendimento: AtendimentoRow;
   trigger?: React.ReactNode;
 }) {
-  const formas = useTable<any>("formas_pagamento", "nome", true);
-  const recebimentos = useTable<any>("recebimentos", "data", true);
+  const formas = useTable<FormaPagamento>("formas_pagamento", "nome", true);
+  const recebimentos = useTable<RecebimentoRegistro>("recebimentos", "data", true);
   const create = useCreate("recebimentos");
   const del = useDelete("recebimentos");
   const [open, setOpen] = useState(false);
