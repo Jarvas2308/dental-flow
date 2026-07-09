@@ -85,11 +85,11 @@ export type AbertoItem = {
   parcela: boolean;
 };
 
-const liq = (r: any) => Number(r?.valor_liquido || 0);
-const bru = (r: any) => Number(r?.valor_bruto || 0);
+const liq = (r: MonetaryRow | null | undefined) => Number(r?.valor_liquido || 0);
+const bru = (r: MonetaryRow | null | undefined) => Number(r?.valor_bruto || 0);
 
 // Fator de conversão bruto -> líquido de um atendimento (considera a taxa).
-export const fatorLiquido = (a: any) => {
+export const fatorLiquido = (a: AtendimentoRow) => {
   const b = bru(a);
   if (b > 0) return liq(a) / b;
   return Math.max(0, 1 - Number(a?.taxa || 0) / 100);
