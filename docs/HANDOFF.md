@@ -188,3 +188,41 @@ bun run format      # prettier --write .
 - [x] Atendimento antigo com saldo aparece no mês atual.
 - [x] Recebimento antigo não entra no recebido do mês atual.
 - [x] Atendimento quitado antigo não aparece sem necessidade.
+
+---
+
+## 12. Revisão de segurança (Supabase / RLS)
+
+Revisão realizada em 2026-07-09. Resultado: **sem problemas encontrados**.
+Nenhuma migration foi necessária.
+
+Escopo verificado em todas as 17 tabelas do schema `public`
+(`atendimento_procedimentos`, `atendimentos`, `consultas_previstas`,
+`custos_laboratorio`, `despesas`, `formas_pagamento`, `gastos_fixos`,
+`gastos_variaveis`, `laboratorios`, `pacientes`, `parcelas`, `procedimentos`,
+`recebimentos`, `receitas_extras`, `tentativas_contato`, `tipos_trabalho`,
+`tratamentos_propostos`):
+
+- **RLS ativo:** habilitado em todas as tabelas.
+- **Cobertura de políticas:** todas as tabelas possuem políticas para
+  `SELECT`, `INSERT`, `UPDATE` e `DELETE` (algumas via política `FOR ALL`,
+  outras via políticas por comando).
+- **Isolamento por usuário (leitura/edição/exclusão):** todas as políticas de
+  `SELECT`/`UPDATE`/`DELETE` usam `USING (auth.uid() = user_id)`, impedindo
+  acesso a registros de outro usuário.
+- **Inserts:** todas as políticas de `INSERT` usam
+  `WITH CHECK (auth.uid() = user_id)`, garantindo que o registro criado
+  pertence ao usuário autenticado.
+- **Updates sem `WITH CHECK` explícito:** seguro. No PostgreSQL, quando um
+  `UPDATE` não define `WITH CHECK`, a expressão de `USING`
+  (`auth.uid() = user_id`) é reutilizada como verificação da nova linha,
+  impedindo reatribuição de `user_id` para outro usuário.
+- **Nenhuma política concede acesso ao papel `anon`:** todo acesso exige
+  usuário autenticado.
+- **RPCs:** `salvar_atendimento_completo` e `gerar_despesas_recorrentes`
+  usam `auth.uid()` (rejeitando chamadas não autenticadas) e definem
+  `SET search_path = public` explicitamente.
+- **Linter do banco:** executado sem apontamentos (`No linter issues found`).
+
+Nenhuma alteração de banco, layout ou regras financeiras foi feita nesta
+revisão — apenas documentação.
