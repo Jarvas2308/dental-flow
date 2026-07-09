@@ -115,7 +115,10 @@ export function useUpdate(table: TableName) {
       const { error } = await (supabase.from(table) as any).update(values).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: [table] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [table] });
+      qc.invalidateQueries({ queryKey: ["consultorio"] });
+    },
     onError: (e: any) => toast.error(e.message ?? "Erro ao atualizar"),
   });
 }
