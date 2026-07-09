@@ -40,7 +40,7 @@ export async function resolvePacienteId(opts: {
     .ilike("nome", nome);
   if (buscaError) throw buscaError;
   const match = (encontrados ?? []).find(
-    (p: any) => (p.nome ?? "").replace(/\s+/g, " ").trim().toLowerCase() === nomeKey,
+    (p) => (p.nome ?? "").replace(/\s+/g, " ").trim().toLowerCase() === nomeKey,
   );
   if (match) return match.id;
 

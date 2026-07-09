@@ -13,6 +13,55 @@
 
 import { monthKey } from "./format";
 
+// Tipos-linha flexíveis para registros vindos do banco. Campos são opcionais
+// porque cada fluxo (à vista, parcelado, legado) preenche um subconjunto deles.
+type MonetaryRow = {
+  valor_liquido?: number | string | null;
+  valor_bruto?: number | string | null;
+};
+
+export type AtendimentoRow = MonetaryRow & {
+  id: string;
+  data: string;
+  taxa?: number | string | null;
+  parcelado?: boolean | null;
+  status_pagamento?: string | null;
+  forma_pagamento?: string | null;
+  paciente?: string | null;
+  procedimento?: string | null;
+  parcelas_total?: number | string | null;
+};
+
+export type RecebimentoRow = {
+  id?: string;
+  atendimento_id: string;
+  valor?: number | string | null;
+  valor_liquido?: number | string | null;
+  data: string;
+  forma_pagamento?: string | null;
+};
+
+export type ParcelaRow = MonetaryRow & {
+  id: string;
+  atendimento_id: string;
+  numero: number;
+  total: number;
+  status?: string | null;
+  vencimento: string;
+  data_pagamento?: string | null;
+  forma_pagamento?: string | null;
+  paciente?: string | null;
+  procedimento?: string | null;
+};
+
+export type DespesaRow = {
+  status?: string | null;
+  valor?: number | string | null;
+  vencimento?: string | null;
+  data_pagamento?: string | null;
+  data?: string | null;
+};
+
 export type Entrada = {
   data: string;
   valor_liquido: number;
@@ -36,11 +85,11 @@ export type AbertoItem = {
   parcela: boolean;
 };
 
-const liq = (r: any) => Number(r?.valor_liquido || 0);
-const bru = (r: any) => Number(r?.valor_bruto || 0);
+const liq = (r: MonetaryRow | null | undefined) => Number(r?.valor_liquido || 0);
+const bru = (r: MonetaryRow | null | undefined) => Number(r?.valor_bruto || 0);
 
 // Fator de conversão bruto -> líquido de um atendimento (considera a taxa).
-export const fatorLiquido = (a: any) => {
+export const fatorLiquido = (a: AtendimentoRow) => {
   const b = bru(a);
   if (b > 0) return liq(a) / b;
   return Math.max(0, 1 - Number(a?.taxa || 0) / 100);
@@ -61,9 +110,9 @@ export type ResumoAtend = {
 
 // Resumo financeiro de um atendimento (à vista ou parcelado).
 export function resumoAtendimento(
-  a: any,
-  recebimentos: any[] = [],
-  parcelas: any[] = [],
+  a: AtendimentoRow,
+  recebimentos: RecebimentoRow[] = [],
+  parcelas: ParcelaRow[] = [],
 ): ResumoAtend {
   const total = bru(a);
   const f = fatorLiquido(a);
@@ -113,9 +162,9 @@ export function resumoAtendimento(
 
 // Entradas efetivamente recebidas (regime de caixa).
 export function receitasRecebidas(
-  atend: any[] = [],
-  recebimentos: any[] = [],
-  parcelas: any[] = [],
+  atend: AtendimentoRow[] = [],
+  recebimentos: RecebimentoRow[] = [],
+  parcelas: ParcelaRow[] = [],
 ): Entrada[] {
   const out: Entrada[] = [];
   const legacyIds = new Set(parcelas.map((p) => p.atendimento_id));
@@ -173,9 +222,9 @@ export function receitasRecebidas(
 
 // Valores em aberto (contas a receber). Persistem até serem quitados.
 export function valoresEmAberto(
-  atend: any[] = [],
-  recebimentos: any[] = [],
-  parcelas: any[] = [],
+  atend: AtendimentoRow[] = [],
+  recebimentos: RecebimentoRow[] = [],
+  parcelas: ParcelaRow[] = [],
 ): AbertoItem[] {
   const out: AbertoItem[] = [];
   const legacyIds = new Set(parcelas.map((p) => p.atendimento_id));
@@ -257,13 +306,13 @@ export type ContaReceber = {
   parcelasCombinadas: number;
   status: StatusReceb;
   data: string;
-  recebimentos: any[];
+  recebimentos: RecebimentoRow[];
 };
 
 export function contasAReceber(
-  atend: any[] = [],
-  recebimentos: any[] = [],
-  parcelas: any[] = [],
+  atend: AtendimentoRow[] = [],
+  recebimentos: RecebimentoRow[] = [],
+  parcelas: ParcelaRow[] = [],
 ): ContaReceber[] {
   const legacyIds = new Set(parcelas.map((p) => p.atendimento_id));
   const out: ContaReceber[] = [];
@@ -298,7 +347,7 @@ export function contasAReceber(
   }
 
   // Atendimentos legados com parcelas em aberto.
-  const byAtend = new Map<string, any[]>();
+  const byAtend = new Map<string, ParcelaRow[]>();
   for (const p of parcelas) {
     const arr = byAtend.get(p.atendimento_id) ?? [];
     arr.push(p);
@@ -358,9 +407,9 @@ export const noMes = (dateStr: string | null | undefined, mes: string): boolean 
 // Atendimentos antigos com saldo continuam existindo (aparecem no Consultório),
 // mas seus recebimentos antigos só entram no mês em que ocorreram.
 export function recebimentosNoMes(
-  atend: any[] = [],
-  recebimentos: any[] = [],
-  parcelas: any[] = [],
+  atend: AtendimentoRow[] = [],
+  recebimentos: RecebimentoRow[] = [],
+  parcelas: ParcelaRow[] = [],
   mes: string,
 ): Entrada[] {
   return receitasRecebidas(atend, recebimentos, parcelas).filter((e) => noMes(e.data, mes));
@@ -368,39 +417,33 @@ export function recebimentosNoMes(
 
 // Despesas pagas normalizadas: posicionadas pela data_pagamento (data da saída
 // real). Cada item recebe `data = data_pagamento` para uso em fluxo de caixa.
-export function despesasPagas(despesas: any[] = []): any[] {
+export function despesasPagas(despesas: DespesaRow[] = []): DespesaRow[] {
   return (despesas ?? [])
-    .filter((r: any) => r.status === "pago" && r.data_pagamento)
-    .map((r: any) => ({ ...r, data: r.data_pagamento }));
+    .filter((r) => r.status === "pago" && r.data_pagamento)
+    .map((r) => ({ ...r, data: r.data_pagamento }));
 }
 
 // Despesas pagas do mês (pela data_pagamento).
-export function despesasPagasNoMes(despesas: any[] = [], mes: string): any[] {
-  return despesasPagas(despesas).filter((r: any) => noMes(r.data, mes));
+export function despesasPagasNoMes(despesas: DespesaRow[] = [], mes: string): DespesaRow[] {
+  return despesasPagas(despesas).filter((r) => noMes(r.data, mes));
 }
 
-export function totalDespesasPagasNoMes(despesas: any[] = [], mes: string): number {
-  return despesasPagasNoMes(despesas, mes).reduce(
-    (s: number, r: any) => s + Number(r.valor || 0),
-    0,
-  );
+export function totalDespesasPagasNoMes(despesas: DespesaRow[] = [], mes: string): number {
+  return despesasPagasNoMes(despesas, mes).reduce((s, r) => s + Number(r.valor || 0), 0);
 }
 
 // Despesas pendentes: ainda não pagas. Posicionadas pelo vencimento.
-export function despesasPendentes(despesas: any[] = []): any[] {
-  return (despesas ?? []).filter((r: any) => r.status !== "pago");
+export function despesasPendentes(despesas: DespesaRow[] = []): DespesaRow[] {
+  return (despesas ?? []).filter((r) => r.status !== "pago");
 }
 
 // Despesas pendentes do mês (pelo vencimento).
-export function despesasPendentesNoMes(despesas: any[] = [], mes: string): any[] {
-  return despesasPendentes(despesas).filter((r: any) => noMes(r.vencimento, mes));
+export function despesasPendentesNoMes(despesas: DespesaRow[] = [], mes: string): DespesaRow[] {
+  return despesasPendentes(despesas).filter((r) => noMes(r.vencimento, mes));
 }
 
-export function totalDespesasPendentesNoMes(despesas: any[] = [], mes: string): number {
-  return despesasPendentesNoMes(despesas, mes).reduce(
-    (s: number, r: any) => s + Number(r.valor || 0),
-    0,
-  );
+export function totalDespesasPendentesNoMes(despesas: DespesaRow[] = [], mes: string): number {
+  return despesasPendentesNoMes(despesas, mes).reduce((s, r) => s + Number(r.valor || 0), 0);
 }
 
 // Caixa realizado = entradas efetivamente recebidas − saídas efetivamente pagas.

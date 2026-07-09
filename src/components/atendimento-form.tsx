@@ -65,7 +65,7 @@ function QuickAdd({
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nome.trim()) return toast.error("Informe o nome");
-    const values: any = { nome: nome.trim() };
+    const values: { nome: string; taxa?: number } = { nome: nome.trim() };
     if (table === "formas_pagamento") values.taxa = Number(taxa) || 0;
     await create.mutateAsync(values);
     onCreated(nome.trim());
@@ -127,8 +127,8 @@ export function PacienteCombobox({
   value: string;
   onChange: (nome: string, id: string | null) => void;
 }) {
-  const pacientes = useTable<any>("pacientes", "nome", true);
-  const atendimentos = useTable<any>("atendimentos", "data");
+  const pacientes = useTable<{ id: string; nome: string | null }>("pacientes", "nome", true);
+  const atendimentos = useTable<{ paciente?: string | null }>("atendimentos", "data");
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -309,6 +309,25 @@ const empty = (): Atendimento => ({
   status_pagamento: "pago",
 });
 
+type AtendimentoEditavel = Atendimento & {
+  paciente_id?: string | null;
+  parcelado?: boolean | null;
+  parcelas_total?: number | null;
+  procedimento?: string | null;
+  valor_bruto?: number | string | null;
+};
+
+type FormaPagamentoRow = { id: string; nome: string; taxa?: number | null };
+
+type RecebimentoInicial = {
+  valor: number;
+  data: string;
+  forma_pagamento: string;
+  observacao: string | null;
+  taxa: number;
+  valor_liquido: number;
+};
+
 export function AtendimentoForm({
   editing,
   onClose,
@@ -316,17 +335,17 @@ export function AtendimentoForm({
   trigger,
   initialData,
 }: {
-  editing?: any;
+  editing?: AtendimentoEditavel;
   onClose?: () => void;
   onSaved?: () => void | Promise<void>;
   trigger?: React.ReactNode;
   initialData?: { paciente?: string; valorEstimado?: number };
 }) {
   const { user } = useAuth();
-  const procedimentos = useTable<any>("procedimentos", "nome", true);
-  const formas = useTable<any>("formas_pagamento", "nome", true);
-  const atendimentos = useTable<any>("atendimentos", "data");
-  const pacientes = useTable<any>("pacientes", "nome", true);
+  const procedimentos = useTable<{ id: string; nome: string }>("procedimentos", "nome", true);
+  const formas = useTable<FormaPagamentoRow>("formas_pagamento", "nome", true);
+  const atendimentos = useTable<{ procedimento?: string | null }>("atendimentos", "data");
+  const pacientes = useTable<{ id: string; nome: string | null }>("pacientes", "nome", true);
   const qc = useQueryClient();
   // Inserções feitas diretamente via supabase para controlar o toast de sucesso
   // (os hooks useCreate disparam um toast próprio em cada insert).
@@ -336,7 +355,7 @@ export function AtendimentoForm({
   const [items, setItems] = useState<ProcItem[]>([{ procedimento: "", valor: "" }]);
   const [parcelado, setParcelado] = useState<boolean>(!!editing?.parcelado);
   const [parcelasN, setParcelasN] = useState<number>(
-    editing?.parcelas_total > 1 ? editing.parcelas_total : 3,
+    editing?.parcelas_total != null && editing.parcelas_total > 1 ? editing.parcelas_total : 3,
   );
   const [dividido, setDividido] = useState(false);
   const [valorInicial, setValorInicial] = useState("");
@@ -351,7 +370,7 @@ export function AtendimentoForm({
   // Procedimentos ordenados por frequência de uso, com fallback alfabético
   const procedimentosOrdenados = useMemo(() => {
     const freq = new Map<string, number>();
-    (atendimentos.data ?? []).forEach((a: any) => {
+    (atendimentos.data ?? []).forEach((a) => {
       if (a.procedimento) freq.set(a.procedimento, (freq.get(a.procedimento) ?? 0) + 1);
     });
     return [...(procedimentos.data ?? [])].sort((a, b) => {
@@ -373,7 +392,9 @@ export function AtendimentoForm({
     }
     setPacienteId(editing?.paciente_id ?? null);
     setParcelado(!!editing?.parcelado);
-    setParcelasN(editing?.parcelas_total > 1 ? editing.parcelas_total : 3);
+    setParcelasN(
+      editing?.parcelas_total != null && editing.parcelas_total > 1 ? editing.parcelas_total : 3,
+    );
     setDividido(false);
     setValorInicial("");
     setFormaInicial("");
@@ -395,8 +416,8 @@ export function AtendimentoForm({
           if (data && data.length > 0) {
             setItems(
               data
-                .sort((a: any, b: any) => (a.created_at ?? "").localeCompare(b.created_at ?? ""))
-                .map((d: any) => ({ procedimento: d.procedimento, valor: String(d.valor ?? "") })),
+                .sort((a, b) => (a.created_at ?? "").localeCompare(b.created_at ?? ""))
+                .map((d) => ({ procedimento: d.procedimento, valor: String(d.valor ?? "") })),
             );
           } else {
             setItems([
@@ -490,7 +511,7 @@ export function AtendimentoForm({
               .ilike("nome", nome);
             if (buscaError) throw buscaError;
             const match = (encontrados ?? []).find(
-              (p: any) => (p.nome ?? "").replace(/\s+/g, " ").trim().toLowerCase() === nomeKey,
+              (p) => (p.nome ?? "").replace(/\s+/g, " ").trim().toLowerCase() === nomeKey,
             );
             if (match) idResolvido = match.id;
           } catch (err) {
@@ -501,7 +522,7 @@ export function AtendimentoForm({
 
           // 3) Cria o paciente apenas se nenhuma correspondência foi encontrada.
           if (!idResolvido) {
-            let novo: any;
+            let novo: { id?: string } | null = null;
             try {
               const { data, error } = await supabase
                 .from("pacientes")
@@ -547,7 +568,7 @@ export function AtendimentoForm({
 
       // Recebimentos iniciais: apenas em criação no modo dividido.
       // Em edição enviamos [] para não duplicar o histórico.
-      const recebimentos: any[] = [];
+      const recebimentos: RecebimentoInicial[] = [];
       if (!isEdit && dividido) {
         recebimentos.push({
           valor: Number(valorInicial),
@@ -985,8 +1006,8 @@ export function AtendimentoForm({
   );
 }
 
-export function EditAtendimentoButton({ row }: { row: any }) {
-  const [editing, setEditing] = useState<any | null>(null);
+export function EditAtendimentoButton({ row }: { row: AtendimentoEditavel }) {
+  const [editing, setEditing] = useState<AtendimentoEditavel | null>(null);
   return (
     <>
       <Button variant="ghost" size="icon" aria-label="Editar" onClick={() => setEditing(row)}>

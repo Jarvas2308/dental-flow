@@ -20,6 +20,9 @@ import {
 } from "@/components/ui/select";
 import { Plus, Loader2 } from "lucide-react";
 
+export type FormValue = string | number | boolean | null | undefined;
+export type FormValues = Record<string, FormValue>;
+
 export type FieldDef =
   | {
       name: string;
@@ -48,13 +51,13 @@ export function FormDialog({
 }: {
   title: string;
   fields: FieldDef[];
-  defaults?: Record<string, any>;
-  onSubmit: (values: Record<string, any>) => Promise<void> | void;
+  defaults?: FormValues;
+  onSubmit: (values: FormValues) => Promise<void> | void;
   trigger?: ReactNode;
   busy?: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const [values, setValues] = useState<Record<string, any>>(defaults);
+  const [values, setValues] = useState<FormValues>(defaults);
 
   const reset = () => setValues(defaults);
 
@@ -92,12 +95,12 @@ export function FormDialog({
               {f.type === "textarea" ? (
                 <Textarea
                   id={f.name}
-                  value={values[f.name] ?? ""}
+                  value={String(values[f.name] ?? "")}
                   onChange={(e) => setValues({ ...values, [f.name]: e.target.value })}
                 />
               ) : f.type === "select" ? (
                 <Select
-                  value={values[f.name] ?? ""}
+                  value={String(values[f.name] ?? "")}
                   onValueChange={(v) => setValues({ ...values, [f.name]: v })}
                 >
                   <SelectTrigger>
@@ -126,9 +129,9 @@ export function FormDialog({
                 <Input
                   id={f.name}
                   type={f.type}
-                  step={(f as any).step}
+                  step={"step" in f ? f.step : undefined}
                   required={f.required}
-                  value={values[f.name] ?? ""}
+                  value={String(values[f.name] ?? "")}
                   onChange={(e) =>
                     setValues({
                       ...values,
