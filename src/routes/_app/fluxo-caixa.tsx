@@ -75,10 +75,7 @@ function FluxoCaixa() {
   // Despesas no caixa realizado: somente as efetivamente pagas, posicionadas
   // na data_pagamento (data da saída real). Pendentes/atrasadas não pagas ficam de fora.
   const despesasPagas = useMemo(
-    () =>
-      (despesas.data ?? [])
-        .filter((r) => r.status === "pago" && r.data_pagamento)
-        .map((r) => ({ ...r, data: r.data_pagamento, _origem: "Despesa" })),
+    () => despesasPagasFn(despesas.data ?? []).map((r) => ({ ...r, _origem: "Despesa" })),
     [despesas.data],
   );
 
