@@ -21,9 +21,16 @@ type Atendimento = {
 };
 
 type CustoLab = {
+  atendimento_id?: string | null;
   procedimento?: string | null;
   valor: number | string;
   data: string;
+};
+
+type ItemProcedimento = {
+  atendimento_id: string;
+  procedimento?: string | null;
+  valor: number | string | null;
 };
 
 type Periodo = "mes" | "3m" | "6m" | "12m";
@@ -34,7 +41,7 @@ export function ProceduresAnalytics({ mes }: { mes: string }) {
   const [mesLocal, setMesLocal] = useState<string>(mes);
 
   const atendimentos = useTable<Atendimento & { id: string }>("atendimentos", "data");
-  const itens = useTable<any>("atendimento_procedimentos", "created_at", true);
+  const itens = useTable<ItemProcedimento>("atendimento_procedimentos", "created_at", true);
   const lab = useTable<CustoLab>("custos_laboratorio", "data");
 
   const mesesPeriodo = useMemo(() => {
@@ -46,7 +53,7 @@ export function ProceduresAnalytics({ mes }: { mes: string }) {
   // Linhas de procedimento: usa itens detalhados quando existirem,
   // com fallback para o campo de texto dos atendimentos antigos.
   const lineItems = useMemo(() => {
-    const itensPorAtend = new Map<string, any[]>();
+    const itensPorAtend = new Map<string, ItemProcedimento[]>();
     (itens.data ?? []).forEach((it) => {
       const arr = itensPorAtend.get(it.atendimento_id) ?? [];
       arr.push(it);
@@ -61,7 +68,7 @@ export function ProceduresAnalytics({ mes }: { mes: string }) {
       atendimentoId: string;
       ratio: number;
     }[] = [];
-    (atendimentos.data ?? []).forEach((a: any) => {
+    (atendimentos.data ?? []).forEach((a) => {
       if (!mesesPeriodo.includes(monthKey(a.data))) return;
       const its = itensPorAtend.get(a.id);
       const liqTotal = Number(a.valor_liquido || 0);
@@ -106,7 +113,7 @@ export function ProceduresAnalytics({ mes }: { mes: string }) {
   const procedimentosUnicos = useMemo(() => {
     const set = new Set<string>();
     (itens.data ?? []).forEach((r) => r.procedimento && set.add(r.procedimento));
-    (atendimentos.data ?? []).forEach((r: any) => r.procedimento && set.add(r.procedimento));
+    (atendimentos.data ?? []).forEach((r) => r.procedimento && set.add(r.procedimento));
     return Array.from(set).sort();
   }, [atendimentos.data, itens.data]);
 
@@ -119,7 +126,7 @@ export function ProceduresAnalytics({ mes }: { mes: string }) {
   const agrupado = useMemo(() => {
     // Soma os custos de laboratório por atendimento_id
     const labPorAtend = new Map<string, number>();
-    labFiltrado.forEach((r: any) => {
+    labFiltrado.forEach((r) => {
       if (!r.atendimento_id) return;
       labPorAtend.set(
         r.atendimento_id,
@@ -289,7 +296,7 @@ export function ProceduresAnalytics({ mes }: { mes: string }) {
                     border: "1px solid var(--border)",
                     borderRadius: 12,
                   }}
-                  formatter={(v: any, name: string) =>
+                  formatter={(v: number | string, name: string) =>
                     name === "Faturamento" ? brl(Number(v)) : v
                   }
                 />
