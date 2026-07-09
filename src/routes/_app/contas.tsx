@@ -50,7 +50,7 @@ type Despesa = {
   valor: number | string | null;
   vencimento: string;
   data_pagamento?: string | null;
-  status: "pago" | "pendente" | "atrasado";
+  status: "pago" | "pendente" | "atrasado" | "aguardando";
   recorrente: boolean;
   tipo_recorrencia: "fixo" | "variavel";
   observacoes?: string | null;
