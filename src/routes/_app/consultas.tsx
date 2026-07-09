@@ -222,6 +222,18 @@ function Consultas() {
             })}
           </TableBody>
         </Table>
+        <TablePagination
+          page={pag.page}
+          totalPages={pag.totalPages}
+          from={pag.from}
+          to={pag.to}
+          total={pag.total}
+          canPrev={pag.canPrev}
+          canNext={pag.canNext}
+          onPrev={pag.prev}
+          onNext={pag.next}
+          unitLabel="consultas"
+        />
       </div>
     </>
   );
