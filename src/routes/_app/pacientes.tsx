@@ -110,12 +110,12 @@ function PacienteForm({
 }
 
 function Pacientes() {
-  const list = useTable<any>("pacientes", "nome", true);
-  const atendimentos = useTable<any>("atendimentos", "data");
-  const consultas = useTable<any>("consultas_previstas", "data_prevista");
-  const propostas = useTable<any>("tratamentos_propostos", "data_proposta");
+  const list = useTable<PacienteRow>("pacientes", "nome", true);
+  const atendimentos = useTable<AtendimentoRow>("atendimentos", "data");
+  const consultas = useTable<ConsultaRow>("consultas_previstas", "data_prevista");
+  const propostas = useTable<PropostaRow>("tratamentos_propostos", "data_proposta");
   const del = useDelete("pacientes");
-  const [editing, setEditing] = useState<any | null>(null);
+  const [editing, setEditing] = useState<PacienteRow | null>(null);
   const [q, setQ] = useState("");
 
   const pacientes = useMemo(() => list.data ?? [], [list.data]);
