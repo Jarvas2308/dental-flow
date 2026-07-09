@@ -54,6 +54,8 @@ import { ConfirmDelete } from "@/components/confirm-delete";
 import { AtendimentoForm, EditAtendimentoButton } from "@/components/atendimento-form";
 import { RegistrarRecebimento } from "@/components/recebimento-form";
 import { resumoAtendimento, receitasRecebidas, noMes, STATUS_LABEL } from "@/lib/finance";
+import { usePagination } from "@/hooks/use-pagination";
+import { TablePagination } from "@/components/table-pagination";
 import { Progress } from "@/components/ui/progress";
 
 export const Route = createFileRoute("/_app/consultorio")({
