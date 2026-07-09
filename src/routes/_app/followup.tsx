@@ -85,8 +85,24 @@ function PropostaForm({ proposta, onClose }: { proposta?: any; onClose: () => vo
     if (!v.tratamento.trim()) return toast.error("Informe o tratamento");
     if (!v.data_proposta) return toast.error("Informe a data da proposta");
 
+    // Resolve/crie o paciente_id preservando o texto do nome para compatibilidade.
+    let idResolvido: string | null = pacienteId;
+    try {
+      idResolvido = await resolvePacienteId({
+        nome: v.paciente,
+        userId: user!.id,
+        knownId: pacienteId,
+        cache: pacientes.data ?? [],
+      });
+    } catch (err) {
+      console.error("[PropostaForm] Erro ao resolver paciente:", err);
+      toast.error("Não foi possível vincular o paciente. Tente novamente.");
+      return;
+    }
+
     const payload = {
       paciente: v.paciente.trim(),
+      paciente_id: idResolvido,
       tratamento: v.tratamento.trim(),
       valor_estimado: v.valor_estimado === "" ? null : Number(v.valor_estimado),
       data_proposta: v.data_proposta,
@@ -98,10 +114,11 @@ function PropostaForm({ proposta, onClose }: { proposta?: any; onClose: () => vo
     };
 
     if (proposta) {
-      update.mutate({ id: proposta.id, values: payload });
+      await update.mutateAsync({ id: proposta.id, values: payload });
     } else {
       await create.mutateAsync({ ...payload, tentativas_feitas: 0, status: "acompanhando" });
     }
+    qc.invalidateQueries({ queryKey: ["pacientes"] });
     onClose();
   };
 
@@ -111,7 +128,7 @@ function PropostaForm({ proposta, onClose }: { proposta?: any; onClose: () => vo
     <form onSubmit={submit} className="space-y-4">
       <div className="space-y-1.5">
         <Label>Paciente</Label>
-        <PacienteCombobox value={v.paciente} onChange={(nome, _id) => setV((p) => ({ ...p, paciente: nome }))} />
+        <PacienteCombobox value={v.paciente} onChange={(nome, id) => { setV((p) => ({ ...p, paciente: nome })); setPacienteId(id); }} />
       </div>
       <div className="space-y-1.5">
         <Label>Tratamento</Label>
