@@ -129,13 +129,21 @@ function ContasReceber() {
         </div>
       ) : rows.length === 0 ? (
         <div
-          className="rounded-2xl border bg-card py-16 text-center text-muted-foreground"
+          className="rounded-2xl border bg-card"
           style={{ boxShadow: "var(--shadow-soft)" }}
         >
-          <CheckCircle2 className="h-8 w-8 mx-auto mb-3 text-success" />
-          Nenhuma conta a receber em aberto.
+          <EmptyState
+            icon={<CheckCircle2 className="h-8 w-8 text-success" />}
+            title={q ? "Nenhum resultado para a busca" : "Nenhuma conta a receber em aberto"}
+            description={
+              q
+                ? "Ajuste o termo buscado para encontrar o paciente ou procedimento."
+                : "Tudo em dia! Novos saldos aparecem aqui quando um atendimento fica pendente."
+            }
+          />
         </div>
       ) : (
+
         <div className="space-y-3">
           {rows.map((c) => {
             const pct = c.total > 0 ? Math.min(100, (c.recebido / c.total) * 100) : 0;
