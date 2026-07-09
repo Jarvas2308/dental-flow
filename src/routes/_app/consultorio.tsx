@@ -173,7 +173,7 @@ function Consultorio() {
   }, [allData, recebimentosData, parcelasData]);
 
   const isPendente = useCallback(
-    (r: any) =>
+    (r: AtendimentoView) =>
       (resumoMap.get(r.id)?.status ??
         (r.status_pagamento === "pendente" ? "aberto" : "quitado")) !== "quitado",
     [resumoMap],
