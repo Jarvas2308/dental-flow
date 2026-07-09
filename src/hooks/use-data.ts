@@ -101,6 +101,7 @@ export function useCreate(table: TableName) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [table] });
+      qc.invalidateQueries({ queryKey: ["consultorio"] });
       toast.success("Salvo com sucesso");
     },
     onError: (e: any) => toast.error(e.message ?? "Erro ao salvar"),
