@@ -299,6 +299,12 @@ function Pacientes() {
     [pacientes, q],
   );
 
+  // Expande automaticamente quando a busca resolve para um único paciente
+  // (fluxo "Ver paciente"), sem interferir na navegação manual.
+  useEffect(() => {
+    if (qParam && rows.length === 1) setExpanded(rows[0].id);
+  }, [qParam, rows]);
+
   return (
     <>
       <PageHeader
