@@ -1,6 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTable } from "@/hooks/use-data";
+import type { Database } from "@/integrations/supabase/types";
+
+type Tables<T extends keyof Database["public"]["Tables"]> =
+  Database["public"]["Tables"][T]["Row"];
 import {
   brl,
   monthOptions,
@@ -61,15 +65,15 @@ function Dashboard() {
   const [mes, setMes] = useState(currentMonthKey());
   const opts = monthOptions(12);
 
-  const atendimentos = useTable<any>("atendimentos", "data");
-  const recebimentos = useTable<any>("recebimentos", "data", true);
-  const parcelas = useTable<any>("parcelas", "vencimento", true);
-  const despesas = useTable<any>("despesas", "vencimento");
-  const lab = useTable<any>("custos_laboratorio", "data");
-  const ganhos = useTable<any>("receitas_extras", "data");
-  const consultas = useTable<any>("consultas_previstas", "data_prevista", true);
-  const tratamentosPropostos = useTable<any>("tratamentos_propostos", "data_proposta", true);
-  const tentativasContato = useTable<any>("tentativas_contato", "data", true);
+  const atendimentos = useTable<Tables<"atendimentos">>("atendimentos", "data");
+  const recebimentos = useTable<Tables<"recebimentos">>("recebimentos", "data", true);
+  const parcelas = useTable<Tables<"parcelas">>("parcelas", "vencimento", true);
+  const despesas = useTable<Tables<"despesas">>("despesas", "vencimento");
+  const lab = useTable<Tables<"custos_laboratorio">>("custos_laboratorio", "data");
+  const ganhos = useTable<Tables<"receitas_extras">>("receitas_extras", "data");
+  const consultas = useTable<Tables<"consultas_previstas">>("consultas_previstas", "data_prevista", true);
+  const tratamentosPropostos = useTable<Tables<"tratamentos_propostos">>("tratamentos_propostos", "data_proposta", true);
+  const tentativasContato = useTable<Tables<"tentativas_contato">>("tentativas_contato", "data", true);
 
   // Previsão de consultas futuras (hoje / semana)
   const previsao = useMemo(() => {
@@ -95,10 +99,10 @@ function Dashboard() {
   const pendentesFollowup = useMemo(
     () =>
       (tratamentosPropostos.data ?? [])
-        .filter((t: any) => t.status === "acompanhando")
-        .filter((t: any) => {
+        .filter((t) => t.status === "acompanhando")
+        .filter((t) => {
           const tts = (tentativasContato.data ?? []).filter(
-            (x: any) => x.tratamento_proposto_id === t.id,
+            (x) => x.tratamento_proposto_id === t.id,
           );
           return estaPendenteHoje(proximaTentativa(t, tts).dataPrevista);
         }).length,
@@ -129,7 +133,7 @@ function Dashboard() {
   const totRecebidoGeral = recebidas.reduce((s, r) => s + r.valor_liquido, 0);
   const totContratado = totRecebidoGeral + totPendente;
 
-  const totGanhos = filt(ganhos.data).reduce((s, r: any) => s + Number(r.valor || 0), 0);
+  const totGanhos = filt(ganhos.data).reduce((s, r) => s + Number(r.valor || 0), 0);
   // Receitas recebidas totais do período (atendimentos + ganhos extras).
   const totReceitaTotal = totLiquidoAtend + totGanhos;
 
@@ -137,7 +141,7 @@ function Dashboard() {
   const totDespPagas = totalDespesasPagasNoMes(despesas.data ?? [], mes);
   // Despesas pendentes: ainda não pagas, posicionadas pelo vencimento.
   const totDespPendentes = totalDespesasPendentesNoMes(despesas.data ?? [], mes);
-  const totLab = filt(lab.data).reduce((s, r: any) => s + Number(r.valor || 0), 0);
+  const totLab = filt(lab.data).reduce((s, r) => s + Number(r.valor || 0), 0);
 
   // Caixa realizado = recebimentos efetivos − despesas pagas (inclui custos de
   // laboratório realizados). Despesas pendentes NÃO reduzem o caixa realizado.
@@ -155,14 +159,14 @@ function Dashboard() {
     .filter((r) => monthKey(r.data) === prevMes)
     .reduce((s, r) => s + r.valor_liquido, 0);
   const totGanhosPrev = (ganhos.data ?? [])
-    .filter((r: any) => monthKey(r.data) === prevMes)
-    .reduce((s, r: any) => s + Number(r.valor || 0), 0);
+    .filter((r) => monthKey(r.data) === prevMes)
+    .reduce((s, r) => s + Number(r.valor || 0), 0);
   const totReceitaTotalPrev = totLiquidoAtendPrev + totGanhosPrev;
   const totDespPagasPrev = totalDespesasPagasNoMes(despesas.data ?? [], prevMes);
   const totDespPendentesPrev = totalDespesasPendentesNoMes(despesas.data ?? [], prevMes);
   const totLabPrev = (lab.data ?? [])
-    .filter((r: any) => monthKey(r.data) === prevMes)
-    .reduce((s, r: any) => s + Number(r.valor || 0), 0);
+    .filter((r) => monthKey(r.data) === prevMes)
+    .reduce((s, r) => s + Number(r.valor || 0), 0);
   const caixaRealizadoPrev = calcCaixaRealizado(totReceitaTotalPrev, totDespPagasPrev + totLabPrev);
   const resultadoPrevistoPrev = calcResultadoPrevisto(caixaRealizadoPrev, totDespPendentesPrev);
 
@@ -179,13 +183,13 @@ function Dashboard() {
         .filter((r) => monthKey(r.data) === m)
         .reduce((s, r) => s + r.valor_liquido, 0);
       const recExtra = (ganhos.data ?? [])
-        .filter((r: any) => monthKey(r.data) === m)
-        .reduce((s, r: any) => s + Number(r.valor || 0), 0);
+        .filter((r) => monthKey(r.data) === m)
+        .reduce((s, r) => s + Number(r.valor || 0), 0);
       const desp =
         totalDespesasPagasNoMes(despesas.data ?? [], m) +
         (lab.data ?? [])
-          .filter((r: any) => monthKey(r.data) === m)
-          .reduce((s, r: any) => s + Number(r.valor || 0), 0);
+          .filter((r) => monthKey(r.data) === m)
+          .reduce((s, r) => s + Number(r.valor || 0), 0);
       return {
         mes: monthLabel(m).replace(" de ", "/"),
         Receita: Number((recAtend + recExtra).toFixed(2)),
@@ -410,7 +414,7 @@ function Dashboard() {
                   border: "1px solid var(--border)",
                   borderRadius: 12,
                 }}
-                formatter={(v: any) => brl(Number(v))}
+                formatter={(v: number | string) => brl(Number(v))}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} />
               <Bar dataKey="Receita" fill="var(--chart-1)" radius={[8, 8, 0, 0]} />

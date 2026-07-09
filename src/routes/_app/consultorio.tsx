@@ -1,6 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useMemo, useState } from "react";
 import { useConsultorioData, useUpdate, useDelete } from "@/hooks/use-data";
+import type { Database } from "@/integrations/supabase/types";
+
+type Tables<T extends keyof Database["public"]["Tables"]> =
+  Database["public"]["Tables"][T]["Row"];
 import {
   brl,
   currentMonthKey,
@@ -145,15 +149,15 @@ function Consultorio() {
   const del = useDelete("atendimentos");
 
   const allData = useMemo(
-    () => (consultorio.data?.atendimentos ?? []) as any[],
+    () => (consultorio.data?.atendimentos ?? []) as Tables<"atendimentos">[],
     [consultorio.data?.atendimentos],
   );
   const recebimentosData = useMemo(
-    () => (consultorio.data?.recebimentos ?? []) as any[],
+    () => consultorio.data?.recebimentos ?? [],
     [consultorio.data?.recebimentos],
   );
   const parcelasData = useMemo(
-    () => (consultorio.data?.parcelas ?? []) as any[],
+    () => consultorio.data?.parcelas ?? [],
     [consultorio.data?.parcelas],
   );
 
