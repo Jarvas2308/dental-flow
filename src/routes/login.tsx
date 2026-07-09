@@ -39,9 +39,8 @@ function LoginPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
-    const { error } = mode === "signin"
-      ? await signIn(email, password)
-      : await signUp(email, password);
+    const { error } =
+      mode === "signin" ? await signIn(email, password) : await signUp(email, password);
     setBusy(false);
     if (error) return toast.error(error);
     if (mode === "signup") toast.success("Conta criada! Verifique seu e-mail se necessário.");
@@ -66,8 +65,8 @@ function LoginPage() {
             Controle financeiro completo do seu consultório.
           </h1>
           <p className="text-primary-foreground/80">
-            Receitas, despesas, procedimentos e laboratório — tudo num só lugar,
-            com lucro líquido calculado automaticamente.
+            Receitas, despesas, procedimentos e laboratório — tudo num só lugar, com lucro líquido
+            calculado automaticamente.
           </p>
         </div>
         <div className="text-xs text-primary-foreground/70">
@@ -78,8 +77,12 @@ function LoginPage() {
       <div className="flex items-center justify-center p-6 sm:p-12 bg-background">
         <div className="w-full max-w-sm">
           <div className="lg:hidden mb-8 flex items-center gap-2.5">
-            <div className="h-10 w-10 rounded-xl grid place-items-center text-primary-foreground font-bold"
-              style={{ background: "var(--gradient-primary)" }}>O</div>
+            <div
+              className="h-10 w-10 rounded-xl grid place-items-center text-primary-foreground font-bold"
+              style={{ background: "var(--gradient-primary)" }}
+            >
+              O
+            </div>
             <div className="font-semibold tracking-tight">Odonto Financeiro</div>
           </div>
 
@@ -93,13 +96,26 @@ function LoginPage() {
           <form onSubmit={submit} className="mt-8 space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="email">E-mail</Label>
-              <Input id="email" type="email" required value={email}
-                onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" />
+              <Input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="seu@email.com"
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="password">Senha</Label>
-              <Input id="password" type="password" required minLength={6}
-                value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+              <Input
+                id="password"
+                type="password"
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+              />
             </div>
             <Button type="submit" className="w-full h-11" disabled={busy}>
               {busy && <Loader2 className="h-4 w-4 animate-spin" />}

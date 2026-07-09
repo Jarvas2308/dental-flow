@@ -3,10 +3,19 @@ import { useCreate, useDelete, useTable } from "@/hooks/use-data";
 import { brl, formatDateBR, todayISO } from "@/lib/format";
 import { resumoAtendimento, STATUS_LABEL } from "@/lib/finance";
 import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -77,14 +86,20 @@ export function RegistrarRecebimento({
       observacao: obs.trim() || null,
     });
     toast.success("Recebimento registrado");
-    setValor(""); setObs(""); setData(todayISO());
+    setValor("");
+    setObs("");
+    setData(todayISO());
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger ?? (
-          <Button size="sm" variant="outline" className="h-8 gap-1 border-primary/40 text-primary hover:bg-primary/10">
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 gap-1 border-primary/40 text-primary hover:bg-primary/10"
+          >
             <HandCoins className="h-4 w-4" /> Receber
           </Button>
         )}
@@ -97,7 +112,9 @@ export function RegistrarRecebimento({
         <div className="rounded-xl border bg-muted/30 p-3 space-y-2">
           <div className="flex items-center justify-between">
             <span className="font-medium truncate">{atendimento.paciente || "—"}</span>
-            <Badge variant="outline" className="capitalize">{STATUS_LABEL[resumo.status]}</Badge>
+            <Badge variant="outline" className="capitalize">
+              {STATUS_LABEL[resumo.status]}
+            </Badge>
           </div>
           <div className="grid grid-cols-3 gap-2 text-sm">
             <div>
@@ -114,7 +131,9 @@ export function RegistrarRecebimento({
             </div>
           </div>
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Recebimentos: {resumo.qtd}/{resumo.parcelasCombinadas}</span>
+            <span>
+              Recebimentos: {resumo.qtd}/{resumo.parcelasCombinadas}
+            </span>
           </div>
           <Progress value={pct} className="h-2" />
         </div>
@@ -124,8 +143,14 @@ export function RegistrarRecebimento({
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Valor recebido (R$)</Label>
-                <Input type="number" step="0.01" autoFocus value={valor}
-                  onChange={(e) => setValor(e.target.value)} placeholder="0,00" />
+                <Input
+                  type="number"
+                  step="0.01"
+                  autoFocus
+                  value={valor}
+                  onChange={(e) => setValor(e.target.value)}
+                  placeholder="0,00"
+                />
               </div>
               <div className="space-y-1.5">
                 <Label>Data</Label>
@@ -135,10 +160,14 @@ export function RegistrarRecebimento({
             <div className="space-y-1.5">
               <Label>Forma de pagamento</Label>
               <Select value={forma} onValueChange={setForma}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
                 <SelectContent>
                   {(formas.data ?? []).map((p) => (
-                    <SelectItem key={p.id} value={p.nome}>{p.nome}</SelectItem>
+                    <SelectItem key={p.id} value={p.nome}>
+                      {p.nome}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -157,10 +186,18 @@ export function RegistrarRecebimento({
             )}
             <div className="space-y-1.5">
               <Label>Observação (opcional)</Label>
-              <Input value={obs} onChange={(e) => setObs(e.target.value)} placeholder="Ex.: entrada, sinal..." />
+              <Input
+                value={obs}
+                onChange={(e) => setObs(e.target.value)}
+                placeholder="Ex.: entrada, sinal..."
+              />
             </div>
             <Button type="submit" className="w-full gap-1.5" disabled={create.isPending}>
-              {create.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+              {create.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Plus className="h-4 w-4" />
+              )}
               Registrar recebimento
             </Button>
           </form>
@@ -177,16 +214,24 @@ export function RegistrarRecebimento({
               {[...recsDoAtend]
                 .sort((a, b) => (b.data ?? "").localeCompare(a.data ?? ""))
                 .map((r) => (
-                  <div key={r.id} className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm">
+                  <div
+                    key={r.id}
+                    className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm"
+                  >
                     <div className="min-w-0">
                       <div className="font-medium">{brl(r.valor)}</div>
                       <div className="text-xs text-muted-foreground truncate">
-                        {formatDateBR(r.data)}{r.forma_pagamento ? ` · ${r.forma_pagamento}` : ""}
+                        {formatDateBR(r.data)}
+                        {r.forma_pagamento ? ` · ${r.forma_pagamento}` : ""}
                         {r.observacao ? ` · ${r.observacao}` : ""}
                       </div>
                     </div>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                      onClick={() => del.mutate(r.id)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                      onClick={() => del.mutate(r.id)}
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -196,7 +241,9 @@ export function RegistrarRecebimento({
         )}
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>Fechar</Button>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Fechar
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

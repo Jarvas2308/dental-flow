@@ -18,9 +18,7 @@ function NotFoundComponent() {
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold">404</h1>
         <h2 className="mt-4 text-xl font-semibold">Página não encontrada</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          O endereço acessado não existe.
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">O endereço acessado não existe.</p>
         <div className="mt-6">
           <Link
             to="/dashboard"
@@ -44,7 +42,10 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
-            onClick={() => { router.invalidate(); reset(); }}
+            onClick={() => {
+              router.invalidate();
+              reset();
+            }}
             className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
           >
             Tentar novamente
@@ -61,13 +62,30 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Odonto Financeiro" },
-      { name: "description", content: "Sistema financeiro e gerencial para consultório odontológico" },
+      {
+        name: "description",
+        content: "Sistema financeiro e gerencial para consultório odontológico",
+      },
       { property: "og:title", content: "Odonto Financeiro" },
       { name: "twitter:title", content: "Odonto Financeiro" },
-      { property: "og:description", content: "Sistema financeiro e gerencial para consultório odontológico" },
-      { name: "twitter:description", content: "Sistema financeiro e gerencial para consultório odontológico" },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/41b49e82-e04a-4ffd-a151-2ef6cd54e8c9/id-preview-4b95a6fb--bedfb0e7-8d22-43ef-acfd-d0447599edc2.lovable.app-1778476481943.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/41b49e82-e04a-4ffd-a151-2ef6cd54e8c9/id-preview-4b95a6fb--bedfb0e7-8d22-43ef-acfd-d0447599edc2.lovable.app-1778476481943.png" },
+      {
+        property: "og:description",
+        content: "Sistema financeiro e gerencial para consultório odontológico",
+      },
+      {
+        name: "twitter:description",
+        content: "Sistema financeiro e gerencial para consultório odontológico",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/41b49e82-e04a-4ffd-a151-2ef6cd54e8c9/id-preview-4b95a6fb--bedfb0e7-8d22-43ef-acfd-d0447599edc2.lovable.app-1778476481943.png",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/41b49e82-e04a-4ffd-a151-2ef6cd54e8c9/id-preview-4b95a6fb--bedfb0e7-8d22-43ef-acfd-d0447599edc2.lovable.app-1778476481943.png",
+      },
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:type", content: "website" },
     ],
@@ -77,7 +95,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "stylesheet", href: appCss },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap",
+      },
     ],
   }),
   shellComponent: RootShell,
@@ -89,7 +110,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR">
-      <head><HeadContent /></head>
+      <head>
+        <HeadContent />
+      </head>
       <body>
         {children}
         <Scripts />

@@ -14,9 +14,7 @@ export default defineTool({
   description:
     "Retorna o resumo financeiro de um mês (AAAA-MM): recebimentos efetivos, despesas pagas, despesas pendentes e caixa realizado.",
   inputSchema: {
-    month: z
-      .string()
-      .describe("Mês no formato AAAA-MM, por exemplo 2026-07."),
+    month: z.string().describe("Mês no formato AAAA-MM, por exemplo 2026-07."),
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
   handler: async ({ month }, ctx: ToolContext) => {

@@ -6,7 +6,12 @@ import { todayISO } from "@/lib/format";
 import { resolvePacienteId } from "@/lib/pacientes";
 import { PacienteCombobox } from "@/components/atendimento-form";
 import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,11 +30,16 @@ type Consulta = {
 };
 
 const empty = (): Consulta => ({
-  paciente: "", data_prevista: todayISO(), valor_estimado: "", observacao: "",
+  paciente: "",
+  data_prevista: todayISO(),
+  valor_estimado: "",
+  observacao: "",
 });
 
 export function ConsultaForm({
-  editing, onClose, trigger,
+  editing,
+  onClose,
+  trigger,
 }: {
   editing?: any;
   onClose?: () => void;
@@ -92,11 +102,19 @@ export function ConsultaForm({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) onClose?.(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (!o) onClose?.();
+      }}
+    >
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       {!trigger && !isEdit && (
         <DialogTrigger asChild>
-          <Button><Plus className="h-4 w-4" /> Nova consulta</Button>
+          <Button>
+            <Plus className="h-4 w-4" /> Nova consulta
+          </Button>
         </DialogTrigger>
       )}
       <DialogContent className="sm:max-w-md">
@@ -106,25 +124,43 @@ export function ConsultaForm({
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-1.5">
             <Label>Paciente</Label>
-            <PacienteCombobox value={v.paciente} onChange={(nome, id) => { setV((p) => ({ ...p, paciente: nome })); setPacienteId(id); }} />
+            <PacienteCombobox
+              value={v.paciente}
+              onChange={(nome, id) => {
+                setV((p) => ({ ...p, paciente: nome }));
+                setPacienteId(id);
+              }}
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Data prevista</Label>
-              <Input type="date" required value={v.data_prevista}
-                onChange={(e) => setV({ ...v, data_prevista: e.target.value })} />
+              <Input
+                type="date"
+                required
+                value={v.data_prevista}
+                onChange={(e) => setV({ ...v, data_prevista: e.target.value })}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Valor estimado (R$)</Label>
-              <Input type="number" step="0.01" placeholder="opcional" value={v.valor_estimado}
-                onChange={(e) => setV({ ...v, valor_estimado: e.target.value })} />
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="opcional"
+                value={v.valor_estimado}
+                onChange={(e) => setV({ ...v, valor_estimado: e.target.value })}
+              />
             </div>
           </div>
           <div className="space-y-1.5">
             <Label>Observação (opcional)</Label>
-            <Textarea rows={2} value={v.observacao}
+            <Textarea
+              rows={2}
+              value={v.observacao}
               onChange={(e) => setV({ ...v, observacao: e.target.value })}
-              placeholder="Ex.: retorno, avaliação..." />
+              placeholder="Ex.: retorno, avaliação..."
+            />
           </div>
           <DialogFooter>
             <Button type="submit" disabled={busy}>

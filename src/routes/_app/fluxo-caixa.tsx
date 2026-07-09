@@ -1,19 +1,46 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTable } from "@/hooks/use-data";
-import { brl, currentMonthKey, monthKey, monthLabel, monthOptions, parseLocalDate } from "@/lib/format";
+import {
+  brl,
+  currentMonthKey,
+  monthKey,
+  monthLabel,
+  monthOptions,
+  parseLocalDate,
+} from "@/lib/format";
 import { receitasRecebidas, despesasPagas as despesasPagasFn } from "@/lib/finance";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import {
-  ResponsiveContainer, AreaChart, Area, BarChart, Bar, LineChart, Line,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
 } from "recharts";
 import {
-  Wallet, ArrowDownCircle, ArrowUpCircle, TrendingUp, Target, Activity,
-  Stethoscope, Layers,
+  Wallet,
+  ArrowDownCircle,
+  ArrowUpCircle,
+  TrendingUp,
+  Target,
+  Activity,
+  Stethoscope,
+  Layers,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -37,7 +64,12 @@ function FluxoCaixa() {
   const lab = useTable<any>("custos_laboratorio", "data");
   const ganhos = useTable<any>("receitas_extras", "data");
 
-  const isLoading = atendimentos.isLoading || parcelas.isLoading || despesas.isLoading || lab.isLoading || ganhos.isLoading;
+  const isLoading =
+    atendimentos.isLoading ||
+    parcelas.isLoading ||
+    despesas.isLoading ||
+    lab.isLoading ||
+    ganhos.isLoading;
 
   const [year, monthNum] = mes.split("-").map(Number);
   const diasNoMes = new Date(year, monthNum, 0).getDate();
@@ -64,11 +96,12 @@ function FluxoCaixa() {
       .filter((r) => pagamento === "todas" || r.forma_pagamento === pagamento)
       .map((r) => ({ data: r.data, valor: r.valor_liquido, _origem: "Atendimento" }));
     if (isClinica) return a;
-    const g = pagamento === "todas"
-      ? (ganhos.data ?? [])
-          .filter((r) => monthKey(r.data) === mes)
-          .map((r) => ({ data: r.data, valor: Number(r.valor || 0), _origem: "Ganho extra" }))
-      : [];
+    const g =
+      pagamento === "todas"
+        ? (ganhos.data ?? [])
+            .filter((r) => monthKey(r.data) === mes)
+            .map((r) => ({ data: r.data, valor: Number(r.valor || 0), _origem: "Ganho extra" }))
+        : [];
     return [...a, ...g];
   }, [recebidas, ganhos.data, mes, pagamento, isClinica]);
 
@@ -83,10 +116,7 @@ function FluxoCaixa() {
   const sai = useMemo(() => {
     const all = isClinica
       ? (lab.data ?? []).map((r) => ({ ...r, _origem: "Laboratório" }))
-      : [
-          ...despesasPagas,
-          ...(lab.data ?? []).map((r) => ({ ...r, _origem: "Laboratório" })),
-        ];
+      : [...despesasPagas, ...(lab.data ?? []).map((r) => ({ ...r, _origem: "Laboratório" }))];
     return all.filter((r) => monthKey(r.data) === mes);
   }, [despesasPagas, lab.data, mes, isClinica]);
 
@@ -98,22 +128,46 @@ function FluxoCaixa() {
   const saldoAcumulado = useMemo(() => {
     const limite = new Date(year, monthNum - 1, diasNoMes);
     const ents =
-      recebidas.filter((r) => (parseLocalDate(r.data) ?? new Date(0)) <= limite).reduce((s, r) => s + r.valor_liquido, 0)
-      + (isClinica ? 0 : (ganhos.data ?? []).filter((r) => new Date(r.data) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0));
+      recebidas
+        .filter((r) => (parseLocalDate(r.data) ?? new Date(0)) <= limite)
+        .reduce((s, r) => s + r.valor_liquido, 0) +
+      (isClinica
+        ? 0
+        : (ganhos.data ?? [])
+            .filter((r) => new Date(r.data) <= limite)
+            .reduce((s, r) => s + Number(r.valor || 0), 0));
     const sds =
-      (isClinica ? 0 : despesasPagas.filter((r) => (parseLocalDate(r.data) ?? new Date(0)) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0)) +
-      (lab.data ?? []).filter((r) => new Date(r.data) <= limite).reduce((s, r) => s + Number(r.valor || 0), 0);
+      (isClinica
+        ? 0
+        : despesasPagas
+            .filter((r) => (parseLocalDate(r.data) ?? new Date(0)) <= limite)
+            .reduce((s, r) => s + Number(r.valor || 0), 0)) +
+      (lab.data ?? [])
+        .filter((r) => new Date(r.data) <= limite)
+        .reduce((s, r) => s + Number(r.valor || 0), 0);
     return ents - sds;
   }, [recebidas, despesasPagas, lab.data, ganhos.data, year, monthNum, diasNoMes, isClinica]);
 
   // Saldo atual (até hoje, considerando todos os meses)
   const saldoAtual = useMemo(() => {
     const ents =
-      recebidas.filter((r) => (parseLocalDate(r.data) ?? new Date(0)) <= hoje).reduce((s, r) => s + r.valor_liquido, 0)
-      + (isClinica ? 0 : (ganhos.data ?? []).filter((r) => new Date(r.data) <= hoje).reduce((s, r) => s + Number(r.valor || 0), 0));
+      recebidas
+        .filter((r) => (parseLocalDate(r.data) ?? new Date(0)) <= hoje)
+        .reduce((s, r) => s + r.valor_liquido, 0) +
+      (isClinica
+        ? 0
+        : (ganhos.data ?? [])
+            .filter((r) => new Date(r.data) <= hoje)
+            .reduce((s, r) => s + Number(r.valor || 0), 0));
     const sds =
-      (isClinica ? 0 : despesasPagas.filter((r) => (parseLocalDate(r.data) ?? new Date(0)) <= hoje).reduce((s, r) => s + Number(r.valor || 0), 0)) +
-      (lab.data ?? []).filter((r) => new Date(r.data) <= hoje).reduce((s, r) => s + Number(r.valor || 0), 0);
+      (isClinica
+        ? 0
+        : despesasPagas
+            .filter((r) => (parseLocalDate(r.data) ?? new Date(0)) <= hoje)
+            .reduce((s, r) => s + Number(r.valor || 0), 0)) +
+      (lab.data ?? [])
+        .filter((r) => new Date(r.data) <= hoje)
+        .reduce((s, r) => s + Number(r.valor || 0), 0);
     return ents - sds;
   }, [recebidas, despesasPagas, lab.data, ganhos.data, isClinica]);
 
@@ -123,7 +177,9 @@ function FluxoCaixa() {
       const d = i + 1;
       const isoDay = `${mes}-${String(d).padStart(2, "0")}`;
       const e = ent.filter((r) => r.data === isoDay).reduce((s, r) => s + Number(r.valor || 0), 0);
-      const s = sai.filter((r) => r.data === isoDay).reduce((su, r) => su + Number(r.valor || 0), 0);
+      const s = sai
+        .filter((r) => r.data === isoDay)
+        .reduce((su, r) => su + Number(r.valor || 0), 0);
       return {
         dia: d,
         diaLabel: String(d).padStart(2, "0"),
@@ -155,9 +211,11 @@ function FluxoCaixa() {
     <>
       <PageHeader
         title="Fluxo de Caixa"
-        description={isClinica
-          ? "Apenas atendimentos e custos clínicos — performance do consultório"
-          : "Visão completa: atendimentos, ganhos extras e despesas"}
+        description={
+          isClinica
+            ? "Apenas atendimentos e custos clínicos — performance do consultório"
+            : "Visão completa: atendimentos, ganhos extras e despesas"
+        }
         actions={
           <div className="flex flex-wrap gap-2 items-center">
             <div className="inline-flex rounded-lg border bg-card p-0.5">
@@ -166,7 +224,9 @@ function FluxoCaixa() {
                 onClick={() => setVisao("clinica")}
                 className={cn(
                   "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md transition-colors",
-                  isClinica ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                  isClinica
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 <Stethoscope className="h-3.5 w-3.5" /> Clínica
@@ -176,25 +236,37 @@ function FluxoCaixa() {
                 onClick={() => setVisao("geral")}
                 className={cn(
                   "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md transition-colors",
-                  !isClinica ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                  !isClinica
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 <Layers className="h-3.5 w-3.5" /> Geral
               </button>
             </div>
             <Select value={mes} onValueChange={setMes}>
-              <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 {monthOptions(12).map((m) => (
-                  <SelectItem key={m} value={m} className="capitalize">{monthLabel(m)}</SelectItem>
+                  <SelectItem key={m} value={m} className="capitalize">
+                    {monthLabel(m)}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
             <Select value={pagamento} onValueChange={setPagamento}>
-              <SelectTrigger className="w-[170px]"><SelectValue placeholder="Pagamento" /></SelectTrigger>
+              <SelectTrigger className="w-[170px]">
+                <SelectValue placeholder="Pagamento" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todas">Todas formas</SelectItem>
-                {formasPag.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                {formasPag.map((f) => (
+                  <SelectItem key={f} value={f}>
+                    {f}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -222,7 +294,9 @@ function FluxoCaixa() {
               value={brl(totalEntradas)}
               tone="primary"
               icon={<ArrowDownCircle className="h-4 w-4" />}
-              hint={isClinica ? `${ent.length} atendimentos` : `Atend. + ganhos extras (${ent.length})`}
+              hint={
+                isClinica ? `${ent.length} atendimentos` : `Atend. + ganhos extras (${ent.length})`
+              }
             />
             <StatCard
               label={`Saídas · ${labelMes}`}
@@ -266,17 +340,38 @@ function FluxoCaixa() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                  <XAxis dataKey="diaLabel" stroke="var(--muted-foreground)" fontSize={10} tickLine={false} axisLine={false} />
-                  <YAxis stroke="var(--muted-foreground)" fontSize={10} tickLine={false} axisLine={false}
-                    tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
+                  <XAxis
+                    dataKey="diaLabel"
+                    stroke="var(--muted-foreground)"
+                    fontSize={10}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis
+                    stroke="var(--muted-foreground)"
+                    fontSize={10}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`}
+                  />
                   <Tooltip
-                    contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 12 }}
+                    contentStyle={{
+                      background: "var(--card)",
+                      border: "1px solid var(--border)",
+                      borderRadius: 12,
+                    }}
                     formatter={(v: any) => brl(Number(v))}
                     labelFormatter={(l) => `Dia ${l}`}
                   />
-                  <Area type="monotone" dataKey="acumulado" name="Acumulado"
-                    stroke="var(--chart-1)" strokeWidth={2} fill="url(#grad-saldo)"
-                    animationDuration={700} />
+                  <Area
+                    type="monotone"
+                    dataKey="acumulado"
+                    name="Acumulado"
+                    stroke="var(--chart-1)"
+                    strokeWidth={2}
+                    fill="url(#grad-saldo)"
+                    animationDuration={700}
+                  />
                 </AreaChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -285,20 +380,45 @@ function FluxoCaixa() {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={diario}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                  <XAxis dataKey="diaLabel" stroke="var(--muted-foreground)" fontSize={10} tickLine={false} axisLine={false} />
-                  <YAxis stroke="var(--muted-foreground)" fontSize={10} tickLine={false} axisLine={false}
-                    tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
+                  <XAxis
+                    dataKey="diaLabel"
+                    stroke="var(--muted-foreground)"
+                    fontSize={10}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis
+                    stroke="var(--muted-foreground)"
+                    fontSize={10}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`}
+                  />
                   <Tooltip
                     cursor={{ fill: "var(--muted)" }}
-                    contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 12 }}
+                    contentStyle={{
+                      background: "var(--card)",
+                      border: "1px solid var(--border)",
+                      borderRadius: 12,
+                    }}
                     formatter={(v: any) => brl(Number(v))}
                     labelFormatter={(l) => `Dia ${l}`}
                   />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="entradas" name="Entradas" fill="var(--chart-2)" radius={[6, 6, 0, 0]}
-                    animationDuration={600} />
-                  <Bar dataKey="saidas" name="Saídas" fill="var(--chart-4)" radius={[6, 6, 0, 0]}
-                    animationDuration={700} />
+                  <Bar
+                    dataKey="entradas"
+                    name="Entradas"
+                    fill="var(--chart-2)"
+                    radius={[6, 6, 0, 0]}
+                    animationDuration={600}
+                  />
+                  <Bar
+                    dataKey="saidas"
+                    name="Saídas"
+                    fill="var(--chart-4)"
+                    radius={[6, 6, 0, 0]}
+                    animationDuration={700}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -309,26 +429,58 @@ function FluxoCaixa() {
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={diario}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                  <XAxis dataKey="diaLabel" stroke="var(--muted-foreground)" fontSize={10} tickLine={false} axisLine={false} />
-                  <YAxis stroke="var(--muted-foreground)" fontSize={10} tickLine={false} axisLine={false}
-                    tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
+                  <XAxis
+                    dataKey="diaLabel"
+                    stroke="var(--muted-foreground)"
+                    fontSize={10}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis
+                    stroke="var(--muted-foreground)"
+                    fontSize={10}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`}
+                  />
                   <Tooltip
-                    contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 12 }}
+                    contentStyle={{
+                      background: "var(--card)",
+                      border: "1px solid var(--border)",
+                      borderRadius: 12,
+                    }}
                     formatter={(v: any) => brl(Number(v))}
                     labelFormatter={(l) => `Dia ${l}`}
                   />
-                  <Line type="monotone" dataKey="acumulado" name="Saldo acumulado"
-                    stroke="var(--chart-1)" strokeWidth={2.5} dot={false} animationDuration={800} />
-                  <Line type="monotone" dataKey="saldoDia" name="Saldo do dia"
-                    stroke="var(--chart-2)" strokeWidth={1.5} strokeDasharray="4 4" dot={false}
-                    animationDuration={900} />
+                  <Line
+                    type="monotone"
+                    dataKey="acumulado"
+                    name="Saldo acumulado"
+                    stroke="var(--chart-1)"
+                    strokeWidth={2.5}
+                    dot={false}
+                    animationDuration={800}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="saldoDia"
+                    name="Saldo do dia"
+                    stroke="var(--chart-2)"
+                    strokeWidth={1.5}
+                    strokeDasharray="4 4"
+                    dot={false}
+                    animationDuration={900}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </ChartCard>
           </div>
 
           {/* Calendário financeiro */}
-          <div className="mt-6 rounded-2xl border bg-card p-5" style={{ boxShadow: "var(--shadow-soft)" }}>
+          <div
+            className="mt-6 rounded-2xl border bg-card p-5"
+            style={{ boxShadow: "var(--shadow-soft)" }}
+          >
             <div className="flex items-end justify-between mb-4 flex-wrap gap-2">
               <div>
                 <h3 className="font-semibold">Calendário financeiro</h3>
@@ -348,8 +500,14 @@ function FluxoCaixa() {
   );
 }
 
-function ChartCard({ title, subtitle, children }: {
-  title: string; subtitle?: string; children: React.ReactNode;
+function ChartCard({
+  title,
+  subtitle,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
 }) {
   return (
     <div className="rounded-2xl border bg-card p-5" style={{ boxShadow: "var(--shadow-soft)" }}>
@@ -372,7 +530,8 @@ function Legenda({ cor, txt }: { cor: string; txt: string }) {
 }
 
 function CalendarioGrid({
-  mes, dias,
+  mes,
+  dias,
 }: {
   mes: string;
   dias: { dia: number; entradas: number; saidas: number; saldoDia: number; futuro: boolean }[];
@@ -386,13 +545,18 @@ function CalendarioGrid({
     <div>
       <div className="grid grid-cols-7 gap-1.5 mb-2">
         {semanas.map((s) => (
-          <div key={s} className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground text-center">
+          <div
+            key={s}
+            className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground text-center"
+          >
             {s}
           </div>
         ))}
       </div>
       <div className="grid grid-cols-7 gap-1.5">
-        {padding.map((_, i) => <div key={`pad-${i}`} />)}
+        {padding.map((_, i) => (
+          <div key={`pad-${i}`} />
+        ))}
         {dias.map((d) => {
           const positivo = d.saldoDia > 0;
           const negativo = d.saldoDia < 0;
@@ -411,12 +575,15 @@ function CalendarioGrid({
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold tabular-nums">{d.dia}</span>
                 {!semMov && (
-                  <span className={cn(
-                    "text-[9px] font-semibold tabular-nums",
-                    positivo && "text-success",
-                    negativo && "text-destructive",
-                  )}>
-                    {positivo ? "+" : ""}{compact(d.saldoDia)}
+                  <span
+                    className={cn(
+                      "text-[9px] font-semibold tabular-nums",
+                      positivo && "text-success",
+                      negativo && "text-destructive",
+                    )}
+                  >
+                    {positivo ? "+" : ""}
+                    {compact(d.saldoDia)}
                   </span>
                 )}
               </div>
@@ -424,13 +591,19 @@ function CalendarioGrid({
                 <div className="mt-1.5 space-y-0.5">
                   {d.entradas > 0 && (
                     <div className="text-[9px] text-muted-foreground tabular-nums truncate">
-                      <span className="inline-block h-1.5 w-1.5 rounded-full mr-1" style={{ background: "var(--chart-2)" }} />
+                      <span
+                        className="inline-block h-1.5 w-1.5 rounded-full mr-1"
+                        style={{ background: "var(--chart-2)" }}
+                      />
                       {compact(d.entradas)}
                     </div>
                   )}
                   {d.saidas > 0 && (
                     <div className="text-[9px] text-muted-foreground tabular-nums truncate">
-                      <span className="inline-block h-1.5 w-1.5 rounded-full mr-1" style={{ background: "var(--chart-4)" }} />
+                      <span
+                        className="inline-block h-1.5 w-1.5 rounded-full mr-1"
+                        style={{ background: "var(--chart-4)" }}
+                      />
                       {compact(d.saidas)}
                     </div>
                   )}

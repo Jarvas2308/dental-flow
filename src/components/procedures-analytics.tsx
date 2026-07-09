@@ -3,11 +3,13 @@ import { useTable } from "@/hooks/use-data";
 import { brl, monthOptions, monthLabel, monthKey } from "@/lib/format";
 import { StatCard } from "@/components/ui-kit";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
-import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
-} from "recharts";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { Activity, CalendarDays, Trophy, Sparkles, Crown, Percent } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -51,7 +53,14 @@ export function ProceduresAnalytics({ mes }: { mes: string }) {
       itensPorAtend.set(it.atendimento_id, arr);
     });
 
-    const out: { procedimento: string; bruto: number; liquido: number; data: string; atendimentoId: string; ratio: number }[] = [];
+    const out: {
+      procedimento: string;
+      bruto: number;
+      liquido: number;
+      data: string;
+      atendimentoId: string;
+      ratio: number;
+    }[] = [];
     (atendimentos.data ?? []).forEach((a: any) => {
       if (!mesesPeriodo.includes(monthKey(a.data))) return;
       const its = itensPorAtend.get(a.id);
@@ -112,10 +121,16 @@ export function ProceduresAnalytics({ mes }: { mes: string }) {
     const labPorAtend = new Map<string, number>();
     labFiltrado.forEach((r: any) => {
       if (!r.atendimento_id) return;
-      labPorAtend.set(r.atendimento_id, (labPorAtend.get(r.atendimento_id) ?? 0) + Number(r.valor || 0));
+      labPorAtend.set(
+        r.atendimento_id,
+        (labPorAtend.get(r.atendimento_id) ?? 0) + Number(r.valor || 0),
+      );
     });
 
-    const map = new Map<string, { nome: string; qtd: number; bruto: number; liquido: number; lab: number }>();
+    const map = new Map<
+      string,
+      { nome: string; qtd: number; bruto: number; liquido: number; lab: number }
+    >();
     filtrados.forEach((r) => {
       const k = r.procedimento || "—";
       const cur = map.get(k) ?? { nome: k, qtd: 0, bruto: 0, liquido: 0, lab: 0 };
@@ -136,26 +151,36 @@ export function ProceduresAnalytics({ mes }: { mes: string }) {
 
   const maisRealizado = [...agrupado].sort((a, b) => b.qtd - a.qtd)[0];
   const maisLucrativo = [...agrupado].sort((a, b) => b.lucro - a.lucro)[0];
-  const maiorMargem = [...agrupado].filter((r) => r.qtd >= 1).sort((a, b) => b.margem - a.margem)[0];
+  const maiorMargem = [...agrupado]
+    .filter((r) => r.qtd >= 1)
+    .sort((a, b) => b.margem - a.margem)[0];
 
   const chartData = [...agrupado].sort((a, b) => b.qtd - a.qtd).slice(0, 8);
   const ranking = [...agrupado].sort((a, b) => b.bruto - a.bruto).slice(0, 10);
 
   const periodoLabel =
-    periodo === "mes" ? monthLabel(mesLocal) :
-    periodo === "3m" ? "Últimos 3 meses" :
-    periodo === "6m" ? "Últimos 6 meses" : "Últimos 12 meses";
+    periodo === "mes"
+      ? monthLabel(mesLocal)
+      : periodo === "3m"
+        ? "Últimos 3 meses"
+        : periodo === "6m"
+          ? "Últimos 6 meses"
+          : "Últimos 12 meses";
 
   return (
     <div className="mt-10 space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">Análise de Procedimentos</h2>
+          <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">
+            Análise de Procedimentos
+          </h2>
           <p className="text-sm text-muted-foreground mt-1 capitalize">{periodoLabel}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Select value={periodo} onValueChange={(v) => setPeriodo(v as Periodo)}>
-            <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="mes">Mês específico</SelectItem>
               <SelectItem value="3m">Últimos 3 meses</SelectItem>
@@ -165,20 +190,28 @@ export function ProceduresAnalytics({ mes }: { mes: string }) {
           </Select>
           {periodo === "mes" && (
             <Select value={mesLocal} onValueChange={setMesLocal}>
-              <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 {monthOptions(12).map((m) => (
-                  <SelectItem key={m} value={m} className="capitalize">{monthLabel(m)}</SelectItem>
+                  <SelectItem key={m} value={m} className="capitalize">
+                    {monthLabel(m)}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           )}
           <Select value={procFiltro} onValueChange={setProcFiltro}>
-            <SelectTrigger className="w-[200px]"><SelectValue placeholder="Procedimento" /></SelectTrigger>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Procedimento" />
+            </SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todos os procedimentos</SelectItem>
               {procedimentosUnicos.map((p) => (
-                <SelectItem key={p} value={p}>{p}</SelectItem>
+                <SelectItem key={p} value={p}>
+                  {p}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -222,20 +255,60 @@ export function ProceduresAnalytics({ mes }: { mes: string }) {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} margin={{ top: 8, right: 12, left: 0, bottom: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                <XAxis dataKey="nome" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false}
-                  interval={0} angle={-15} textAnchor="end" height={60} />
-                <YAxis yAxisId="left" stroke="var(--muted-foreground)" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis yAxisId="right" orientation="right" stroke="var(--muted-foreground)" fontSize={11}
-                  tickLine={false} axisLine={false} tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
+                <XAxis
+                  dataKey="nome"
+                  stroke="var(--muted-foreground)"
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                  interval={0}
+                  angle={-15}
+                  textAnchor="end"
+                  height={60}
+                />
+                <YAxis
+                  yAxisId="left"
+                  stroke="var(--muted-foreground)"
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  stroke="var(--muted-foreground)"
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`}
+                />
                 <Tooltip
                   cursor={{ fill: "var(--muted)" }}
-                  contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 12 }}
-                  formatter={(v: any, name: string) => name === "Faturamento" ? brl(Number(v)) : v}
+                  contentStyle={{
+                    background: "var(--card)",
+                    border: "1px solid var(--border)",
+                    borderRadius: 12,
+                  }}
+                  formatter={(v: any, name: string) =>
+                    name === "Faturamento" ? brl(Number(v)) : v
+                  }
                 />
-                <Bar yAxisId="left" dataKey="qtd" name="Quantidade" fill="var(--chart-1)" radius={[8, 8, 0, 0]}
-                  animationDuration={600} />
-                <Bar yAxisId="right" dataKey="bruto" name="Faturamento" fill="var(--chart-2)" radius={[8, 8, 0, 0]}
-                  animationDuration={800} />
+                <Bar
+                  yAxisId="left"
+                  dataKey="qtd"
+                  name="Quantidade"
+                  fill="var(--chart-1)"
+                  radius={[8, 8, 0, 0]}
+                  animationDuration={600}
+                />
+                <Bar
+                  yAxisId="right"
+                  dataKey="bruto"
+                  name="Faturamento"
+                  fill="var(--chart-2)"
+                  radius={[8, 8, 0, 0]}
+                  animationDuration={800}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -265,7 +338,10 @@ export function ProceduresAnalytics({ mes }: { mes: string }) {
         />
       </div>
 
-      <div className="rounded-2xl border bg-card overflow-hidden" style={{ boxShadow: "var(--shadow-soft)" }}>
+      <div
+        className="rounded-2xl border bg-card overflow-hidden"
+        style={{ boxShadow: "var(--shadow-soft)" }}
+      >
         <div className="p-5 border-b">
           <h3 className="font-semibold">Top Procedimentos</h3>
           <p className="text-xs text-muted-foreground">Ranking por faturamento</p>
@@ -291,8 +367,12 @@ export function ProceduresAnalytics({ mes }: { mes: string }) {
                     <td className="px-5 py-3 font-medium">{r.nome}</td>
                     <td className="px-5 py-3 text-right tabular-nums">{r.qtd}</td>
                     <td className="px-5 py-3 text-right tabular-nums">{brl(r.bruto)}</td>
-                    <td className={cn("px-5 py-3 text-right tabular-nums font-medium",
-                      r.lucro >= 0 ? "text-success" : "text-destructive")}>
+                    <td
+                      className={cn(
+                        "px-5 py-3 text-right tabular-nums font-medium",
+                        r.lucro >= 0 ? "text-success" : "text-destructive",
+                      )}
+                    >
                       {brl(r.lucro)}
                     </td>
                   </tr>
@@ -307,7 +387,11 @@ export function ProceduresAnalytics({ mes }: { mes: string }) {
 }
 
 function InsightCard({
-  icon, label, title, hint, tone = "default",
+  icon,
+  label,
+  title,
+  hint,
+  tone = "default",
 }: {
   icon: React.ReactNode;
   label: string;
@@ -321,13 +405,17 @@ function InsightCard({
     success: "text-success",
   }[tone];
   return (
-    <div className="rounded-2xl border bg-card p-5 transition-shadow hover:shadow-[var(--shadow-card)]"
-      style={{ boxShadow: "var(--shadow-soft)" }}>
+    <div
+      className="rounded-2xl border bg-card p-5 transition-shadow hover:shadow-[var(--shadow-card)]"
+      style={{ boxShadow: "var(--shadow-soft)" }}
+    >
       <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
         <span className={toneCls}>{icon}</span>
         {label}
       </div>
-      <div className={cn("mt-3 text-lg font-semibold tracking-tight truncate", toneCls)}>{title}</div>
+      <div className={cn("mt-3 text-lg font-semibold tracking-tight truncate", toneCls)}>
+        {title}
+      </div>
       {hint && <div className="text-xs text-muted-foreground mt-1">{hint}</div>}
     </div>
   );

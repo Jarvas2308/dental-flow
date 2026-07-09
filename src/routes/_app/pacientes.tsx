@@ -4,10 +4,20 @@ import { useTable, useCreate, useDelete, useUpdate } from "@/hooks/use-data";
 import { buildPacienteHistoryCounter } from "@/lib/pacientes";
 import { PageHeader } from "@/components/ui-kit";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +32,9 @@ export const Route = createFileRoute("/_app/pacientes")({
 });
 
 function PacienteForm({
-  pacientes, editing, onClose,
+  pacientes,
+  editing,
+  onClose,
 }: {
   pacientes: any[];
   editing?: any;
@@ -55,10 +67,18 @@ function PacienteForm({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) onClose?.(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (!o) onClose?.();
+      }}
+    >
       {!isEdit && (
         <DialogTrigger asChild>
-          <Button><Plus className="h-4 w-4" /> Novo paciente</Button>
+          <Button>
+            <Plus className="h-4 w-4" /> Novo paciente
+          </Button>
         </DialogTrigger>
       )}
       <DialogContent className="sm:max-w-md">
@@ -97,14 +117,9 @@ function Pacientes() {
   // Prioriza paciente_id e usa o nome normalizado apenas como fallback para
   // registros antigos sem id, sem duplicar registros que já têm paciente_id.
   const countFor = useMemo(
-    () => buildPacienteHistoryCounter([
-      atendimentos.data,
-      consultas.data,
-      propostas.data,
-    ]),
+    () => buildPacienteHistoryCounter([atendimentos.data, consultas.data, propostas.data]),
     [atendimentos.data, consultas.data, propostas.data],
   );
-
 
   const rows = useMemo(
     () => pacientes.filter((p) => !q || p.nome?.toLowerCase().includes(q.toLowerCase())),
@@ -122,11 +137,19 @@ function Pacientes() {
       <div className="flex gap-2 mb-4 flex-wrap">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar paciente..." value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" />
+          <Input
+            placeholder="Buscar paciente..."
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            className="pl-9"
+          />
         </div>
       </div>
 
-      <div className="rounded-2xl border bg-card overflow-hidden" style={{ boxShadow: "var(--shadow-soft)" }}>
+      <div
+        className="rounded-2xl border bg-card overflow-hidden"
+        style={{ boxShadow: "var(--shadow-soft)" }}
+      >
         <Table>
           <TableHeader>
             <TableRow>
@@ -136,12 +159,18 @@ function Pacientes() {
           </TableHeader>
           <TableBody>
             {list.isLoading && (
-              <TableRow><TableCell colSpan={2} className="text-center py-12">
-                <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
-              </TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={2} className="text-center py-12">
+                  <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
+                </TableCell>
+              </TableRow>
             )}
             {!list.isLoading && rows.length === 0 && (
-              <TableRow><TableCell colSpan={2} className="text-center text-muted-foreground py-12">Nenhum paciente ainda.</TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={2} className="text-center text-muted-foreground py-12">
+                  Nenhum paciente ainda.
+                </TableCell>
+              </TableRow>
             )}
             {rows.map((r) => (
               <TableRow key={r.id}>
@@ -153,7 +182,12 @@ function Pacientes() {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
-                    <Button variant="ghost" size="icon" aria-label="Editar" onClick={() => setEditing(r)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Editar"
+                      onClick={() => setEditing(r)}
+                    >
                       <Pencil className="h-4 w-4 text-muted-foreground" />
                     </Button>
                     <ConfirmDelete
@@ -170,11 +204,7 @@ function Pacientes() {
       </div>
 
       {editing && (
-        <PacienteForm
-          pacientes={pacientes}
-          editing={editing}
-          onClose={() => setEditing(null)}
-        />
+        <PacienteForm pacientes={pacientes} editing={editing} onClose={() => setEditing(null)} />
       )}
     </>
   );

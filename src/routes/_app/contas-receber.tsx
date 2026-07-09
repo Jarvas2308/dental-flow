@@ -9,7 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
-  Search, Loader2, CheckCircle2, Clock, HandCoins, CalendarClock, Layers, Users,
+  Search,
+  Loader2,
+  CheckCircle2,
+  Clock,
+  HandCoins,
+  CalendarClock,
+  Layers,
+  Users,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_app/contas-receber")({
@@ -49,15 +56,39 @@ function ContasReceber() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-6">
-        <StatCard label="Total a receber" value={brl(totalSaldo)} tone={totalSaldo > 0 ? "warning" : "success"} icon={<HandCoins className="h-4 w-4" />} hint="Saldo pendente" />
-        <StatCard label="Já recebido (nestes)" value={brl(totalRecebido)} tone="success" icon={<CheckCircle2 className="h-4 w-4" />} />
-        <StatCard label="Tratamentos abertos" value={String(rows.length)} icon={<Layers className="h-4 w-4" />} />
-        <StatCard label="Pacientes" value={String(pacientes)} icon={<Users className="h-4 w-4" />} />
+        <StatCard
+          label="Total a receber"
+          value={brl(totalSaldo)}
+          tone={totalSaldo > 0 ? "warning" : "success"}
+          icon={<HandCoins className="h-4 w-4" />}
+          hint="Saldo pendente"
+        />
+        <StatCard
+          label="Já recebido (nestes)"
+          value={brl(totalRecebido)}
+          tone="success"
+          icon={<CheckCircle2 className="h-4 w-4" />}
+        />
+        <StatCard
+          label="Tratamentos abertos"
+          value={String(rows.length)}
+          icon={<Layers className="h-4 w-4" />}
+        />
+        <StatCard
+          label="Pacientes"
+          value={String(pacientes)}
+          icon={<Users className="h-4 w-4" />}
+        />
       </div>
 
       <div className="relative max-w-md mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Buscar paciente ou procedimento..." value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" />
+        <Input
+          placeholder="Buscar paciente ou procedimento..."
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          className="pl-9"
+        />
       </div>
 
       {loading ? (
@@ -65,7 +96,10 @@ function ContasReceber() {
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : rows.length === 0 ? (
-        <div className="rounded-2xl border bg-card py-16 text-center text-muted-foreground" style={{ boxShadow: "var(--shadow-soft)" }}>
+        <div
+          className="rounded-2xl border bg-card py-16 text-center text-muted-foreground"
+          style={{ boxShadow: "var(--shadow-soft)" }}
+        >
           <CheckCircle2 className="h-8 w-8 mx-auto mb-3 text-success" />
           Nenhuma conta a receber em aberto.
         </div>
@@ -75,14 +109,19 @@ function ContasReceber() {
             const pct = c.total > 0 ? Math.min(100, (c.recebido / c.total) * 100) : 0;
             const atend = (atendimentos.data ?? []).find((a) => a.id === c.atendimento_id);
             return (
-              <div key={c.atendimento_id} className="rounded-2xl border bg-card p-4 sm:p-5" style={{ boxShadow: "var(--shadow-soft)" }}>
+              <div
+                key={c.atendimento_id}
+                className="rounded-2xl border bg-card p-4 sm:p-5"
+                style={{ boxShadow: "var(--shadow-soft)" }}
+              >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-semibold truncate">{c.paciente || "—"}</h3>
                       {c.parcelasCombinadas > 1 && (
                         <Badge variant="outline" className="gap-1">
-                          <CalendarClock className="h-3 w-3" /> {c.parcelasCombinadas} parcelas combinadas
+                          <CalendarClock className="h-3 w-3" /> {c.parcelasCombinadas} parcelas
+                          combinadas
                         </Badge>
                       )}
                       <Badge
@@ -96,7 +135,9 @@ function ContasReceber() {
                         {STATUS_LABEL[c.status]}
                       </Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground">{c.procedimento} · {c.forma_pagamento}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {c.procedimento} · {c.forma_pagamento}
+                    </p>
                   </div>
                   <div className="text-right">
                     <div className="text-lg font-semibold text-warning">{brl(c.saldo)}</div>
@@ -106,7 +147,9 @@ function ContasReceber() {
 
                 <div className="mt-3">
                   <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                    <span>Recebido {brl(c.recebido)} · {c.qtd} recebimento(s)</span>
+                    <span>
+                      Recebido {brl(c.recebido)} · {c.qtd} recebimento(s)
+                    </span>
                     <span>Início {formatDateBR(c.data)}</span>
                   </div>
                   <Progress value={pct} className="h-2" />

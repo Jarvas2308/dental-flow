@@ -34,7 +34,13 @@ const items = [
   { to: "/cadastros", label: "Cadastros", icon: Settings },
 ] as const;
 
-const mobilePrimaryPaths = ["/dashboard", "/consultorio", "/fluxo-caixa", "/contas", "/contas-receber"] as const;
+const mobilePrimaryPaths = [
+  "/dashboard",
+  "/consultorio",
+  "/fluxo-caixa",
+  "/contas",
+  "/contas-receber",
+] as const;
 
 const mobilePrimary = mobilePrimaryPaths.map((p) => items.find((i) => i.to === p)!);
 
@@ -83,9 +89,7 @@ export function AppSidebar() {
       </nav>
 
       <div className="p-3 border-t mt-2">
-        <div className="px-3 py-2 text-xs text-muted-foreground truncate">
-          {user?.email}
-        </div>
+        <div className="px-3 py-2 text-xs text-muted-foreground truncate">{user?.email}</div>
         <button
           onClick={() => signOut()}
           className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground transition-colors"
@@ -102,9 +106,7 @@ export function MobileNav() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
 
-  const moreActive = mobileMore.some(
-    ({ to }) => path === to || path.startsWith(to + "/"),
-  );
+  const moreActive = mobileMore.some(({ to }) => path === to || path.startsWith(to + "/"));
 
   return (
     <>
