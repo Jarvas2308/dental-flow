@@ -129,10 +129,7 @@ function PacienteForm({
   );
 }
 
-const EVENTO_META: Record<
-  EventoTipo,
-  { label: string; icon: typeof Stethoscope; cls: string }
-> = {
+const EVENTO_META: Record<EventoTipo, { label: string; icon: typeof Stethoscope; cls: string }> = {
   atendimento: { label: "Atendimento", icon: Stethoscope, cls: "text-primary" },
   recebimento: { label: "Recebimento", icon: Wallet, cls: "text-success" },
   consulta: { label: "Consulta", icon: CalendarClock, cls: "text-foreground" },
@@ -170,16 +167,34 @@ function PacienteDetalhe({
   return (
     <div className="space-y-4 p-4 bg-muted/30">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <StatCard label="Atendimentos" value={String(resumo.totalAtendimentos)} icon={<Stethoscope className="h-4 w-4" />} />
-        <StatCard label="Recebido" value={brl(resumo.totalRecebido)} tone="success" icon={<Wallet className="h-4 w-4" />} />
+        <StatCard
+          label="Atendimentos"
+          value={String(resumo.totalAtendimentos)}
+          icon={<Stethoscope className="h-4 w-4" />}
+        />
+        <StatCard
+          label="Recebido"
+          value={brl(resumo.totalRecebido)}
+          tone="success"
+          icon={<Wallet className="h-4 w-4" />}
+        />
         <StatCard
           label="Em aberto"
           value={brl(resumo.totalEmAberto)}
           tone={resumo.totalEmAberto > 0 ? "destructive" : "default"}
           icon={<Wallet className="h-4 w-4" />}
         />
-        <StatCard label="Consultas futuras" value={String(resumo.consultasFuturas)} icon={<CalendarClock className="h-4 w-4" />} />
-        <StatCard label="Follow-ups abertos" value={String(resumo.followupsEmAberto)} tone={resumo.followupsEmAberto > 0 ? "warning" : "default"} icon={<ClipboardList className="h-4 w-4" />} />
+        <StatCard
+          label="Consultas futuras"
+          value={String(resumo.consultasFuturas)}
+          icon={<CalendarClock className="h-4 w-4" />}
+        />
+        <StatCard
+          label="Follow-ups abertos"
+          value={String(resumo.followupsEmAberto)}
+          tone={resumo.followupsEmAberto > 0 ? "warning" : "default"}
+          icon={<ClipboardList className="h-4 w-4" />}
+        />
       </div>
 
       <div className="rounded-2xl border bg-card" style={{ boxShadow: "var(--shadow-soft)" }}>

@@ -1,5 +1,10 @@
 import { normalizePacienteNome } from "@/lib/pacientes";
-import { resumoAtendimento, type AtendimentoRow, type RecebimentoRow, type ParcelaRow } from "@/lib/finance";
+import {
+  resumoAtendimento,
+  type AtendimentoRow,
+  type RecebimentoRow,
+  type ParcelaRow,
+} from "@/lib/finance";
 import { todayISO } from "@/lib/format";
 
 // Registro genérico que pode ser vinculado a um paciente por id (prioritário)
@@ -84,7 +89,9 @@ export function dadosDoPaciente(
   const parcelas = (data.parcelas ?? []).filter((p) => atendIds.has(p.atendimento_id));
 
   const propostaIds = new Set(propostas.map((p) => p.id));
-  const tentativas = (data.tentativas ?? []).filter((t) => propostaIds.has(t.tratamento_proposto_id));
+  const tentativas = (data.tentativas ?? []).filter((t) =>
+    propostaIds.has(t.tratamento_proposto_id),
+  );
 
   // Resumo financeiro por atendimento reaproveita a regra existente.
   let totalRecebido = 0;
