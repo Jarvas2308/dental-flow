@@ -11,7 +11,8 @@ import {
   AtendimentoForm,
   ProcedimentoCombobox,
 } from "@/components/atendimento-form";
-import { PageHeader, StatCard } from "@/components/ui-kit";
+import { PageHeader, StatCard, AlertBanner, EmptyState } from "@/components/ui-kit";
+import { VerPacienteButton } from "@/components/paciente-link";
 import {
   Table,
   TableBody,
@@ -43,6 +44,7 @@ import {
   CalendarClock,
   Pencil,
   CircleDollarSign,
+  AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -454,6 +456,15 @@ function Followup() {
         />
       </div>
 
+      {pendentes > 0 && (
+        <AlertBanner
+          tone="destructive"
+          icon={<AlertTriangle className="h-5 w-5" />}
+          title={`${pendentes} follow-up(s) pendente(s) hoje`}
+          description="Tratamentos em acompanhamento com contato previsto para hoje ou atrasado."
+        />
+      )}
+
       <div
         className="rounded-2xl border bg-card overflow-hidden"
         style={{ boxShadow: "var(--shadow-soft)" }}
@@ -479,8 +490,12 @@ function Followup() {
             )}
             {!props.isLoading && rows.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-12">
-                  Nenhum tratamento em acompanhamento.
+                <TableCell colSpan={6} className="py-0">
+                  <EmptyState
+                    icon={<CalendarClock className="h-8 w-8" />}
+                    title="Nenhum tratamento em acompanhamento"
+                    description="Crie uma proposta para acompanhar contatos e follow-ups por fase."
+                  />
                 </TableCell>
               </TableRow>
             )}
@@ -505,6 +520,7 @@ function Followup() {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1">
+                    <VerPacienteButton nome={p.paciente} label="" />
                     <EditarPropostaButton proposta={p} />
                     <ContatadoButton proposta={p} />
                     <FecharButton proposta={p} />

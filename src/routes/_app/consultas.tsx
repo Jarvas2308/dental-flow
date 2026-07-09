@@ -5,7 +5,8 @@ import type { Database } from "@/integrations/supabase/types";
 type ConsultaRow = Database["public"]["Tables"]["consultas_previstas"]["Row"];
 import { useTable, useUpdate, useDelete } from "@/hooks/use-data";
 import { brl, formatDateBR, parseLocalDate, todayISO } from "@/lib/format";
-import { PageHeader, StatCard } from "@/components/ui-kit";
+import { PageHeader, StatCard, AlertBanner, EmptyState } from "@/components/ui-kit";
+import { VerPacienteButton } from "@/components/paciente-link";
 import {
   Table,
   TableBody,
@@ -31,6 +32,7 @@ import {
   CheckCircle2,
   Pencil,
   Clock,
+  AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -60,7 +62,7 @@ function Consultas() {
 
   const all = useMemo(() => list.data ?? [], [list.data]);
 
-  const { hoje, semana, valorSemana } = useMemo(() => {
+  const { hoje, semana, valorSemana, atrasadas } = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayKey = todayISO();
@@ -68,12 +70,13 @@ function Consultas() {
     const we = endOfWeek(today);
     const ativos = all.filter((c) => !c.realizada);
     const hoje = ativos.filter((c) => c.data_prevista === todayKey).length;
+    const atrasadas = ativos.filter((c) => c.data_prevista < todayKey).length;
     const naSemana = ativos.filter((c) => {
       const d = parseLocalDate(c.data_prevista);
       return d && d >= ws && d <= we;
     });
     const valorSemana = naSemana.reduce((s, c) => s + Number(c.valor_estimado || 0), 0);
-    return { hoje, semana: naSemana.length, valorSemana };
+    return { hoje, semana: naSemana.length, valorSemana, atrasadas };
   }, [all]);
 
   const rows = useMemo(() => {
@@ -118,6 +121,22 @@ function Consultas() {
         />
       </div>
 
+      {atrasadas > 0 && (
+        <AlertBanner
+          tone="destructive"
+          icon={<AlertTriangle className="h-5 w-5" />}
+          title={`${atrasadas} consulta(s) atrasada(s)`}
+          description="Consultas previstas com data já vencida e ainda não realizadas."
+          action={
+            !showRealizadas ? undefined : (
+              <Button variant="outline" size="sm" onClick={() => setShowRealizadas(false)}>
+                Ver só pendentes
+              </Button>
+            )
+          }
+        />
+      )}
+
       <div className="flex flex-wrap gap-2 mb-3">
         <div className="relative flex-1 min-w-[220px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -161,8 +180,22 @@ function Consultas() {
             )}
             {!list.isLoading && rows.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-12">
-                  Nenhuma consulta prevista.
+                <TableCell colSpan={6} className="py-0">
+                  <EmptyState
+                    icon={<CalendarClock className="h-8 w-8" />}
+                    title={
+                      q
+                        ? "Nenhuma consulta encontrada"
+                        : showRealizadas
+                          ? "Nenhuma consulta registrada"
+                          : "Nenhuma consulta prevista"
+                    }
+                    description={
+                      q
+                        ? "Ajuste a busca para localizar o paciente."
+                        : "Use o botão “Nova consulta” para agendar a próxima previsão."
+                    }
+                  />
                 </TableCell>
               </TableRow>
             )}
@@ -217,6 +250,7 @@ function Consultas() {
                         </Button>
                       )}
                       <EditConsultaButton row={c} />
+                      <VerPacienteButton nome={c.paciente} label="" />
                       <ConfirmDelete onConfirm={() => del.mutate(c.id)} />
                     </div>
                   </TableCell>

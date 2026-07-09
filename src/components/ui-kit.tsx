@@ -58,3 +58,61 @@ export function StatCard({
     </div>
   );
 }
+
+// Faixa de alerta operacional para destacar pendências (consultas atrasadas,
+// follow-ups do dia, contas vencidas). Apenas visual — não altera dados.
+export function AlertBanner({
+  tone = "warning",
+  icon,
+  title,
+  description,
+  action,
+}: {
+  tone?: "warning" | "destructive" | "primary";
+  icon?: ReactNode;
+  title: string;
+  description?: string;
+  action?: ReactNode;
+}) {
+  const toneCls = {
+    warning: "border-warning/30 bg-warning/10 text-warning",
+    destructive: "border-destructive/30 bg-destructive/10 text-destructive",
+    primary: "border-primary/30 bg-primary/10 text-primary",
+  }[tone];
+
+  return (
+    <div
+      className={cn("mb-4 flex flex-wrap items-center gap-3 rounded-2xl border px-4 py-3", toneCls)}
+      role="status"
+    >
+      {icon && <div className="shrink-0">{icon}</div>}
+      <div className="min-w-0 flex-1">
+        <div className="text-sm font-semibold">{title}</div>
+        {description && <div className="text-xs opacity-80">{description}</div>}
+      </div>
+      {action && <div className="shrink-0">{action}</div>}
+    </div>
+  );
+}
+
+// Estado vazio consistente para tabelas/listas das telas principais.
+export function EmptyState({
+  icon,
+  title,
+  description,
+  action,
+}: {
+  icon?: ReactNode;
+  title: string;
+  description?: string;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-2 px-4 py-12 text-center">
+      {icon && <div className="text-muted-foreground/70">{icon}</div>}
+      <div className="text-sm font-medium">{title}</div>
+      {description && <div className="max-w-sm text-xs text-muted-foreground">{description}</div>}
+      {action && <div className="mt-2">{action}</div>}
+    </div>
+  );
+}

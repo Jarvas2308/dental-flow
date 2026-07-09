@@ -55,6 +55,9 @@ type Tables<T extends keyof Database["public"]["Tables"]> = Database["public"]["
 type PacienteRow = Tables<"pacientes">;
 
 export const Route = createFileRoute("/_app/pacientes")({
+  validateSearch: (search: Record<string, unknown>): { q?: string } => ({
+    q: typeof search.q === "string" ? search.q : undefined,
+  }),
   component: Pacientes,
 });
 
@@ -251,9 +254,16 @@ function Pacientes() {
   const propostas = useTable<PropostaFull>("tratamentos_propostos", "data_proposta");
   const tentativas = useTable<TentativaFull>("tentativas_contato", "data");
   const del = useDelete("pacientes");
+  const { q: qParam } = Route.useSearch();
   const [editing, setEditing] = useState<PacienteRow | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [q, setQ] = useState("");
+  const [q, setQ] = useState(qParam ?? "");
+
+  // Ao chegar via "Ver paciente" (com ?q=), sincroniza a busca e já expande
+  // automaticamente o paciente correspondente para agilizar a navegação.
+  useEffect(() => {
+    if (qParam) setQ(qParam);
+  }, [qParam]);
 
   const pacientes = useMemo(() => list.data ?? [], [list.data]);
 
@@ -288,6 +298,12 @@ function Pacientes() {
     () => pacientes.filter((p) => !q || p.nome?.toLowerCase().includes(q.toLowerCase())),
     [pacientes, q],
   );
+
+  // Expande automaticamente quando a busca resolve para um único paciente
+  // (fluxo "Ver paciente"), sem interferir na navegação manual.
+  useEffect(() => {
+    if (qParam && rows.length === 1) setExpanded(rows[0].id);
+  }, [qParam, rows]);
 
   return (
     <>

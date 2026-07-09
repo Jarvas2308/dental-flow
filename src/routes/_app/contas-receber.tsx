@@ -1,18 +1,22 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTable } from "@/hooks/use-data";
-import { brl, formatDateBR } from "@/lib/format";
+import { brl, formatDateBR, todayISO } from "@/lib/format";
 import {
   contasAReceber,
+  valoresEmAberto,
   STATUS_LABEL,
-  type AtendimentoRow,
   type RecebimentoRow,
   type ParcelaRow,
 } from "@/lib/finance";
+import type { Database } from "@/integrations/supabase/types";
 import { RegistrarRecebimento } from "@/components/recebimento-form";
-import { PageHeader, StatCard } from "@/components/ui-kit";
+import { EditAtendimentoButton } from "@/components/atendimento-form";
+import { VerPacienteButton } from "@/components/paciente-link";
+import { PageHeader, StatCard, AlertBanner, EmptyState } from "@/components/ui-kit";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
   Search,
@@ -23,15 +27,22 @@ import {
   CalendarClock,
   Layers,
   Users,
+  AlertTriangle,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_app/contas-receber")({
   component: ContasReceber,
 });
 
+type NotaFiscalStatus = "pendente" | "emitida" | "nao_emitida" | "nao_se_aplica";
+type AtendimentoFull = Omit<
+  Database["public"]["Tables"]["atendimentos"]["Row"],
+  "nota_fiscal_status"
+> & { nota_fiscal_status: NotaFiscalStatus };
+
 function ContasReceber() {
   const [q, setQ] = useState("");
-  const atendimentos = useTable<AtendimentoRow>("atendimentos", "data");
+  const atendimentos = useTable<AtendimentoFull>("atendimentos", "data");
   const recebimentos = useTable<RecebimentoRow>("recebimentos", "data", true);
   const parcelas = useTable<ParcelaRow>("parcelas", "vencimento", true);
 
@@ -41,6 +52,19 @@ function ContasReceber() {
     () => contasAReceber(atendimentos.data ?? [], recebimentos.data ?? [], parcelas.data ?? []),
     [atendimentos.data, recebimentos.data, parcelas.data],
   );
+
+  // Itens efetivamente vencidos (vencimento anterior a hoje) — apenas para o
+  // alerta visual; não altera nenhum cálculo financeiro.
+  const vencidas = useMemo(() => {
+    const hoje = todayISO();
+    return valoresEmAberto(
+      atendimentos.data ?? [],
+      recebimentos.data ?? [],
+      parcelas.data ?? [],
+    ).filter((v) => v.vencimento && v.vencimento < hoje);
+  }, [atendimentos.data, recebimentos.data, parcelas.data]);
+
+  const totalVencido = vencidas.reduce((s, v) => s + v.valor_liquido, 0);
 
   const rows = useMemo(() => {
     if (!q) return contas;
@@ -60,6 +84,15 @@ function ContasReceber() {
         title="Valores em Aberto"
         description="Tratamentos com saldo pendente — só entram no caixa quando recebidos"
       />
+
+      {!loading && vencidas.length > 0 && (
+        <AlertBanner
+          tone="destructive"
+          icon={<AlertTriangle className="h-5 w-5" />}
+          title={`${vencidas.length} conta(s) a receber vencida(s)`}
+          description={`Saldo vencido de ${brl(totalVencido)} aguardando recebimento.`}
+        />
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-6">
         <StatCard
@@ -102,12 +135,16 @@ function ContasReceber() {
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : rows.length === 0 ? (
-        <div
-          className="rounded-2xl border bg-card py-16 text-center text-muted-foreground"
-          style={{ boxShadow: "var(--shadow-soft)" }}
-        >
-          <CheckCircle2 className="h-8 w-8 mx-auto mb-3 text-success" />
-          Nenhuma conta a receber em aberto.
+        <div className="rounded-2xl border bg-card" style={{ boxShadow: "var(--shadow-soft)" }}>
+          <EmptyState
+            icon={<CheckCircle2 className="h-8 w-8 text-success" />}
+            title={q ? "Nenhum resultado para a busca" : "Nenhuma conta a receber em aberto"}
+            description={
+              q
+                ? "Ajuste o termo buscado para encontrar o paciente ou procedimento."
+                : "Tudo em dia! Novos saldos aparecem aqui quando um atendimento fica pendente."
+            }
+          />
         </div>
       ) : (
         <div className="space-y-3">
@@ -161,9 +198,20 @@ function ContasReceber() {
                   <Progress value={pct} className="h-2" />
                 </div>
 
-                <div className="mt-3 flex items-center justify-end gap-2">
+                <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
+                  <VerPacienteButton nome={c.paciente} />
                   {atend ? (
-                    <RegistrarRecebimento atendimento={atend} />
+                    <>
+                      <EditAtendimentoButton row={atend} />
+                      <RegistrarRecebimento
+                        atendimento={atend}
+                        trigger={
+                          <Button size="sm" className="h-8 gap-1">
+                            <HandCoins className="h-4 w-4" /> Receber saldo
+                          </Button>
+                        }
+                      />
+                    </>
                   ) : (
                     <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                       <Clock className="h-3 w-3" /> Pendente
