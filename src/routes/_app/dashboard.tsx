@@ -3,8 +3,7 @@ import { useMemo, useState } from "react";
 import { useTable } from "@/hooks/use-data";
 import type { Database } from "@/integrations/supabase/types";
 
-type Tables<T extends keyof Database["public"]["Tables"]> =
-  Database["public"]["Tables"][T]["Row"];
+type Tables<T extends keyof Database["public"]["Tables"]> = Database["public"]["Tables"][T]["Row"];
 import {
   brl,
   monthOptions,
@@ -71,9 +70,21 @@ function Dashboard() {
   const despesas = useTable<Tables<"despesas">>("despesas", "vencimento");
   const lab = useTable<Tables<"custos_laboratorio">>("custos_laboratorio", "data");
   const ganhos = useTable<Tables<"receitas_extras">>("receitas_extras", "data");
-  const consultas = useTable<Tables<"consultas_previstas">>("consultas_previstas", "data_prevista", true);
-  const tratamentosPropostos = useTable<Tables<"tratamentos_propostos">>("tratamentos_propostos", "data_proposta", true);
-  const tentativasContato = useTable<Tables<"tentativas_contato">>("tentativas_contato", "data", true);
+  const consultas = useTable<Tables<"consultas_previstas">>(
+    "consultas_previstas",
+    "data_prevista",
+    true,
+  );
+  const tratamentosPropostos = useTable<Tables<"tratamentos_propostos">>(
+    "tratamentos_propostos",
+    "data_proposta",
+    true,
+  );
+  const tentativasContato = useTable<Tables<"tentativas_contato">>(
+    "tentativas_contato",
+    "data",
+    true,
+  );
 
   // Previsão de consultas futuras (hoje / semana)
   const previsao = useMemo(() => {

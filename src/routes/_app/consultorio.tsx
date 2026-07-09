@@ -3,8 +3,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useConsultorioData, useUpdate, useDelete } from "@/hooks/use-data";
 import type { Database } from "@/integrations/supabase/types";
 
-type Tables<T extends keyof Database["public"]["Tables"]> =
-  Database["public"]["Tables"][T]["Row"];
+type Tables<T extends keyof Database["public"]["Tables"]> = Database["public"]["Tables"][T]["Row"];
 
 type NotaFiscalStatus = "pendente" | "emitida" | "nao_emitida" | "nao_se_aplica";
 type AtendimentoView = Omit<Tables<"atendimentos">, "nota_fiscal_status"> & {
