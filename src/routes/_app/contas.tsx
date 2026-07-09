@@ -446,7 +446,7 @@ function Contas() {
                         <ConfirmDelete
                           title="Excluir despesa?"
                           description={`"${r.nome}" será removida permanentemente.`}
-                          onConfirm={() => del.mutate(r.id)}
+                          onConfirm={() => del.mutate(r.id!)}
                         />
                       </div>
                     </TableCell>
