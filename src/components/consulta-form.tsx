@@ -93,7 +93,7 @@ export function ConsultaForm({
       observacao: v.observacao.trim() || null,
     };
 
-    if (isEdit) await update.mutateAsync({ id: editing.id, values: payload });
+    if (isEdit) await update.mutateAsync({ id: editing!.id!, values: payload });
     else await create.mutateAsync(payload);
 
     qc.invalidateQueries({ queryKey: ["pacientes"] });
