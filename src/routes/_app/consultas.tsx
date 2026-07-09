@@ -121,6 +121,23 @@ function Consultas() {
         />
       </div>
 
+      {atrasadas > 0 && (
+        <AlertBanner
+          tone="destructive"
+          icon={<AlertTriangle className="h-5 w-5" />}
+          title={`${atrasadas} consulta(s) atrasada(s)`}
+          description="Consultas previstas com data já vencida e ainda não realizadas."
+          action={
+            !showRealizadas ? undefined : (
+              <Button variant="outline" size="sm" onClick={() => setShowRealizadas(false)}>
+                Ver só pendentes
+              </Button>
+            )
+          }
+        />
+      )}
+
+
       <div className="flex flex-wrap gap-2 mb-3">
         <div className="relative flex-1 min-w-[220px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
