@@ -26,7 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { HandCoins, Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-type FormaPagamento = { id: string; nome: string; taxa_percentual?: number | null };
+type FormaPagamento = { id: string; nome: string; taxa?: number | null };
 type RecebimentoRegistro = RecebimentoRow & { observacao?: string | null };
 
 export function RegistrarRecebimento({
@@ -64,7 +64,7 @@ export function RegistrarRecebimento({
     [formas.data, forma],
   );
 
-  const taxaPercentual = selectedForma?.taxa_percentual ?? 0;
+  const taxaPercentual = selectedForma?.taxa ?? 0;
   const valorLiquido = useMemo(() => {
     const v = Number(valor);
     if (!v || v <= 0) return 0;

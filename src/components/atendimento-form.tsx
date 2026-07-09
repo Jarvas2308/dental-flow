@@ -626,18 +626,19 @@ export function AtendimentoForm({
       qc.invalidateQueries({ queryKey: ["recebimentos"] });
       qc.invalidateQueries({ queryKey: ["consultorio"] });
 
-      // Todas as operações do atendimento concluídas com sucesso.
-      toast.success("Atendimento salvo com sucesso");
-
       // Aguarda o callback do fluxo pai (ex.: marcar consulta/proposta) antes
-      // de fechar o modal. Se ele falhar, mantém o modal aberto para nova
-      // tentativa — o erro já é sinalizado pelo próprio callback.
+      // de sinalizar sucesso e fechar o modal. Se ele falhar, mantém o modal
+      // aberto para nova tentativa — o erro já é sinalizado pelo próprio callback.
       try {
         await onSaved?.();
       } catch (savedErr) {
         console.error("[AtendimentoForm] Erro no callback onSaved:", savedErr);
         return;
       }
+
+      // Todas as operações do atendimento e o fluxo pai concluídos com sucesso.
+      toast.success("Atendimento salvo com sucesso");
+
       setOpen(false);
       onClose?.();
     } catch (err) {
