@@ -13,6 +13,55 @@
 
 import { monthKey } from "./format";
 
+// Tipos-linha flexíveis para registros vindos do banco. Campos são opcionais
+// porque cada fluxo (à vista, parcelado, legado) preenche um subconjunto deles.
+type MonetaryRow = {
+  valor_liquido?: number | string | null;
+  valor_bruto?: number | string | null;
+};
+
+export type AtendimentoRow = MonetaryRow & {
+  id: string;
+  data: string;
+  taxa?: number | string | null;
+  parcelado?: boolean | null;
+  status_pagamento?: string | null;
+  forma_pagamento?: string | null;
+  paciente?: string | null;
+  procedimento?: string | null;
+  parcelas_total?: number | string | null;
+};
+
+export type RecebimentoRow = {
+  id?: string;
+  atendimento_id: string;
+  valor?: number | string | null;
+  valor_liquido?: number | string | null;
+  data: string;
+  forma_pagamento?: string | null;
+};
+
+export type ParcelaRow = MonetaryRow & {
+  id: string;
+  atendimento_id: string;
+  numero: number;
+  total: number;
+  status?: string | null;
+  vencimento: string;
+  data_pagamento?: string | null;
+  forma_pagamento?: string | null;
+  paciente?: string | null;
+  procedimento?: string | null;
+};
+
+export type DespesaRow = {
+  status?: string | null;
+  valor?: number | string | null;
+  vencimento?: string | null;
+  data_pagamento?: string | null;
+  data?: string | null;
+};
+
 export type Entrada = {
   data: string;
   valor_liquido: number;
