@@ -1,5 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
+import type { Database } from "@/integrations/supabase/types";
+
+type ConsultaRow = Database["public"]["Tables"]["consultas_previstas"]["Row"];
 import { useTable, useUpdate, useDelete } from "@/hooks/use-data";
 import { brl, formatDateBR, parseLocalDate, todayISO } from "@/lib/format";
 import { PageHeader, StatCard } from "@/components/ui-kit";
