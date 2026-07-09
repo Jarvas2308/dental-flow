@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./use-auth";
 import { toast } from "sonner";
+import type { AtendimentoRow, RecebimentoRow, ParcelaRow } from "@/lib/finance";
 
 type TableName =
   | "procedimentos"
@@ -67,8 +68,8 @@ export function useConsultorioData(mes: string) {
 
       const ids = (atendimentos ?? []).map((a) => a.id);
 
-      let recebimentos: any[] = [];
-      let parcelas: any[] = [];
+      let recebimentos: RecebimentoRow[] = [];
+      let parcelas: ParcelaRow[] = [];
       if (ids.length) {
         const [{ data: recs, error: rErr }, { data: parc, error: pErr }] = await Promise.all([
           supabase.from("recebimentos").select("*").in("atendimento_id", ids),
@@ -81,7 +82,7 @@ export function useConsultorioData(mes: string) {
       }
 
       return {
-        atendimentos: (atendimentos ?? []) as any[],
+        atendimentos: (atendimentos ?? []) as AtendimentoRow[],
         recebimentos,
         parcelas,
       };
