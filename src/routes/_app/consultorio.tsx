@@ -186,7 +186,7 @@ function Consultorio() {
 
   const freqMap = useMemo(() => {
     const m = new Map<string, number>();
-    allData.forEach((r: any) => m.set(r.procedimento, (m.get(r.procedimento) ?? 0) + 1));
+    allData.forEach((r) => m.set(r.procedimento, (m.get(r.procedimento) ?? 0) + 1));
     return m;
   }, [allData]);
 
