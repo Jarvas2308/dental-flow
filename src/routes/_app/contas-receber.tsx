@@ -2,7 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTable } from "@/hooks/use-data";
 import { brl, formatDateBR } from "@/lib/format";
-import { contasAReceber, STATUS_LABEL } from "@/lib/finance";
+import {
+  contasAReceber,
+  STATUS_LABEL,
+  type AtendimentoRow,
+  type RecebimentoRow,
+  type ParcelaRow,
+} from "@/lib/finance";
 import { RegistrarRecebimento } from "@/components/recebimento-form";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import { Input } from "@/components/ui/input";
