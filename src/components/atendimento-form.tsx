@@ -484,6 +484,7 @@ export function AtendimentoForm({
       qc.invalidateQueries({ queryKey: ["atendimentos"] });
       qc.invalidateQueries({ queryKey: ["atendimento_procedimentos"] });
       qc.invalidateQueries({ queryKey: ["recebimentos"] });
+      qc.invalidateQueries({ queryKey: ["consultorio"] });
 
       // Todas as operações do atendimento concluídas com sucesso.
       toast.success("Atendimento salvo com sucesso");

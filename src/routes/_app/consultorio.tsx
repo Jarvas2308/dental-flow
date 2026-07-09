@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useTable, useUpdate, useDelete } from "@/hooks/use-data";
+import { useConsultorioData, useUpdate, useDelete } from "@/hooks/use-data";
 import { brl, currentMonthKey, formatDateBR, monthKey, monthLabel, monthOptions, parseLocalDate } from "@/lib/format";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import {
@@ -89,32 +89,32 @@ function Consultorio() {
   const [procFilter, setProcFilter] = useState<string>("__all__");
   const [statusPag, setStatusPag] = useState<StatusPag>("todos");
 
-  const list = useTable<any>("atendimentos", "data");
-  const recebimentos = useTable<any>("recebimentos", "data", true);
-  const parcelas = useTable<any>("parcelas", "vencimento", true);
+  const consultorio = useConsultorioData(mes);
   const upd = useUpdate("atendimentos");
   const del = useDelete("atendimentos");
 
-  const allData = list.data ?? [];
+  const allData = (consultorio.data?.atendimentos ?? []) as any[];
+  const recebimentosData = (consultorio.data?.recebimentos ?? []) as any[];
+  const parcelasData = (consultorio.data?.parcelas ?? []) as any[];
 
   const resumoMap = useMemo(() => {
     const m = new Map<string, ReturnType<typeof resumoAtendimento>>();
-    allData.forEach((a) => m.set(a.id, resumoAtendimento(a, recebimentos.data ?? [], parcelas.data ?? [])));
+    allData.forEach((a: any) => m.set(a.id, resumoAtendimento(a, recebimentosData, parcelasData)));
     return m;
-  }, [allData, recebimentos.data, parcelas.data]);
+  }, [allData, recebimentosData, parcelasData]);
 
   const isPendente = (r: any) => (resumoMap.get(r.id)?.status ?? (r.status_pagamento === "pendente" ? "aberto" : "quitado")) !== "quitado";
 
 
 
   const procedimentosUnicos = useMemo(
-    () => Array.from(new Set(allData.map((r) => r.procedimento).filter(Boolean))).sort(),
+    () => Array.from(new Set(allData.map((r: any) => r.procedimento).filter(Boolean))).sort(),
     [allData],
   );
 
   const freqMap = useMemo(() => {
     const m = new Map<string, number>();
-    allData.forEach((r) => m.set(r.procedimento, (m.get(r.procedimento) ?? 0) + 1));
+    allData.forEach((r: any) => m.set(r.procedimento, (m.get(r.procedimento) ?? 0) + 1));
     return m;
   }, [allData]);
 
@@ -218,8 +218,8 @@ function Consultorio() {
   // usando os próprios campos (bruto/líquido) de cada recebimento. Não usa o
   // acumulado de resumoAtendimento.
   const recebPeriodo = useMemo(
-    () => receitasRecebidas(rows, recebimentos.data ?? [], parcelas.data ?? []).filter((e) => inPeriodo(e.data)),
-    [rows, recebimentos.data, parcelas.data, filter, mes],
+    () => receitasRecebidas(rows, recebimentosData, parcelasData).filter((e) => inPeriodo(e.data)),
+    [rows, recebimentosData, parcelasData, filter, mes],
   );
   const totBruto = recebPeriodo.reduce((s, e) => s + e.valor_bruto, 0);
   const totLiq = recebPeriodo.reduce((s, e) => s + e.valor_liquido, 0);
@@ -378,12 +378,12 @@ function Consultorio() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {list.isLoading && (
+            {consultorio.isLoading && (
               <TableRow><TableCell colSpan={9} className="text-center py-12">
                 <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
               </TableCell></TableRow>
             )}
-            {!list.isLoading && rows.length === 0 && (
+            {!consultorio.isLoading && rows.length === 0 && (
               <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-12">Nenhum atendimento encontrado.</TableCell></TableRow>
             )}
             {rows.map((r) => {
