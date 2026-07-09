@@ -254,8 +254,8 @@ function DespesaForm({ editing, onClose }: { editing?: Despesa; onClose?: () => 
   );
 }
 
-function EditDespesa({ row }: { row: any }) {
-  const [editing, setEditing] = useState<any | null>(null);
+function EditDespesa({ row }: { row: Despesa }) {
+  const [editing, setEditing] = useState<Despesa | null>(null);
   return (
     <>
       <Button variant="ghost" size="icon" aria-label="Editar" onClick={() => setEditing(row)}>
