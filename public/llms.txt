@@ -1,0 +1,7 @@
+# Odonto Financeiro
+
+> Sistema financeiro e gerencial para consultório odontológico: controle de receitas, despesas, custos laboratoriais e lucro líquido.
+
+## Pages
+
+- [Entrar](/login): Acesso ao painel financeiro do consultório.
