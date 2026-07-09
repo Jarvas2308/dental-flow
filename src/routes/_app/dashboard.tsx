@@ -2,7 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTable } from "@/hooks/use-data";
 import { brl, monthOptions, monthLabel, currentMonthKey, monthKey, parseLocalDate, todayISO } from "@/lib/format";
-import { receitasRecebidas, valoresEmAberto } from "@/lib/finance";
+import {
+  receitasRecebidas, valoresEmAberto,
+  totalDespesasPagasNoMes, totalDespesasPendentesNoMes,
+  caixaRealizado as calcCaixaRealizado, resultadoPrevisto as calcResultadoPrevisto,
+} from "@/lib/finance";
 import { proximaTentativa, estaPendenteHoje } from "@/lib/followup";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import {
