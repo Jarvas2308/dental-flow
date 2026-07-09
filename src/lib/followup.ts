@@ -47,7 +47,7 @@ export function proximaTentativa(
   }
 
   // Data base: a tentativa mais recente, ou a data da proposta se não houver.
-  let base = proposta?.data_proposta as string;
+  let base: string | null | undefined = proposta?.data_proposta;
   if (tentativas && tentativas.length > 0) {
     const maisRecente = tentativas.reduce((acc, t) =>
       (t.data ?? "") > (acc.data ?? "") ? t : acc,
