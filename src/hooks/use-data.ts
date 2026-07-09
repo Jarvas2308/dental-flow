@@ -26,7 +26,7 @@ type TableName =
 export function useTable<T = unknown>(table: TableName, orderBy = "created_at", asc = false) {
   const { user } = useAuth();
   return useQuery({
-    queryKey: [table, user?.id],
+    queryKey: [table, user?.id, orderBy, asc],
     enabled: !!user,
     queryFn: async () => {
       const { data, error } = await supabase

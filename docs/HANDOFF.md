@@ -149,17 +149,12 @@ UI ainda não é testada automaticamente.
 
 ## 9. Pendências técnicas controladas
 
-Warnings de lint conhecidos e propositalmente preservados (corrigir exigiria
-refatoração ampla com risco de mudar comportamento — fora de escopo):
+Lint, testes, typecheck e build estão passando. Não há pendências ativas de lint conhecidas:
 
-- **`@typescript-eslint/no-explicit-any`** (~178 ocorrências): uso de `any` em
-  handlers de dados e helpers financeiros. Tipar exige mapear os tipos gerados
-  do backend em toda a cadeia.
-- **`react-hooks/exhaustive-deps`** (~20 ocorrências): dependências de efeitos
-  intencionalmente omitidas em algumas telas para evitar re-execuções.
+- **`@typescript-eslint/no-explicit-any`**: zerado em todo o projeto. Todos os arquivos permitidos foram tipados, substituindo `any` por tipos específicos do Supabase, `unknown` onde o tipo é realmente desconhecido ou tipos auxiliares pequenos.
+- **`react-hooks/exhaustive-deps`**: zerado. Não restam dependências de efeito omitidas intencionalmente em telas.
 
-Nenhum `no-unused-vars` pendente. Código de `gerar_despesas_recorrentes`,
-exibição de `nota_fiscal` e fallback de contagem por nome estão em uso ativo.
+Nenhuma alteração de banco, layout, regras financeiras ou comportamento funcional foi feita para alcançar esse estado.
 
 ---
 
