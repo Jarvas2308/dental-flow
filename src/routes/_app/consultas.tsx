@@ -55,7 +55,7 @@ function Consultas() {
   const upd = useUpdate("consultas_previstas");
   const del = useDelete("consultas_previstas");
 
-  const all = list.data ?? [];
+  const all = useMemo(() => list.data ?? [], [list.data]);
 
   const { hoje, semana, valorSemana } = useMemo(() => {
     const today = new Date();

@@ -417,7 +417,7 @@ export function AtendimentoForm({
     } else {
       setItems([{ procedimento: "", valor: "" }]);
     }
-  }, [open, editing]);
+  }, [open, editing, initialData]);
 
   useEffect(() => {
     if (dividido && !formaInicialTocada) {

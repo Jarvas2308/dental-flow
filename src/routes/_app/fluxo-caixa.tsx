@@ -73,7 +73,7 @@ function FluxoCaixa() {
 
   const [year, monthNum] = mes.split("-").map(Number);
   const diasNoMes = new Date(year, monthNum, 0).getDate();
-  const hoje = new Date();
+  const hoje = useMemo(() => new Date(), []);
   const ehMesAtual = currentMonthKey() === mes;
   const diaAtual = ehMesAtual ? Math.min(hoje.getDate(), diasNoMes) : diasNoMes;
 
@@ -169,7 +169,7 @@ function FluxoCaixa() {
         .filter((r) => new Date(r.data) <= hoje)
         .reduce((s, r) => s + Number(r.valor || 0), 0);
     return ents - sds;
-  }, [recebidas, despesasPagas, lab.data, ganhos.data, isClinica]);
+  }, [recebidas, despesasPagas, lab.data, ganhos.data, isClinica, hoje]);
 
   // Dias do mês com agregados
   const diario = useMemo(() => {

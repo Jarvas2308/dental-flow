@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useConsultorioData, useUpdate, useDelete } from "@/hooks/use-data";
 import {
   brl,
@@ -144,9 +144,18 @@ function Consultorio() {
   const upd = useUpdate("atendimentos");
   const del = useDelete("atendimentos");
 
-  const allData = (consultorio.data?.atendimentos ?? []) as any[];
-  const recebimentosData = (consultorio.data?.recebimentos ?? []) as any[];
-  const parcelasData = (consultorio.data?.parcelas ?? []) as any[];
+  const allData = useMemo(
+    () => (consultorio.data?.atendimentos ?? []) as any[],
+    [consultorio.data?.atendimentos],
+  );
+  const recebimentosData = useMemo(
+    () => (consultorio.data?.recebimentos ?? []) as any[],
+    [consultorio.data?.recebimentos],
+  );
+  const parcelasData = useMemo(
+    () => (consultorio.data?.parcelas ?? []) as any[],
+    [consultorio.data?.parcelas],
+  );
 
   const resumoMap = useMemo(() => {
     const m = new Map<string, ReturnType<typeof resumoAtendimento>>();
@@ -154,9 +163,12 @@ function Consultorio() {
     return m;
   }, [allData, recebimentosData, parcelasData]);
 
-  const isPendente = (r: any) =>
-    (resumoMap.get(r.id)?.status ?? (r.status_pagamento === "pendente" ? "aberto" : "quitado")) !==
-    "quitado";
+  const isPendente = useCallback(
+    (r: any) =>
+      (resumoMap.get(r.id)?.status ??
+        (r.status_pagamento === "pendente" ? "aberto" : "quitado")) !== "quitado",
+    [resumoMap],
+  );
 
   const procedimentosUnicos = useMemo(
     () => Array.from(new Set(allData.map((r: any) => r.procedimento).filter(Boolean))).sort(),
@@ -276,29 +288,32 @@ function Consultorio() {
       return cmp(a, b);
     });
     return r;
-  }, [allData, mes, q, sort, filter, procFilter, statusPag, freqMap]);
+  }, [allData, mes, q, sort, filter, procFilter, statusPag, freqMap, isPendente]);
 
   // Predicado de período (data do RECEBIMENTO), espelhando o filtro temporal da tabela.
-  const inPeriodo = (dateStr: string) => {
-    const d = parseLocalDate(dateStr);
-    if (!d) return false;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (filter === "hoje") {
-      const tomorrow = new Date(today);
-      tomorrow.setDate(today.getDate() + 1);
-      return d >= today && d < tomorrow;
-    }
-    if (filter === "semana") return d >= startOfWeek(today);
-    return noMes(dateStr, mes);
-  };
+  const inPeriodo = useCallback(
+    (dateStr: string) => {
+      const d = parseLocalDate(dateStr);
+      if (!d) return false;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (filter === "hoje") {
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+        return d >= today && d < tomorrow;
+      }
+      if (filter === "semana") return d >= startOfWeek(today);
+      return noMes(dateStr, mes);
+    },
+    [filter, mes],
+  );
 
   // "Recebido no período": soma somente recebimentos cuja DATA pertence ao período,
   // usando os próprios campos (bruto/líquido) de cada recebimento. Não usa o
   // acumulado de resumoAtendimento.
   const recebPeriodo = useMemo(
     () => receitasRecebidas(rows, recebimentosData, parcelasData).filter((e) => inPeriodo(e.data)),
-    [rows, recebimentosData, parcelasData, filter, mes],
+    [rows, recebimentosData, parcelasData, inPeriodo],
   );
   const totBruto = recebPeriodo.reduce((s, e) => s + e.valor_bruto, 0);
   const totLiq = recebPeriodo.reduce((s, e) => s + e.valor_liquido, 0);

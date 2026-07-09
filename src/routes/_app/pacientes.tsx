@@ -111,7 +111,7 @@ function Pacientes() {
   const [editing, setEditing] = useState<any | null>(null);
   const [q, setQ] = useState("");
 
-  const pacientes = list.data ?? [];
+  const pacientes = useMemo(() => list.data ?? [], [list.data]);
 
   // Histórico completo do paciente: atendimentos + consultas + propostas/follow-ups.
   // Prioriza paciente_id e usa o nome normalizado apenas como fallback para
