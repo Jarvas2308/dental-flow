@@ -6,7 +6,6 @@ import {
   contasAReceber,
   valoresEmAberto,
   STATUS_LABEL,
-  type AtendimentoRow,
   type RecebimentoRow,
   type ParcelaRow,
 } from "@/lib/finance";
