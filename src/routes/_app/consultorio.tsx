@@ -218,8 +218,8 @@ function Consultorio() {
   // usando os próprios campos (bruto/líquido) de cada recebimento. Não usa o
   // acumulado de resumoAtendimento.
   const recebPeriodo = useMemo(
-    () => receitasRecebidas(rows, recebimentos.data ?? [], parcelas.data ?? []).filter((e) => inPeriodo(e.data)),
-    [rows, recebimentos.data, parcelas.data, filter, mes],
+    () => receitasRecebidas(rows, recebimentosData, parcelasData).filter((e) => inPeriodo(e.data)),
+    [rows, recebimentosData, parcelasData, filter, mes],
   );
   const totBruto = recebPeriodo.reduce((s, e) => s + e.valor_bruto, 0);
   const totLiq = recebPeriodo.reduce((s, e) => s + e.valor_liquido, 0);
