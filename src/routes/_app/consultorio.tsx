@@ -211,7 +211,7 @@ function Consultorio() {
       return d >= today && d < tomorrow;
     }
     if (filter === "semana") return d >= startOfWeek(today);
-    return monthKey(dateStr) === mes;
+    return noMes(dateStr, mes);
   };
 
   // "Recebido no período": soma somente recebimentos cuja DATA pertence ao período,
