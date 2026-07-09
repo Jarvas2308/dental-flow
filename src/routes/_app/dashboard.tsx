@@ -94,20 +94,16 @@ function Dashboard() {
   const totReceitaTotal = totLiquidoAtend + totGanhos;
 
   // Despesas pagas: somente status pago, posicionadas pela data_pagamento efetiva.
-  const totDespPagas = (despesas.data ?? [])
-    .filter((r: any) => r.status === "pago" && r.data_pagamento && monthKey(r.data_pagamento) === mes)
-    .reduce((s, r: any) => s + Number(r.valor || 0), 0);
+  const totDespPagas = totalDespesasPagasNoMes(despesas.data ?? [], mes);
   // Despesas pendentes: ainda não pagas, posicionadas pelo vencimento.
-  const totDespPendentes = (despesas.data ?? [])
-    .filter((r: any) => r.status !== "pago" && monthKey(r.vencimento) === mes)
-    .reduce((s, r: any) => s + Number(r.valor || 0), 0);
+  const totDespPendentes = totalDespesasPendentesNoMes(despesas.data ?? [], mes);
   const totLab = filt(lab.data).reduce((s, r: any) => s + Number(r.valor || 0), 0);
 
   // Caixa realizado = recebimentos efetivos − despesas pagas (inclui custos de
   // laboratório realizados). Despesas pendentes NÃO reduzem o caixa realizado.
-  const caixaRealizado = totReceitaTotal - totDespPagas - totLab;
+  const caixaRealizado = calcCaixaRealizado(totReceitaTotal, totDespPagas + totLab);
   // Resultado previsto = caixa realizado menos as despesas ainda pendentes.
-  const resultadoPrevisto = caixaRealizado - totDespPendentes;
+  const resultadoPrevisto = calcResultadoPrevisto(caixaRealizado, totDespPendentes);
 
 
   // Mês anterior ao mês selecionado (não ao calendário) para comparação
