@@ -130,9 +130,9 @@ function CrudList({
   label: string;
   withTaxa?: boolean;
 }) {
-  const list = useTable<any>(table, "nome", true);
+  const list = useTable<CadastroRow>(table, "nome", true);
   const del = useDelete(table);
-  const [editing, setEditing] = useState<any | null>(null);
+  const [editing, setEditing] = useState<CadastroRow | null>(null);
 
   return (
     <div className="space-y-4">
