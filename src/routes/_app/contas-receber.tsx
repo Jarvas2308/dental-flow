@@ -2,7 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTable } from "@/hooks/use-data";
 import { brl, formatDateBR } from "@/lib/format";
-import { contasAReceber, STATUS_LABEL } from "@/lib/finance";
+import {
+  contasAReceber,
+  STATUS_LABEL,
+  type AtendimentoRow,
+  type RecebimentoRow,
+  type ParcelaRow,
+} from "@/lib/finance";
 import { RegistrarRecebimento } from "@/components/recebimento-form";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import { Input } from "@/components/ui/input";
@@ -25,9 +31,9 @@ export const Route = createFileRoute("/_app/contas-receber")({
 
 function ContasReceber() {
   const [q, setQ] = useState("");
-  const atendimentos = useTable<any>("atendimentos", "data");
-  const recebimentos = useTable<any>("recebimentos", "data", true);
-  const parcelas = useTable<any>("parcelas", "vencimento", true);
+  const atendimentos = useTable<AtendimentoRow>("atendimentos", "data");
+  const recebimentos = useTable<RecebimentoRow>("recebimentos", "data", true);
+  const parcelas = useTable<ParcelaRow>("parcelas", "vencimento", true);
 
   const loading = atendimentos.isLoading || recebimentos.isLoading || parcelas.isLoading;
 

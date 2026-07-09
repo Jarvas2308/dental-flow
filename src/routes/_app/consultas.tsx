@@ -1,5 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
+import type { Database } from "@/integrations/supabase/types";
+
+type ConsultaRow = Database["public"]["Tables"]["consultas_previstas"]["Row"];
 import { useTable, useUpdate, useDelete } from "@/hooks/use-data";
 import { brl, formatDateBR, parseLocalDate, todayISO } from "@/lib/format";
 import { PageHeader, StatCard } from "@/components/ui-kit";
@@ -51,7 +54,7 @@ function endOfWeek(d: Date) {
 function Consultas() {
   const [q, setQ] = useState("");
   const [showRealizadas, setShowRealizadas] = useState(false);
-  const list = useTable<any>("consultas_previstas", "data_prevista", true);
+  const list = useTable<ConsultaRow>("consultas_previstas", "data_prevista", true);
   const upd = useUpdate("consultas_previstas");
   const del = useDelete("consultas_previstas");
 
@@ -239,7 +242,13 @@ function Consultas() {
   );
 }
 
-function RealizarConsulta({ consulta, upd }: { consulta: any; upd: ReturnType<typeof useUpdate> }) {
+function RealizarConsulta({
+  consulta,
+  upd,
+}: {
+  consulta: ConsultaRow;
+  upd: ReturnType<typeof useUpdate>;
+}) {
   // Garante que a consulta seja marcada como realizada uma única vez, mesmo
   // com cliques repetidos. Em caso de falha, libera para nova tentativa.
   const done = useRef(false);
@@ -271,14 +280,26 @@ function RealizarConsulta({ consulta, upd }: { consulta: any; upd: ReturnType<ty
   );
 }
 
-function EditConsultaButton({ row }: { row: any }) {
-  const [editing, setEditing] = useState<any | null>(null);
+function EditConsultaButton({ row }: { row: ConsultaRow }) {
+  const [editing, setEditing] = useState<ConsultaRow | null>(null);
   return (
     <>
       <Button variant="ghost" size="icon" aria-label="Editar" onClick={() => setEditing(row)}>
         <Pencil className="h-4 w-4 text-muted-foreground" />
       </Button>
-      {editing && <ConsultaForm editing={editing} onClose={() => setEditing(null)} />}
+      {editing && (
+        <ConsultaForm
+          editing={{
+            id: editing.id,
+            paciente: editing.paciente,
+            paciente_id: editing.paciente_id,
+            data_prevista: editing.data_prevista,
+            valor_estimado: editing.valor_estimado,
+            observacao: editing.observacao ?? "",
+          }}
+          onClose={() => setEditing(null)}
+        />
+      )}
     </>
   );
 }

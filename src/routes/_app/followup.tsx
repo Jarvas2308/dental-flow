@@ -48,6 +48,13 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { usePagination } from "@/hooks/use-pagination";
 import { TablePagination } from "@/components/table-pagination";
+import type { Database } from "@/integrations/supabase/types";
+
+type Tables<T extends keyof Database["public"]["Tables"]> = Database["public"]["Tables"][T]["Row"];
+type TratamentoRow = Tables<"tratamentos_propostos">;
+type TentativaRow = Tables<"tentativas_contato">;
+type ProcedimentoRow = Tables<"procedimentos">;
+type PacienteRow = Tables<"pacientes">;
 
 export const Route = createFileRoute("/_app/followup")({
   component: Followup,
@@ -77,11 +84,11 @@ const empty = (): Proposta => ({
   fase3_intervalo_dias: 15,
 });
 
-function PropostaForm({ proposta, onClose }: { proposta?: any; onClose: () => void }) {
+function PropostaForm({ proposta, onClose }: { proposta?: TratamentoRow; onClose: () => void }) {
   const create = useCreate("tratamentos_propostos");
   const update = useUpdate("tratamentos_propostos");
-  const procedimentos = useTable<any>("procedimentos", "nome", true);
-  const pacientes = useTable<any>("pacientes", "nome", true);
+  const procedimentos = useTable<ProcedimentoRow>("procedimentos", "nome", true);
+  const pacientes = useTable<PacienteRow>("pacientes", "nome", true);
   const { user } = useAuth();
   const qc = useQueryClient();
   // Guarda o id vindo do combobox quando um paciente existente é selecionado.
@@ -285,7 +292,7 @@ function NovaProposta() {
   );
 }
 
-function EditarPropostaButton({ proposta }: { proposta: any }) {
+function EditarPropostaButton({ proposta }: { proposta: TratamentoRow }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -305,7 +312,7 @@ function EditarPropostaButton({ proposta }: { proposta: any }) {
   );
 }
 
-function ContatadoButton({ proposta }: { proposta: any }) {
+function ContatadoButton({ proposta }: { proposta: TratamentoRow }) {
   const create = useCreate("tentativas_contato");
   const update = useUpdate("tratamentos_propostos");
   const [open, setOpen] = useState(false);
@@ -364,7 +371,7 @@ function ContatadoButton({ proposta }: { proposta: any }) {
   );
 }
 
-function FecharButton({ proposta }: { proposta: any }) {
+function FecharButton({ proposta }: { proposta: TratamentoRow }) {
   const update = useUpdate("tratamentos_propostos");
   // Garante que a proposta seja fechada uma única vez, mesmo com cliques
   // repetidos. Em caso de falha, libera para nova tentativa.
@@ -395,8 +402,8 @@ function FecharButton({ proposta }: { proposta: any }) {
 }
 
 function Followup() {
-  const props = useTable<any>("tratamentos_propostos", "data_proposta", true);
-  const tentativas = useTable<any>("tentativas_contato", "data", true);
+  const props = useTable<TratamentoRow>("tratamentos_propostos", "data_proposta", true);
+  const tentativas = useTable<TentativaRow>("tentativas_contato", "data", true);
   const update = useUpdate("tratamentos_propostos");
 
   const allTentativas = useMemo(() => tentativas.data ?? [], [tentativas.data]);
