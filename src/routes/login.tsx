@@ -67,7 +67,7 @@ function LoginPage() {
   if (loading) return null;
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2">
+    <main className="min-h-screen grid lg:grid-cols-2">
       <div
         className="hidden lg:flex flex-col justify-between p-12 text-primary-foreground"
         style={{ background: "var(--gradient-primary)" }}
