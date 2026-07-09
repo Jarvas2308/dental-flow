@@ -8,6 +8,24 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/login")({
+  head: () => ({
+    meta: [
+      { title: "Entrar — Odonto Financeiro" },
+      {
+        name: "description",
+        content:
+          "Acesse o painel do Odonto Financeiro para controlar receitas, despesas e o lucro líquido do seu consultório.",
+      },
+      { property: "og:title", content: "Entrar — Odonto Financeiro" },
+      {
+        property: "og:description",
+        content:
+          "Acesse o painel do Odonto Financeiro para controlar receitas, despesas e o lucro líquido do seu consultório.",
+      },
+      { property: "og:url", content: "https://annajuliaodonto.lovable.app/login" },
+    ],
+    links: [{ rel: "canonical", href: "https://annajuliaodonto.lovable.app/login" }],
+  }),
   validateSearch: (s: Record<string, unknown>) => ({
     next: typeof s.next === "string" ? s.next : "",
   }),
