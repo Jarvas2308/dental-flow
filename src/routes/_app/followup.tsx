@@ -491,8 +491,12 @@ function Followup() {
             )}
             {!props.isLoading && rows.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-12">
-                  Nenhum tratamento em acompanhamento.
+                <TableCell colSpan={6} className="py-0">
+                  <EmptyState
+                    icon={<CalendarClock className="h-8 w-8" />}
+                    title="Nenhum tratamento em acompanhamento"
+                    description="Crie uma proposta para acompanhar contatos e follow-ups por fase."
+                  />
                 </TableCell>
               </TableRow>
             )}
