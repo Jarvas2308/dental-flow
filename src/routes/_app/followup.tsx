@@ -11,7 +11,8 @@ import {
   AtendimentoForm,
   ProcedimentoCombobox,
 } from "@/components/atendimento-form";
-import { PageHeader, StatCard } from "@/components/ui-kit";
+import { PageHeader, StatCard, AlertBanner, EmptyState } from "@/components/ui-kit";
+import { VerPacienteButton } from "@/components/paciente-link";
 import {
   Table,
   TableBody,
