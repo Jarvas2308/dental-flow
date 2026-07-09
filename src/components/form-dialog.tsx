@@ -48,13 +48,13 @@ export function FormDialog({
 }: {
   title: string;
   fields: FieldDef[];
-  defaults?: Record<string, any>;
-  onSubmit: (values: Record<string, any>) => Promise<void> | void;
+  defaults?: FormValues;
+  onSubmit: (values: FormValues) => Promise<void> | void;
   trigger?: ReactNode;
   busy?: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const [values, setValues] = useState<Record<string, any>>(defaults);
+  const [values, setValues] = useState<FormValues>(defaults);
 
   const reset = () => setValues(defaults);
 
