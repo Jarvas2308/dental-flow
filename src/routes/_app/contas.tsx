@@ -217,7 +217,7 @@ function DespesaForm({ editing, onClose }: { editing?: Despesa; onClose?: () => 
                 <Label>Tipo de recorrência</Label>
                 <Select
                   value={v.tipo_recorrencia}
-                  onValueChange={(s: any) => setV({ ...v, tipo_recorrencia: s })}
+                  onValueChange={(s) => setV({ ...v, tipo_recorrencia: s as Despesa["tipo_recorrencia"] })}
                 >
                   <SelectTrigger>
                     <SelectValue />
