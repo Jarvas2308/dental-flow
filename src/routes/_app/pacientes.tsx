@@ -324,9 +324,8 @@ function Pacientes() {
             {rows.map((r) => {
               const isOpen = expanded === r.id;
               return (
-                <>
+                <Fragment key={r.id}>
                   <TableRow
-                    key={r.id}
                     className="cursor-pointer"
                     onClick={() => setExpanded(isOpen ? null : r.id)}
                   >
