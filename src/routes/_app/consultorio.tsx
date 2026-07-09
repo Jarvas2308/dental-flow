@@ -108,13 +108,13 @@ function Consultorio() {
 
 
   const procedimentosUnicos = useMemo(
-    () => Array.from(new Set(allData.map((r) => r.procedimento).filter(Boolean))).sort(),
+    () => Array.from(new Set(allData.map((r: any) => r.procedimento).filter(Boolean))).sort(),
     [allData],
   );
 
   const freqMap = useMemo(() => {
     const m = new Map<string, number>();
-    allData.forEach((r) => m.set(r.procedimento, (m.get(r.procedimento) ?? 0) + 1));
+    allData.forEach((r: any) => m.set(r.procedimento, (m.get(r.procedimento) ?? 0) + 1));
     return m;
   }, [allData]);
 
