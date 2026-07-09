@@ -5,7 +5,8 @@ import type { Database } from "@/integrations/supabase/types";
 type ConsultaRow = Database["public"]["Tables"]["consultas_previstas"]["Row"];
 import { useTable, useUpdate, useDelete } from "@/hooks/use-data";
 import { brl, formatDateBR, parseLocalDate, todayISO } from "@/lib/format";
-import { PageHeader, StatCard } from "@/components/ui-kit";
+import { PageHeader, StatCard, AlertBanner, EmptyState } from "@/components/ui-kit";
+import { VerPacienteButton } from "@/components/paciente-link";
 import {
   Table,
   TableBody,
