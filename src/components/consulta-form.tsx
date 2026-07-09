@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useCreate, useUpdate, useTable } from "@/hooks/use-data";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/hooks/use-auth-context";
 import { useQueryClient } from "@tanstack/react-query";
 import { todayISO } from "@/lib/format";
 import { resolvePacienteId } from "@/lib/pacientes";
