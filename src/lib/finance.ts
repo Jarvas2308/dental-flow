@@ -11,6 +11,9 @@
 // - Compatibilidade: atendimentos antigos que possuírem registros na tabela
 //   `parcelas` continuam sendo tratados pelas parcelas pagas.
 
+import { monthKey } from "./format";
+
+
 export type Entrada = {
   data: string;
   valor_liquido: number;
