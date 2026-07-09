@@ -113,7 +113,7 @@ function DespesaForm({ editing, onClose }: { editing?: Despesa; onClose?: () => 
     if (!v.nome.trim()) return toast.error("Informe o nome");
     const variavelSemValor = v.recorrente && v.tipo_recorrencia === "variavel" && !Number(v.valor);
     if (!variavelSemValor && !Number(v.valor)) return toast.error("Informe o valor");
-    const payload: any = {
+    const payload = {
       nome: v.nome.trim(),
       valor: variavelSemValor ? null : Number(v.valor),
       vencimento: v.vencimento,
@@ -123,7 +123,7 @@ function DespesaForm({ editing, onClose }: { editing?: Despesa; onClose?: () => 
       data_pagamento: v.status === "pago" ? v.data_pagamento || v.vencimento : null,
       observacoes: v.observacoes?.toString().trim() || null,
     };
-    if (isEdit) await update.mutateAsync({ id: editing.id, values: payload });
+    if (isEdit && editing?.id) await update.mutateAsync({ id: editing.id, values: payload });
     else await create.mutateAsync(payload);
     setOpen(false);
     onClose?.();
