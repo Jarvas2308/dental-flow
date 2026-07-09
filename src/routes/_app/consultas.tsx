@@ -251,6 +251,7 @@ function Consultas() {
                         </Button>
                       )}
                       <EditConsultaButton row={c} />
+                      <VerPacienteButton nome={c.paciente} label="" />
                       <ConfirmDelete onConfirm={() => del.mutate(c.id)} />
                     </div>
                   </TableCell>
