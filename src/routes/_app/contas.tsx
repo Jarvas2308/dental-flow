@@ -50,7 +50,7 @@ type Despesa = {
   valor: number | string | null;
   vencimento: string;
   data_pagamento?: string | null;
-  status: "pago" | "pendente" | "atrasado";
+  status: "pago" | "pendente" | "atrasado" | "aguardando";
   recorrente: boolean;
   tipo_recorrencia: "fixo" | "variavel";
   observacoes?: string | null;
@@ -80,7 +80,7 @@ function statusBadge(s: string) {
   return <Badge variant="outline">Pendente</Badge>;
 }
 
-function computeStatus(d: any): "pago" | "pendente" | "atrasado" | "aguardando" {
+function computeStatus(d: Despesa): "pago" | "pendente" | "atrasado" | "aguardando" {
   if (d.status === "pago") return "pago";
   if (
     d.recorrente &&
@@ -95,7 +95,7 @@ function computeStatus(d: any): "pago" | "pendente" | "atrasado" | "aguardando" 
   return v < today ? "atrasado" : "pendente";
 }
 
-function DespesaForm({ editing, onClose }: { editing?: any; onClose?: () => void }) {
+function DespesaForm({ editing, onClose }: { editing?: Despesa; onClose?: () => void }) {
   const create = useCreate("despesas");
   const update = useUpdate("despesas");
   const [open, setOpen] = useState(!!editing);
@@ -113,7 +113,7 @@ function DespesaForm({ editing, onClose }: { editing?: any; onClose?: () => void
     if (!v.nome.trim()) return toast.error("Informe o nome");
     const variavelSemValor = v.recorrente && v.tipo_recorrencia === "variavel" && !Number(v.valor);
     if (!variavelSemValor && !Number(v.valor)) return toast.error("Informe o valor");
-    const payload: any = {
+    const payload = {
       nome: v.nome.trim(),
       valor: variavelSemValor ? null : Number(v.valor),
       vencimento: v.vencimento,
@@ -123,7 +123,7 @@ function DespesaForm({ editing, onClose }: { editing?: any; onClose?: () => void
       data_pagamento: v.status === "pago" ? v.data_pagamento || v.vencimento : null,
       observacoes: v.observacoes?.toString().trim() || null,
     };
-    if (isEdit) await update.mutateAsync({ id: editing.id, values: payload });
+    if (isEdit && editing?.id) await update.mutateAsync({ id: editing.id, values: payload });
     else await create.mutateAsync(payload);
     setOpen(false);
     onClose?.();
@@ -179,7 +179,7 @@ function DespesaForm({ editing, onClose }: { editing?: any; onClose?: () => void
             </div>
             <div className="space-y-1.5">
               <Label>Status</Label>
-              <Select value={v.status} onValueChange={(s: any) => setV({ ...v, status: s })}>
+              <Select value={v.status} onValueChange={(s) => setV({ ...v, status: s as Despesa["status"] })}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -217,7 +217,7 @@ function DespesaForm({ editing, onClose }: { editing?: any; onClose?: () => void
                 <Label>Tipo de recorrência</Label>
                 <Select
                   value={v.tipo_recorrencia}
-                  onValueChange={(s: any) => setV({ ...v, tipo_recorrencia: s })}
+                  onValueChange={(s) => setV({ ...v, tipo_recorrencia: s as Despesa["tipo_recorrencia"] })}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -254,8 +254,8 @@ function DespesaForm({ editing, onClose }: { editing?: any; onClose?: () => void
   );
 }
 
-function EditDespesa({ row }: { row: any }) {
-  const [editing, setEditing] = useState<any | null>(null);
+function EditDespesa({ row }: { row: Despesa }) {
+  const [editing, setEditing] = useState<Despesa | null>(null);
   return (
     <>
       <Button variant="ghost" size="icon" aria-label="Editar" onClick={() => setEditing(row)}>
@@ -273,7 +273,7 @@ function Contas() {
     "todas",
   );
   const [q, setQ] = useState("");
-  const list = useTable<any>("despesas", "vencimento", true);
+  const list = useTable<Despesa>("despesas", "vencimento", true);
   const upd = useUpdate("despesas");
   const del = useDelete("despesas");
 
@@ -308,9 +308,9 @@ function Contas() {
   const totalAguardando = totMes.filter((r) => r.status === "aguardando").length;
   const totalGeral = totalPago + totalPendente + totalAtrasado;
 
-  const marcarPago = (r: any) => {
+  const marcarPago = (r: Despesa) => {
     upd.mutate({
-      id: r.id,
+      id: r.id!,
       values: { status: "pago", data_pagamento: new Date().toISOString().slice(0, 10) },
     });
   };
@@ -366,7 +366,7 @@ function Contas() {
         </div>
       </div>
 
-      <Tabs value={aba} onValueChange={(v) => setAba(v as any)}>
+      <Tabs value={aba} onValueChange={(v) => setAba(v as typeof aba)}>
         <TabsList>
           <TabsTrigger value="todas">Todas ({totMes.length})</TabsTrigger>
           <TabsTrigger value="pendente">Pendentes</TabsTrigger>
@@ -446,7 +446,7 @@ function Contas() {
                         <ConfirmDelete
                           title="Excluir despesa?"
                           description={`"${r.nome}" será removida permanentemente.`}
-                          onConfirm={() => del.mutate(r.id)}
+                          onConfirm={() => del.mutate(r.id!)}
                         />
                       </div>
                     </TableCell>

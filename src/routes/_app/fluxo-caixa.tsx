@@ -1,6 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTable } from "@/hooks/use-data";
+import type { Database } from "@/integrations/supabase/types";
+
+type Tables<T extends keyof Database["public"]["Tables"]> =
+  Database["public"]["Tables"][T]["Row"];
 import {
   brl,
   currentMonthKey,
@@ -57,12 +61,12 @@ function FluxoCaixa() {
   const [visao, setVisao] = useState<Visao>("geral");
   const isClinica = visao === "clinica";
 
-  const atendimentos = useTable<any>("atendimentos", "data");
-  const recebimentos = useTable<any>("recebimentos", "data", true);
-  const parcelas = useTable<any>("parcelas", "vencimento", true);
-  const despesas = useTable<any>("despesas", "vencimento");
-  const lab = useTable<any>("custos_laboratorio", "data");
-  const ganhos = useTable<any>("receitas_extras", "data");
+  const atendimentos = useTable<Tables<"atendimentos">>("atendimentos", "data");
+  const recebimentos = useTable<Tables<"recebimentos">>("recebimentos", "data", true);
+  const parcelas = useTable<Tables<"parcelas">>("parcelas", "vencimento", true);
+  const despesas = useTable<Tables<"despesas">>("despesas", "vencimento");
+  const lab = useTable<Tables<"custos_laboratorio">>("custos_laboratorio", "data");
+  const ganhos = useTable<Tables<"receitas_extras">>("receitas_extras", "data");
 
   const isLoading =
     atendimentos.isLoading ||
@@ -117,7 +121,7 @@ function FluxoCaixa() {
     const all = isClinica
       ? (lab.data ?? []).map((r) => ({ ...r, _origem: "Laboratório" }))
       : [...despesasPagas, ...(lab.data ?? []).map((r) => ({ ...r, _origem: "Laboratório" }))];
-    return all.filter((r) => monthKey(r.data) === mes);
+    return all.filter((r) => monthKey(r.data ?? "") === mes);
   }, [despesasPagas, lab.data, mes, isClinica]);
 
   const totalEntradas = ent.reduce((s, r) => s + Number(r.valor || 0), 0);
@@ -360,7 +364,7 @@ function FluxoCaixa() {
                       border: "1px solid var(--border)",
                       borderRadius: 12,
                     }}
-                    formatter={(v: any) => brl(Number(v))}
+                    formatter={(v: number | string) => brl(Number(v))}
                     labelFormatter={(l) => `Dia ${l}`}
                   />
                   <Area
@@ -401,7 +405,7 @@ function FluxoCaixa() {
                       border: "1px solid var(--border)",
                       borderRadius: 12,
                     }}
-                    formatter={(v: any) => brl(Number(v))}
+                    formatter={(v: number | string) => brl(Number(v))}
                     labelFormatter={(l) => `Dia ${l}`}
                   />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
@@ -449,7 +453,7 @@ function FluxoCaixa() {
                       border: "1px solid var(--border)",
                       borderRadius: 12,
                     }}
-                    formatter={(v: any) => brl(Number(v))}
+                    formatter={(v: number | string) => brl(Number(v))}
                     labelFormatter={(l) => `Dia ${l}`}
                   />
                   <Line

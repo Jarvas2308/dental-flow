@@ -1,6 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useMemo, useState } from "react";
 import { useConsultorioData, useUpdate, useDelete } from "@/hooks/use-data";
+import type { Database } from "@/integrations/supabase/types";
+
+type Tables<T extends keyof Database["public"]["Tables"]> =
+  Database["public"]["Tables"][T]["Row"];
+
+type NotaFiscalStatus = "pendente" | "emitida" | "nao_emitida" | "nao_se_aplica";
+type AtendimentoView = Omit<Tables<"atendimentos">, "nota_fiscal_status"> & {
+  nota_fiscal_status: NotaFiscalStatus;
+};
 import {
   brl,
   currentMonthKey,
@@ -145,39 +154,39 @@ function Consultorio() {
   const del = useDelete("atendimentos");
 
   const allData = useMemo(
-    () => (consultorio.data?.atendimentos ?? []) as any[],
+    () => (consultorio.data?.atendimentos ?? []) as AtendimentoView[],
     [consultorio.data?.atendimentos],
   );
   const recebimentosData = useMemo(
-    () => (consultorio.data?.recebimentos ?? []) as any[],
+    () => consultorio.data?.recebimentos ?? [],
     [consultorio.data?.recebimentos],
   );
   const parcelasData = useMemo(
-    () => (consultorio.data?.parcelas ?? []) as any[],
+    () => consultorio.data?.parcelas ?? [],
     [consultorio.data?.parcelas],
   );
 
   const resumoMap = useMemo(() => {
     const m = new Map<string, ReturnType<typeof resumoAtendimento>>();
-    allData.forEach((a: any) => m.set(a.id, resumoAtendimento(a, recebimentosData, parcelasData)));
+    allData.forEach((a) => m.set(a.id, resumoAtendimento(a, recebimentosData, parcelasData)));
     return m;
   }, [allData, recebimentosData, parcelasData]);
 
   const isPendente = useCallback(
-    (r: any) =>
+    (r: AtendimentoView) =>
       (resumoMap.get(r.id)?.status ??
         (r.status_pagamento === "pendente" ? "aberto" : "quitado")) !== "quitado",
     [resumoMap],
   );
 
   const procedimentosUnicos = useMemo(
-    () => Array.from(new Set(allData.map((r: any) => r.procedimento).filter(Boolean))).sort(),
+    () => Array.from(new Set(allData.map((r) => r.procedimento).filter(Boolean))).sort(),
     [allData],
   );
 
   const freqMap = useMemo(() => {
     const m = new Map<string, number>();
-    allData.forEach((r: any) => m.set(r.procedimento, (m.get(r.procedimento) ?? 0) + 1));
+    allData.forEach((r) => m.set(r.procedimento, (m.get(r.procedimento) ?? 0) + 1));
     return m;
   }, [allData]);
 
@@ -197,7 +206,7 @@ function Consultorio() {
     monthEnd.setHours(23, 59, 59, 999);
 
     // Inclui registros do mês OU pendentes que continuam em aberto até o mês selecionado
-    const inMonth = (x: any) => {
+    const inMonth = (x: AtendimentoView) => {
       if (monthKey(x.data) === mes) return true;
       const d = parseLocalDate(x.data);
       return isPendente(x) && !!d && d <= monthEnd;
@@ -249,7 +258,7 @@ function Consultorio() {
       );
     }
 
-    const cmp = (a: any, b: any) => {
+    const cmp = (a: AtendimentoView, b: AtendimentoView) => {
       switch (sort) {
         case "data_desc":
           return +parseLocalDate(b.data)! - +parseLocalDate(a.data)!;
