@@ -76,7 +76,7 @@ const empty = (): Receita => ({
   observacoes: "",
 });
 
-function ReceitaForm({ editing, onClose }: { editing?: any; onClose?: () => void }) {
+function ReceitaForm({ editing, onClose }: { editing?: ReceitaRow; onClose?: () => void }) {
   const create = useCreate("receitas_extras");
   const update = useUpdate("receitas_extras");
   const [open, setOpen] = useState(!!editing);
