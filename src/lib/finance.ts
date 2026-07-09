@@ -340,3 +340,73 @@ export const STATUS_LABEL: Record<StatusReceb, string> = {
   parcial: "Parcialmente recebido",
   quitado: "Quitado",
 };
+
+// ---------------------------------------------------------------------------
+// Helpers financeiros compartilhados (Dashboard / Fluxo de Caixa / Consultório)
+//
+// Regras únicas para não divergir entre telas:
+// - Recebimento entra pela DATA DO RECEBIMENTO.
+// - Despesa PAGA entra pela DATA_PAGAMENTO.
+// - Despesa PENDENTE entra pelo VENCIMENTO e NÃO reduz o caixa realizado.
+// - Caixa realizado = recebimentos efetivos − despesas pagas.
+// - Resultado previsto = caixa realizado − despesas pendentes.
+// ---------------------------------------------------------------------------
+
+// Verdadeiro quando a data (YYYY-MM-DD) pertence ao mês informado (YYYY-MM).
+export const noMes = (dateStr: string | null | undefined, mes: string): boolean =>
+  !!dateStr && monthKey(dateStr) === mes;
+
+// Recebimentos efetivos posicionados pela data do recebimento, filtrados ao mês.
+// Atendimentos antigos com saldo continuam existindo (aparecem no Consultório),
+// mas seus recebimentos antigos só entram no mês em que ocorreram.
+export function recebimentosNoMes(
+  atend: any[] = [],
+  recebimentos: any[] = [],
+  parcelas: any[] = [],
+  mes: string,
+): Entrada[] {
+  return receitasRecebidas(atend, recebimentos, parcelas).filter((e) => noMes(e.data, mes));
+}
+
+// Despesas pagas normalizadas: posicionadas pela data_pagamento (data da saída
+// real). Cada item recebe `data = data_pagamento` para uso em fluxo de caixa.
+export function despesasPagas(despesas: any[] = []): any[] {
+  return (despesas ?? [])
+    .filter((r: any) => r.status === "pago" && r.data_pagamento)
+    .map((r: any) => ({ ...r, data: r.data_pagamento }));
+}
+
+// Despesas pagas do mês (pela data_pagamento).
+export function despesasPagasNoMes(despesas: any[] = [], mes: string): any[] {
+  return despesasPagas(despesas).filter((r: any) => noMes(r.data, mes));
+}
+
+export function totalDespesasPagasNoMes(despesas: any[] = [], mes: string): number {
+  return despesasPagasNoMes(despesas, mes).reduce((s: number, r: any) => s + Number(r.valor || 0), 0);
+}
+
+// Despesas pendentes: ainda não pagas. Posicionadas pelo vencimento.
+export function despesasPendentes(despesas: any[] = []): any[] {
+  return (despesas ?? []).filter((r: any) => r.status !== "pago");
+}
+
+// Despesas pendentes do mês (pelo vencimento).
+export function despesasPendentesNoMes(despesas: any[] = [], mes: string): any[] {
+  return despesasPendentes(despesas).filter((r: any) => noMes(r.vencimento, mes));
+}
+
+export function totalDespesasPendentesNoMes(despesas: any[] = [], mes: string): number {
+  return despesasPendentesNoMes(despesas, mes).reduce((s: number, r: any) => s + Number(r.valor || 0), 0);
+}
+
+// Caixa realizado = entradas efetivamente recebidas − saídas efetivamente pagas.
+// (Despesas pendentes NÃO entram aqui.)
+export function caixaRealizado(entradas: number, saidasPagas: number): number {
+  return entradas - saidasPagas;
+}
+
+// Resultado previsto = caixa realizado − despesas ainda pendentes.
+export function resultadoPrevisto(caixa: number, despesasPendentesTotal: number): number {
+  return caixa - despesasPendentesTotal;
+}
+
