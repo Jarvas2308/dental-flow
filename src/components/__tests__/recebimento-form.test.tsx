@@ -86,7 +86,9 @@ describe("registrar recebimento", () => {
 
     await user.click(screen.getByRole("button", { name: /Registrar recebimento/i }));
 
-    await waitFor(() => expect(spies.insert).toHaveBeenCalledWith("recebimentos", expect.any(Object)));
+    await waitFor(() =>
+      expect(spies.insert).toHaveBeenCalledWith("recebimentos", expect.any(Object)),
+    );
     expect(toast.error).not.toHaveBeenCalled();
   });
 });

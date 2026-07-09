@@ -17,11 +17,7 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
   return {
     ...actual,
     Link: ({ children, to, ...rest }: { children?: ReactNode; to?: string }) =>
-      createElement(
-        "a",
-        { href: typeof to === "string" ? to : "#", ...rest },
-        children,
-      ),
+      createElement("a", { href: typeof to === "string" ? to : "#", ...rest }, children),
     Navigate: () => null,
     useNavigate: () => vi.fn(),
     useRouter: () => ({ navigate: vi.fn(), invalidate: vi.fn() }),
