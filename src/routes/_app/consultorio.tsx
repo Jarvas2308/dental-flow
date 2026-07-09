@@ -168,7 +168,7 @@ function Consultorio() {
 
   const resumoMap = useMemo(() => {
     const m = new Map<string, ReturnType<typeof resumoAtendimento>>();
-    allData.forEach((a: any) => m.set(a.id, resumoAtendimento(a, recebimentosData, parcelasData)));
+    allData.forEach((a) => m.set(a.id, resumoAtendimento(a, recebimentosData, parcelasData)));
     return m;
   }, [allData, recebimentosData, parcelasData]);
 
