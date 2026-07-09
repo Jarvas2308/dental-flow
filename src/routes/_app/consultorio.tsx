@@ -89,19 +89,19 @@ function Consultorio() {
   const [procFilter, setProcFilter] = useState<string>("__all__");
   const [statusPag, setStatusPag] = useState<StatusPag>("todos");
 
-  const list = useTable<any>("atendimentos", "data");
-  const recebimentos = useTable<any>("recebimentos", "data", true);
-  const parcelas = useTable<any>("parcelas", "vencimento", true);
+  const consultorio = useConsultorioData(mes);
   const upd = useUpdate("atendimentos");
   const del = useDelete("atendimentos");
 
-  const allData = list.data ?? [];
+  const allData = (consultorio.data?.atendimentos ?? []) as any[];
+  const recebimentosData = (consultorio.data?.recebimentos ?? []) as any[];
+  const parcelasData = (consultorio.data?.parcelas ?? []) as any[];
 
   const resumoMap = useMemo(() => {
     const m = new Map<string, ReturnType<typeof resumoAtendimento>>();
-    allData.forEach((a) => m.set(a.id, resumoAtendimento(a, recebimentos.data ?? [], parcelas.data ?? [])));
+    allData.forEach((a: any) => m.set(a.id, resumoAtendimento(a, recebimentosData, parcelasData)));
     return m;
-  }, [allData, recebimentos.data, parcelas.data]);
+  }, [allData, recebimentosData, parcelasData]);
 
   const isPendente = (r: any) => (resumoMap.get(r.id)?.status ?? (r.status_pagamento === "pendente" ? "aberto" : "quitado")) !== "quitado";
 
