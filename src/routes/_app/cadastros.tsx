@@ -44,7 +44,7 @@ function CadastroForm({
   table: T;
   label: string;
   withTaxa?: boolean;
-  editing?: any;
+  editing?: CadastroRow & { taxa?: number };
   onClose?: () => void;
 }) {
   const create = useCreate(table);
