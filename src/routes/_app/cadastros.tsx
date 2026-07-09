@@ -25,12 +25,14 @@ import { Button } from "@/components/ui/button";
 import { Plus, Pencil, Loader2 } from "lucide-react";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { toast } from "sonner";
+import type { Database } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/_app/cadastros")({
   component: Cadastros,
 });
 
 type T = "procedimentos" | "formas_pagamento" | "laboratorios" | "tipos_trabalho";
+type CadastroRow = Database["public"]["Tables"][T]["Row"];
 
 function CadastroForm({
   table,
@@ -42,7 +44,7 @@ function CadastroForm({
   table: T;
   label: string;
   withTaxa?: boolean;
-  editing?: any;
+  editing?: CadastroRow & { taxa?: number };
   onClose?: () => void;
 }) {
   const create = useCreate(table);
@@ -64,9 +66,9 @@ function CadastroForm({
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nome.trim()) return toast.error("Informe o nome");
-    const payload: any = { nome: nome.trim() };
+    const payload: Record<string, unknown> = { nome: nome.trim() };
     if (withTaxa) payload.taxa = Number(taxa) || 0;
-    if (isEdit) await update.mutateAsync({ id: editing.id, values: payload });
+    if (isEdit) await update.mutateAsync({ id: editing!.id, values: payload });
     else await create.mutateAsync(payload);
     setOpen(false);
     onClose?.();
@@ -128,9 +130,9 @@ function CrudList({
   label: string;
   withTaxa?: boolean;
 }) {
-  const list = useTable<any>(table, "nome", true);
+  const list = useTable<CadastroRow>(table, "nome", true);
   const del = useDelete(table);
-  const [editing, setEditing] = useState<any | null>(null);
+  const [editing, setEditing] = useState<CadastroRow | null>(null);
 
   return (
     <div className="space-y-4">
@@ -171,7 +173,11 @@ function CrudList({
             {(list.data ?? []).map((r) => (
               <TableRow key={r.id}>
                 <TableCell className="font-medium">{r.nome}</TableCell>
-                {withTaxa && <TableCell className="text-right">{r.taxa}%</TableCell>}
+                {withTaxa && (
+                  <TableCell className="text-right">
+                    {(r as { taxa?: number }).taxa}%
+                  </TableCell>
+                )}
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
                     <Button

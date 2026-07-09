@@ -41,6 +41,9 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Loader2, PiggyBank } from "lucide-react";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { toast } from "sonner";
+import type { Database } from "@/integrations/supabase/types";
+
+type ReceitaRow = Database["public"]["Tables"]["receitas_extras"]["Row"];
 
 export const Route = createFileRoute("/_app/ganhos")({
   component: Ganhos,
@@ -73,7 +76,7 @@ const empty = (): Receita => ({
   observacoes: "",
 });
 
-function ReceitaForm({ editing, onClose }: { editing?: any; onClose?: () => void }) {
+function ReceitaForm({ editing, onClose }: { editing?: ReceitaRow; onClose?: () => void }) {
   const create = useCreate("receitas_extras");
   const update = useUpdate("receitas_extras");
   const [open, setOpen] = useState(!!editing);
@@ -185,8 +188,8 @@ function ReceitaForm({ editing, onClose }: { editing?: any; onClose?: () => void
   );
 }
 
-function EditReceita({ row }: { row: any }) {
-  const [editing, setEditing] = useState<any | null>(null);
+function EditReceita({ row }: { row: ReceitaRow }) {
+  const [editing, setEditing] = useState<ReceitaRow | null>(null);
   return (
     <>
       <Button variant="ghost" size="icon" aria-label="Editar" onClick={() => setEditing(row)}>
