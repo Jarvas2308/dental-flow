@@ -16,10 +16,12 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-router")>();
   return {
     ...actual,
-    Link: ({ children, to, ...rest }: { children?: React.ReactNode; to?: string }) => {
-      const React = require("react");
-      return React.createElement("a", { href: typeof to === "string" ? to : "#", ...rest }, children);
-    },
+    Link: ({ children, to, ...rest }: { children?: ReactNode; to?: string }) =>
+      createElement(
+        "a",
+        { href: typeof to === "string" ? to : "#", ...rest },
+        children,
+      ),
     Navigate: () => null,
     useNavigate: () => vi.fn(),
     useRouter: () => ({ navigate: vi.fn(), invalidate: vi.fn() }),
