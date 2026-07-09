@@ -163,7 +163,7 @@ function Consultas() {
                 </TableCell>
               </TableRow>
             )}
-            {rows.map((c) => {
+            {pag.pageItems.map((c) => {
               const atrasada = !c.realizada && c.data_prevista < todayKey;
               return (
                 <TableRow key={c.id} className={cn(c.realizada && "opacity-60")}>
