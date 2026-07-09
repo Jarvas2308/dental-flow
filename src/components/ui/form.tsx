@@ -28,11 +28,7 @@ const FormField = <
   );
 };
 
-type FormItemContextValue = {
-  id: string;
-};
 
-const FormItemContext = React.createContext<FormItemContextValue | null>(null);
 
 const FormItem = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => {
