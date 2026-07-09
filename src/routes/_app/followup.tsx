@@ -521,6 +521,7 @@ function Followup() {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1">
+                    <VerPacienteButton nome={p.paciente} label="" />
                     <EditarPropostaButton proposta={p} />
                     <ContatadoButton proposta={p} />
                     <FecharButton proposta={p} />
