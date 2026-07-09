@@ -179,7 +179,7 @@ function DespesaForm({ editing, onClose }: { editing?: Despesa; onClose?: () => 
             </div>
             <div className="space-y-1.5">
               <Label>Status</Label>
-              <Select value={v.status} onValueChange={(s: any) => setV({ ...v, status: s })}>
+              <Select value={v.status} onValueChange={(s) => setV({ ...v, status: s as Despesa["status"] })}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
