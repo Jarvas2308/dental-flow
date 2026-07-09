@@ -54,7 +54,7 @@ function endOfWeek(d: Date) {
 function Consultas() {
   const [q, setQ] = useState("");
   const [showRealizadas, setShowRealizadas] = useState(false);
-  const list = useTable<any>("consultas_previstas", "data_prevista", true);
+  const list = useTable<ConsultaRow>("consultas_previstas", "data_prevista", true);
   const upd = useUpdate("consultas_previstas");
   const del = useDelete("consultas_previstas");
 
