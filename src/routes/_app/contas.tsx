@@ -454,6 +454,18 @@ function Contas() {
                 ))}
               </TableBody>
             </Table>
+            <TablePagination
+              page={pag.page}
+              totalPages={pag.totalPages}
+              from={pag.from}
+              to={pag.to}
+              total={pag.total}
+              canPrev={pag.canPrev}
+              canNext={pag.canNext}
+              onPrev={pag.prev}
+              onNext={pag.next}
+              unitLabel="despesas"
+            />
             <div className="flex justify-between items-center px-4 py-3 border-t bg-muted/30">
               <span className="text-sm text-muted-foreground">{rowsMes.length} despesa(s)</span>
               <span className="font-semibold">
