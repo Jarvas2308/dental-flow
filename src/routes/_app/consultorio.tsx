@@ -551,7 +551,7 @@ function Consultorio() {
                 </TableCell>
               </TableRow>
             )}
-            {rows.map((r) => {
+            {pag.pageItems.map((r) => {
               const pend = isPendente(r);
               return (
                 <TableRow
