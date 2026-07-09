@@ -22,7 +22,7 @@ type TableName =
   | "tratamentos_propostos"
   | "tentativas_contato";
 
-export function useTable<T = any>(table: TableName, orderBy = "created_at", asc = false) {
+export function useTable<T = unknown>(table: TableName, orderBy = "created_at", asc = false) {
   const { user } = useAuth();
   return useQuery({
     queryKey: [table, user?.id],
@@ -65,7 +65,7 @@ export function useConsultorioData(mes: string) {
         .order("data", { ascending: false });
       if (aErr) throw aErr;
 
-      const ids = (atendimentos ?? []).map((a: any) => a.id);
+      const ids = (atendimentos ?? []).map((a) => a.id);
 
       let recebimentos: any[] = [];
       let parcelas: any[] = [];
@@ -93,7 +93,7 @@ export function useCreate(table: TableName) {
   const qc = useQueryClient();
   const { user } = useAuth();
   return useMutation({
-    mutationFn: async (values: Record<string, any>) => {
+    mutationFn: async (values: Record<string, unknown>) => {
       const payload = { ...values, user_id: user!.id };
       const { data, error } = await (supabase.from(table) as any).insert(payload).select().single();
       if (error) throw error;
@@ -104,14 +104,15 @@ export function useCreate(table: TableName) {
       qc.invalidateQueries({ queryKey: ["consultorio"] });
       toast.success("Salvo com sucesso");
     },
-    onError: (e: any) => toast.error(e.message ?? "Erro ao salvar"),
+    onError: (e: unknown) =>
+      toast.error(e instanceof Error ? e.message : "Erro ao salvar"),
   });
 }
 
 export function useUpdate(table: TableName) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, values }: { id: string; values: Record<string, any> }) => {
+    mutationFn: async ({ id, values }: { id: string; values: Record<string, unknown> }) => {
       const { error } = await (supabase.from(table) as any).update(values).eq("id", id);
       if (error) throw error;
     },
@@ -119,7 +120,8 @@ export function useUpdate(table: TableName) {
       qc.invalidateQueries({ queryKey: [table] });
       qc.invalidateQueries({ queryKey: ["consultorio"] });
     },
-    onError: (e: any) => toast.error(e.message ?? "Erro ao atualizar"),
+    onError: (e: unknown) =>
+      toast.error(e instanceof Error ? e.message : "Erro ao atualizar"),
   });
 }
 
@@ -135,6 +137,7 @@ export function useDelete(table: TableName) {
       qc.invalidateQueries({ queryKey: ["consultorio"] });
       toast.success("Excluído");
     },
-    onError: (e: any) => toast.error(e.message ?? "Erro ao excluir"),
+    onError: (e: unknown) =>
+      toast.error(e instanceof Error ? e.message : "Erro ao excluir"),
   });
 }
