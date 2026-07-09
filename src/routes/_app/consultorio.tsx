@@ -291,26 +291,29 @@ function Consultorio() {
   }, [allData, mes, q, sort, filter, procFilter, statusPag, freqMap]);
 
   // Predicado de período (data do RECEBIMENTO), espelhando o filtro temporal da tabela.
-  const inPeriodo = (dateStr: string) => {
-    const d = parseLocalDate(dateStr);
-    if (!d) return false;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (filter === "hoje") {
-      const tomorrow = new Date(today);
-      tomorrow.setDate(today.getDate() + 1);
-      return d >= today && d < tomorrow;
-    }
-    if (filter === "semana") return d >= startOfWeek(today);
-    return noMes(dateStr, mes);
-  };
+  const inPeriodo = useCallback(
+    (dateStr: string) => {
+      const d = parseLocalDate(dateStr);
+      if (!d) return false;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (filter === "hoje") {
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+        return d >= today && d < tomorrow;
+      }
+      if (filter === "semana") return d >= startOfWeek(today);
+      return noMes(dateStr, mes);
+    },
+    [filter, mes],
+  );
 
   // "Recebido no período": soma somente recebimentos cuja DATA pertence ao período,
   // usando os próprios campos (bruto/líquido) de cada recebimento. Não usa o
   // acumulado de resumoAtendimento.
   const recebPeriodo = useMemo(
     () => receitasRecebidas(rows, recebimentosData, parcelasData).filter((e) => inPeriodo(e.data)),
-    [rows, recebimentosData, parcelasData, filter, mes],
+    [rows, recebimentosData, parcelasData, inPeriodo],
   );
   const totBruto = recebPeriodo.reduce((s, e) => s + e.valor_bruto, 0);
   const totLiq = recebPeriodo.reduce((s, e) => s + e.valor_liquido, 0);
