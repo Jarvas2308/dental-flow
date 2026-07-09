@@ -62,7 +62,7 @@ function Consultas() {
 
   const all = useMemo(() => list.data ?? [], [list.data]);
 
-  const { hoje, semana, valorSemana } = useMemo(() => {
+  const { hoje, semana, valorSemana, atrasadas } = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayKey = todayISO();
@@ -70,12 +70,13 @@ function Consultas() {
     const we = endOfWeek(today);
     const ativos = all.filter((c) => !c.realizada);
     const hoje = ativos.filter((c) => c.data_prevista === todayKey).length;
+    const atrasadas = ativos.filter((c) => c.data_prevista < todayKey).length;
     const naSemana = ativos.filter((c) => {
       const d = parseLocalDate(c.data_prevista);
       return d && d >= ws && d <= we;
     });
     const valorSemana = naSemana.reduce((s, c) => s + Number(c.valor_estimado || 0), 0);
-    return { hoje, semana: naSemana.length, valorSemana };
+    return { hoje, semana: naSemana.length, valorSemana, atrasadas };
   }, [all]);
 
   const rows = useMemo(() => {
