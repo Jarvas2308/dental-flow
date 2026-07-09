@@ -570,8 +570,20 @@ function Consultorio() {
             )}
             {!consultorio.isLoading && rows.length === 0 && (
               <TableRow>
-                <TableCell colSpan={9} className="text-center text-muted-foreground py-12">
-                  Nenhum atendimento encontrado.
+                <TableCell colSpan={9} className="py-0">
+                  <EmptyState
+                    icon={<Search className="h-8 w-8" />}
+                    title={
+                      hasActiveFilter
+                        ? "Nenhum atendimento para os filtros atuais"
+                        : "Nenhum atendimento registrado"
+                    }
+                    description={
+                      hasActiveFilter
+                        ? "Ajuste ou limpe os filtros para ver mais atendimentos."
+                        : "Use “Novo atendimento” para registrar o primeiro procedimento."
+                    }
+                  />
                 </TableCell>
               </TableRow>
             )}
