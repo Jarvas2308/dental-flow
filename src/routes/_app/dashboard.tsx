@@ -135,7 +135,7 @@ function Dashboard() {
       const recExtra = (ganhos.data ?? []).filter((r: any) => monthKey(r.data) === m)
         .reduce((s, r: any) => s + Number(r.valor || 0), 0);
       const desp =
-        (despesas.data ?? []).filter((r: any) => r.status === "pago" && r.data_pagamento && monthKey(r.data_pagamento) === m).reduce((s, r: any) => s + Number(r.valor || 0), 0) +
+        totalDespesasPagasNoMes(despesas.data ?? [], m) +
         (lab.data ?? []).filter((r: any) => monthKey(r.data) === m).reduce((s, r: any) => s + Number(r.valor || 0), 0);
       return {
         mes: monthLabel(m).replace(" de ", "/"),
