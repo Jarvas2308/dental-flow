@@ -41,6 +41,9 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Loader2, PiggyBank } from "lucide-react";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { toast } from "sonner";
+import type { Database } from "@/integrations/supabase/types";
+
+type ReceitaRow = Database["public"]["Tables"]["receitas_extras"]["Row"];
 
 export const Route = createFileRoute("/_app/ganhos")({
   component: Ganhos,
