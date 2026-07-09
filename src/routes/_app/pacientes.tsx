@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useTable, useCreate, useDelete, useUpdate } from "@/hooks/use-data";
+import { normalizePacienteNome } from "@/lib/pacientes";
 import { PageHeader } from "@/components/ui-kit";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -90,15 +91,27 @@ function Pacientes() {
 
   const pacientes = list.data ?? [];
 
-  const countByName = useMemo(() => {
-    const m: Record<string, number> = {};
+  // Conta atendimentos priorizando paciente_id; registros antigos sem id caem
+  // no fallback pelo nome normalizado. As duas chaves são disjuntas por registro,
+  // então não há duplicação quando paciente_id existe.
+  const { countById, countByName } = useMemo(() => {
+    const byId: Record<string, number> = {};
+    const byName: Record<string, number> = {};
     for (const a of atendimentos.data ?? []) {
-      const k = a.paciente ?? "";
-      if (!k) continue;
-      m[k] = (m[k] ?? 0) + 1;
+      if (a.paciente_id) {
+        byId[a.paciente_id] = (byId[a.paciente_id] ?? 0) + 1;
+      } else {
+        const k = normalizePacienteNome(a.paciente ?? "").toLowerCase();
+        if (!k) continue;
+        byName[k] = (byName[k] ?? 0) + 1;
+      }
     }
-    return m;
+    return { countById: byId, countByName: byName };
   }, [atendimentos.data]);
+
+  const countFor = (p: any) =>
+    (countById[p.id] ?? 0) +
+    (countByName[normalizePacienteNome(p.nome ?? "").toLowerCase()] ?? 0);
 
   const rows = useMemo(
     () => pacientes.filter((p) => !q || p.nome?.toLowerCase().includes(q.toLowerCase())),
@@ -142,7 +155,7 @@ function Pacientes() {
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-2">
                     {r.nome}
-                    <Badge variant="secondary">{countByName[r.nome] ?? 0} atend.</Badge>
+                    <Badge variant="secondary">{countFor(r)} atend.</Badge>
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
