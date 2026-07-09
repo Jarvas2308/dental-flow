@@ -6,13 +6,27 @@ import { useQueryClient } from "@tanstack/react-query";
 import { resolvePacienteId } from "@/lib/pacientes";
 import { brl, formatDateBR, todayISO } from "@/lib/format";
 import { proximaTentativa, estaPendenteHoje } from "@/lib/followup";
-import { PacienteCombobox, AtendimentoForm, ProcedimentoCombobox } from "@/components/atendimento-form";
+import {
+  PacienteCombobox,
+  AtendimentoForm,
+  ProcedimentoCombobox,
+} from "@/components/atendimento-form";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,7 +35,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import {
-  Plus, Loader2, MessageCircle, CheckCircle2, XCircle, CalendarClock, Pencil, CircleDollarSign,
+  Plus,
+  Loader2,
+  MessageCircle,
+  CheckCircle2,
+  XCircle,
+  CalendarClock,
+  Pencil,
+  CircleDollarSign,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -76,7 +97,7 @@ function PropostaForm({ proposta, onClose }: { proposta?: any; onClose: () => vo
           fase2_qtd: String(proposta.fase2_qtd ?? ""),
           fase3_intervalo_dias: String(proposta.fase3_intervalo_dias ?? ""),
         }
-      : empty()
+      : empty(),
   );
 
   const submit = async (e: React.FormEvent) => {
@@ -128,22 +149,41 @@ function PropostaForm({ proposta, onClose }: { proposta?: any; onClose: () => vo
     <form onSubmit={submit} className="space-y-4">
       <div className="space-y-1.5">
         <Label>Paciente</Label>
-        <PacienteCombobox value={v.paciente} onChange={(nome, id) => { setV((p) => ({ ...p, paciente: nome })); setPacienteId(id); }} />
+        <PacienteCombobox
+          value={v.paciente}
+          onChange={(nome, id) => {
+            setV((p) => ({ ...p, paciente: nome }));
+            setPacienteId(id);
+          }}
+        />
       </div>
       <div className="space-y-1.5">
         <Label>Tratamento</Label>
-        <ProcedimentoCombobox value={v.tratamento} onChange={(nome) => setV((p) => ({ ...p, tratamento: nome }))} options={procedimentos.data ?? []} />
+        <ProcedimentoCombobox
+          value={v.tratamento}
+          onChange={(nome) => setV((p) => ({ ...p, tratamento: nome }))}
+          options={procedimentos.data ?? []}
+        />
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label>Valor estimado (R$)</Label>
-          <Input type="number" step="0.01" placeholder="opcional" value={v.valor_estimado}
-            onChange={(e) => setV({ ...v, valor_estimado: e.target.value })} />
+          <Input
+            type="number"
+            step="0.01"
+            placeholder="opcional"
+            value={v.valor_estimado}
+            onChange={(e) => setV({ ...v, valor_estimado: e.target.value })}
+          />
         </div>
         <div className="space-y-1.5">
           <Label>Data da proposta</Label>
-          <Input type="date" required value={v.data_proposta}
-            onChange={(e) => setV({ ...v, data_proposta: e.target.value })} />
+          <Input
+            type="date"
+            required
+            value={v.data_proposta}
+            onChange={(e) => setV({ ...v, data_proposta: e.target.value })}
+          />
         </div>
       </div>
 
@@ -153,13 +193,21 @@ function PropostaForm({ proposta, onClose }: { proposta?: any; onClose: () => vo
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">A cada (dias)</Label>
-              <Input type="number" min="1" value={v.fase1_intervalo_dias}
-                onChange={(e) => setV({ ...v, fase1_intervalo_dias: e.target.value })} />
+              <Input
+                type="number"
+                min="1"
+                value={v.fase1_intervalo_dias}
+                onChange={(e) => setV({ ...v, fase1_intervalo_dias: e.target.value })}
+              />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Tentativas</Label>
-              <Input type="number" min="0" value={v.fase1_qtd}
-                onChange={(e) => setV({ ...v, fase1_qtd: e.target.value })} />
+              <Input
+                type="number"
+                min="0"
+                value={v.fase1_qtd}
+                onChange={(e) => setV({ ...v, fase1_qtd: e.target.value })}
+              />
             </div>
           </div>
         </div>
@@ -168,13 +216,21 @@ function PropostaForm({ proposta, onClose }: { proposta?: any; onClose: () => vo
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">A cada (dias)</Label>
-              <Input type="number" min="1" value={v.fase2_intervalo_dias}
-                onChange={(e) => setV({ ...v, fase2_intervalo_dias: e.target.value })} />
+              <Input
+                type="number"
+                min="1"
+                value={v.fase2_intervalo_dias}
+                onChange={(e) => setV({ ...v, fase2_intervalo_dias: e.target.value })}
+              />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Tentativas</Label>
-              <Input type="number" min="0" value={v.fase2_qtd}
-                onChange={(e) => setV({ ...v, fase2_qtd: e.target.value })} />
+              <Input
+                type="number"
+                min="0"
+                value={v.fase2_qtd}
+                onChange={(e) => setV({ ...v, fase2_qtd: e.target.value })}
+              />
             </div>
           </div>
         </div>
@@ -183,11 +239,17 @@ function PropostaForm({ proposta, onClose }: { proposta?: any; onClose: () => vo
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">A cada (dias)</Label>
-              <Input type="number" min="1" value={v.fase3_intervalo_dias}
-                onChange={(e) => setV({ ...v, fase3_intervalo_dias: e.target.value })} />
+              <Input
+                type="number"
+                min="1"
+                value={v.fase3_intervalo_dias}
+                onChange={(e) => setV({ ...v, fase3_intervalo_dias: e.target.value })}
+              />
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">Repete até você marcar como Fechado ou Recusado</p>
+          <p className="text-xs text-muted-foreground">
+            Repete até você marcar como Fechado ou Recusado
+          </p>
         </div>
       </div>
 
@@ -207,7 +269,9 @@ function NovaProposta() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button><Plus className="h-4 w-4" /> Nova proposta</Button>
+        <Button>
+          <Plus className="h-4 w-4" /> Nova proposta
+        </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -253,13 +317,22 @@ function ContatadoButton({ proposta }: { proposta: any }) {
       data: todayISO(),
       observacao: obs.trim() || null,
     });
-    update.mutate({ id: proposta.id, values: { tentativas_feitas: Number(proposta.tentativas_feitas) + 1 } });
+    update.mutate({
+      id: proposta.id,
+      values: { tentativas_feitas: Number(proposta.tentativas_feitas) + 1 },
+    });
     setObs("");
     setOpen(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setObs(""); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (!o) setObs("");
+      }}
+    >
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm" className="h-8 gap-1 text-primary hover:bg-primary/10">
           <MessageCircle className="h-4 w-4" /> Contatado
@@ -271,8 +344,12 @@ function ContatadoButton({ proposta }: { proposta: any }) {
         </DialogHeader>
         <div className="space-y-1.5">
           <Label>Observação (opcional)</Label>
-          <Textarea rows={3} value={obs} onChange={(e) => setObs(e.target.value)}
-            placeholder="Ex.: ligou, sem resposta..." />
+          <Textarea
+            rows={3}
+            value={obs}
+            onChange={(e) => setObs(e.target.value)}
+            placeholder="Ex.: ligou, sem resposta..."
+          />
         </div>
         <DialogFooter>
           <Button onClick={confirmar} disabled={create.isPending}>
@@ -292,7 +369,10 @@ function FecharButton({ proposta }: { proposta: any }) {
   const done = useRef(false);
   return (
     <AtendimentoForm
-      initialData={{ paciente: proposta.paciente, valorEstimado: Number(proposta.valor_estimado) || undefined }}
+      initialData={{
+        paciente: proposta.paciente,
+        valorEstimado: Number(proposta.valor_estimado) || undefined,
+      }}
       onSaved={async () => {
         if (done.current) return;
         done.current = true;
@@ -333,8 +413,7 @@ function Followup() {
   const pendentes = rows.filter((r) => r.pendente).length;
   const valorTotal = rows.reduce((s, r) => s + (Number(r.p.valor_estimado) || 0), 0);
 
-  const marcarStatus = (id: string, status: string) =>
-    update.mutate({ id, values: { status } });
+  const marcarStatus = (id: string, status: string) => update.mutate({ id, values: { status } });
 
   return (
     <>
@@ -345,14 +424,29 @@ function Followup() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 mb-6">
-        <StatCard label="Em acompanhamento" value={String(rows.length)} tone="primary"
-          icon={<CalendarClock className="h-4 w-4" />} />
-        <StatCard label="Pendentes hoje" value={String(pendentes)} tone={pendentes > 0 ? "destructive" : undefined} />
-        <StatCard label="Valor em acompanhamento" value={brl(valorTotal)} tone="success"
-          icon={<CircleDollarSign className="h-4 w-4" />} />
+        <StatCard
+          label="Em acompanhamento"
+          value={String(rows.length)}
+          tone="primary"
+          icon={<CalendarClock className="h-4 w-4" />}
+        />
+        <StatCard
+          label="Pendentes hoje"
+          value={String(pendentes)}
+          tone={pendentes > 0 ? "destructive" : undefined}
+        />
+        <StatCard
+          label="Valor em acompanhamento"
+          value={brl(valorTotal)}
+          tone="success"
+          icon={<CircleDollarSign className="h-4 w-4" />}
+        />
       </div>
 
-      <div className="rounded-2xl border bg-card overflow-hidden" style={{ boxShadow: "var(--shadow-soft)" }}>
+      <div
+        className="rounded-2xl border bg-card overflow-hidden"
+        style={{ boxShadow: "var(--shadow-soft)" }}
+      >
         <Table>
           <TableHeader>
             <TableRow>
@@ -366,14 +460,18 @@ function Followup() {
           </TableHeader>
           <TableBody>
             {props.isLoading && (
-              <TableRow><TableCell colSpan={6} className="text-center py-12">
-                <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
-              </TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-12">
+                  <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
+                </TableCell>
+              </TableRow>
             )}
             {!props.isLoading && rows.length === 0 && (
-              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-12">
-                Nenhum tratamento em acompanhamento.
-              </TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={6} className="text-center text-muted-foreground py-12">
+                  Nenhum tratamento em acompanhamento.
+                </TableCell>
+              </TableRow>
             )}
             {rows.map(({ p, prox, pendente }) => (
               <TableRow key={p.id}>
@@ -383,9 +481,15 @@ function Followup() {
                   {p.valor_estimado != null ? brl(p.valor_estimado) : "—"}
                 </TableCell>
                 <TableCell>
-                  <Badge variant="outline">Fase {prox.fase} · tentativa {prox.numeroNaFase}</Badge>
+                  <Badge variant="outline">
+                    Fase {prox.fase} · tentativa {prox.numeroNaFase}
+                  </Badge>
                 </TableCell>
-                <TableCell className={cn(pendente ? "text-destructive font-medium" : "text-muted-foreground")}>
+                <TableCell
+                  className={cn(
+                    pendente ? "text-destructive font-medium" : "text-muted-foreground",
+                  )}
+                >
                   {formatDateBR(prox.dataPrevista)}
                 </TableCell>
                 <TableCell className="text-right">

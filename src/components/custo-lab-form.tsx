@@ -2,13 +2,27 @@ import { useEffect, useMemo, useState } from "react";
 import { useCreate, useTable, useUpdate } from "@/hooks/use-data";
 import { formatDateBR } from "@/lib/format";
 import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import {
-  Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
@@ -30,8 +44,13 @@ type Custo = {
 };
 
 const empty = (): Custo => ({
-  laboratorio: "", tipo_trabalho: "", paciente: "", procedimento: "",
-  atendimento_id: null, valor: "", data: new Date().toISOString().slice(0, 10),
+  laboratorio: "",
+  tipo_trabalho: "",
+  paciente: "",
+  procedimento: "",
+  atendimento_id: null,
+  valor: "",
+  data: new Date().toISOString().slice(0, 10),
 });
 
 function AtendimentoCombobox({
@@ -49,9 +68,10 @@ function AtendimentoCombobox({
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     if (!term) return atendimentos;
-    return atendimentos.filter((a) =>
-      (a.paciente ?? "").toLowerCase().includes(term) ||
-      (a.procedimento ?? "").toLowerCase().includes(term)
+    return atendimentos.filter(
+      (a) =>
+        (a.paciente ?? "").toLowerCase().includes(term) ||
+        (a.procedimento ?? "").toLowerCase().includes(term),
     );
   }, [atendimentos, search]);
 
@@ -78,13 +98,21 @@ function AtendimentoCombobox({
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
         <Command>
-          <CommandInput placeholder="Buscar paciente ou procedimento..." value={search} onValueChange={setSearch} />
+          <CommandInput
+            placeholder="Buscar paciente ou procedimento..."
+            value={search}
+            onValueChange={setSearch}
+          />
           <CommandList>
             <CommandEmpty>Nenhum atendimento encontrado.</CommandEmpty>
             <CommandGroup>
               <CommandItem
                 value="__none__"
-                onSelect={() => { onChange(null); setSearch(""); setOpen(false); }}
+                onSelect={() => {
+                  onChange(null);
+                  setSearch("");
+                  setOpen(false);
+                }}
               >
                 <Check className={cn("h-4 w-4", !value ? "opacity-100" : "opacity-0")} />
                 Nenhum
@@ -93,7 +121,11 @@ function AtendimentoCombobox({
                 <CommandItem
                   key={a.id}
                   value={a.id}
-                  onSelect={() => { onChange(a.id); setSearch(""); setOpen(false); }}
+                  onSelect={() => {
+                    onChange(a.id);
+                    setSearch("");
+                    setOpen(false);
+                  }}
                 >
                   <Check className={cn("h-4 w-4", value === a.id ? "opacity-100" : "opacity-0")} />
                   {formatDateBR(a.data)} · {a.paciente} · {a.procedimento}
@@ -107,12 +139,7 @@ function AtendimentoCombobox({
   );
 }
 
-export function CustoLabForm({
-  editing, onClose,
-}: {
-  editing?: any;
-  onClose?: () => void;
-}) {
+export function CustoLabForm({ editing, onClose }: { editing?: any; onClose?: () => void }) {
   const labs = useTable<any>("laboratorios", "nome", true);
   const tipos = useTable<any>("tipos_trabalho", "nome", true);
   const atendimentos = useTable<any>("atendimentos", "data");
@@ -166,10 +193,18 @@ export function CustoLabForm({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) onClose?.(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (!o) onClose?.();
+      }}
+    >
       {!isEdit && (
         <DialogTrigger asChild>
-          <Button><Plus className="h-4 w-4" /> Novo custo</Button>
+          <Button>
+            <Plus className="h-4 w-4" /> Novo custo
+          </Button>
         </DialogTrigger>
       )}
       <DialogContent className="sm:max-w-lg">
@@ -181,18 +216,33 @@ export function CustoLabForm({
             <div className="space-y-1.5">
               <Label>Laboratório</Label>
               <Select value={v.laboratorio} onValueChange={(x) => setV({ ...v, laboratorio: x })}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
                 <SelectContent>
-                  {(labs.data ?? []).map((l: any) => <SelectItem key={l.id} value={l.nome}>{l.nome}</SelectItem>)}
+                  {(labs.data ?? []).map((l: any) => (
+                    <SelectItem key={l.id} value={l.nome}>
+                      {l.nome}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Tipo de trabalho</Label>
-              <Select value={v.tipo_trabalho} onValueChange={(x) => setV({ ...v, tipo_trabalho: x })}>
-                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+              <Select
+                value={v.tipo_trabalho}
+                onValueChange={(x) => setV({ ...v, tipo_trabalho: x })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
                 <SelectContent>
-                  {(tipos.data ?? []).map((l: any) => <SelectItem key={l.id} value={l.nome}>{l.nome}</SelectItem>)}
+                  {(tipos.data ?? []).map((l: any) => (
+                    <SelectItem key={l.id} value={l.nome}>
+                      {l.nome}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -206,20 +256,37 @@ export function CustoLabForm({
             </div>
             <div className="space-y-1.5">
               <Label>Paciente</Label>
-              <Input required value={v.paciente} onChange={(e) => setV({ ...v, paciente: e.target.value })} />
+              <Input
+                required
+                value={v.paciente}
+                onChange={(e) => setV({ ...v, paciente: e.target.value })}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Procedimento</Label>
-              <Input value={v.procedimento} onChange={(e) => setV({ ...v, procedimento: e.target.value })} />
+              <Input
+                value={v.procedimento}
+                onChange={(e) => setV({ ...v, procedimento: e.target.value })}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Valor (R$)</Label>
-              <Input type="number" step="0.01" required value={v.valor}
-                onChange={(e) => setV({ ...v, valor: e.target.value })} />
+              <Input
+                type="number"
+                step="0.01"
+                required
+                value={v.valor}
+                onChange={(e) => setV({ ...v, valor: e.target.value })}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Data</Label>
-              <Input type="date" required value={v.data} onChange={(e) => setV({ ...v, data: e.target.value })} />
+              <Input
+                type="date"
+                required
+                value={v.data}
+                onChange={(e) => setV({ ...v, data: e.target.value })}
+              />
             </div>
           </div>
           <DialogFooter>

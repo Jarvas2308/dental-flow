@@ -2,14 +2,22 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useTable, useCreate, useDelete, useUpdate } from "@/hooks/use-data";
 import { PageHeader } from "@/components/ui-kit";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
-  Tabs, TabsList, TabsTrigger, TabsContent,
-} from "@/components/ui/tabs";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,7 +33,11 @@ export const Route = createFileRoute("/_app/cadastros")({
 type T = "procedimentos" | "formas_pagamento" | "laboratorios" | "tipos_trabalho";
 
 function CadastroForm({
-  table, label, withTaxa, editing, onClose,
+  table,
+  label,
+  withTaxa,
+  editing,
+  onClose,
 }: {
   table: T;
   label: string;
@@ -61,10 +73,18 @@ function CadastroForm({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) onClose?.(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (!o) onClose?.();
+      }}
+    >
       {!isEdit && (
         <DialogTrigger asChild>
-          <Button><Plus className="h-4 w-4" /> Novo</Button>
+          <Button>
+            <Plus className="h-4 w-4" /> Novo
+          </Button>
         </DialogTrigger>
       )}
       <DialogContent className="sm:max-w-md">
@@ -79,7 +99,12 @@ function CadastroForm({
           {withTaxa && (
             <div className="space-y-1.5">
               <Label>Taxa padrão (%)</Label>
-              <Input type="number" step="0.01" value={taxa} onChange={(e) => setTaxa(e.target.value)} />
+              <Input
+                type="number"
+                step="0.01"
+                value={taxa}
+                onChange={(e) => setTaxa(e.target.value)}
+              />
             </div>
           )}
           <DialogFooter>
@@ -94,7 +119,15 @@ function CadastroForm({
   );
 }
 
-function CrudList({ table, label, withTaxa = false }: { table: T; label: string; withTaxa?: boolean }) {
+function CrudList({
+  table,
+  label,
+  withTaxa = false,
+}: {
+  table: T;
+  label: string;
+  withTaxa?: boolean;
+}) {
   const list = useTable<any>(table, "nome", true);
   const del = useDelete(table);
   const [editing, setEditing] = useState<any | null>(null);
@@ -105,7 +138,10 @@ function CrudList({ table, label, withTaxa = false }: { table: T; label: string;
         <CadastroForm table={table} label={label} withTaxa={withTaxa} />
       </div>
 
-      <div className="rounded-2xl border bg-card overflow-hidden" style={{ boxShadow: "var(--shadow-soft)" }}>
+      <div
+        className="rounded-2xl border bg-card overflow-hidden"
+        style={{ boxShadow: "var(--shadow-soft)" }}
+      >
         <Table>
           <TableHeader>
             <TableRow>
@@ -116,12 +152,21 @@ function CrudList({ table, label, withTaxa = false }: { table: T; label: string;
           </TableHeader>
           <TableBody>
             {list.isLoading && (
-              <TableRow><TableCell colSpan={withTaxa ? 3 : 2} className="text-center py-12">
-                <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
-              </TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={withTaxa ? 3 : 2} className="text-center py-12">
+                  <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
+                </TableCell>
+              </TableRow>
             )}
             {!list.isLoading && (list.data ?? []).length === 0 && (
-              <TableRow><TableCell colSpan={withTaxa ? 3 : 2} className="text-center text-muted-foreground py-12">Nenhum cadastro ainda.</TableCell></TableRow>
+              <TableRow>
+                <TableCell
+                  colSpan={withTaxa ? 3 : 2}
+                  className="text-center text-muted-foreground py-12"
+                >
+                  Nenhum cadastro ainda.
+                </TableCell>
+              </TableRow>
             )}
             {(list.data ?? []).map((r) => (
               <TableRow key={r.id}>
@@ -129,7 +174,12 @@ function CrudList({ table, label, withTaxa = false }: { table: T; label: string;
                 {withTaxa && <TableCell className="text-right">{r.taxa}%</TableCell>}
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
-                    <Button variant="ghost" size="icon" aria-label="Editar" onClick={() => setEditing(r)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Editar"
+                      onClick={() => setEditing(r)}
+                    >
                       <Pencil className="h-4 w-4 text-muted-foreground" />
                     </Button>
                     <ConfirmDelete
@@ -147,8 +197,11 @@ function CrudList({ table, label, withTaxa = false }: { table: T; label: string;
 
       {editing && (
         <CadastroForm
-          table={table} label={label} withTaxa={withTaxa}
-          editing={editing} onClose={() => setEditing(null)}
+          table={table}
+          label={label}
+          withTaxa={withTaxa}
+          editing={editing}
+          onClose={() => setEditing(null)}
         />
       )}
     </div>
@@ -158,7 +211,10 @@ function CrudList({ table, label, withTaxa = false }: { table: T; label: string;
 function Cadastros() {
   return (
     <>
-      <PageHeader title="Cadastros" description="Procedimentos, pagamentos, laboratórios e tipos de trabalho" />
+      <PageHeader
+        title="Cadastros"
+        description="Procedimentos, pagamentos, laboratórios e tipos de trabalho"
+      />
       <Tabs defaultValue="procedimentos">
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="procedimentos">Procedimentos</TabsTrigger>
@@ -166,10 +222,18 @@ function Cadastros() {
           <TabsTrigger value="laboratorios">Laboratórios</TabsTrigger>
           <TabsTrigger value="tipos">Tipos de trabalho</TabsTrigger>
         </TabsList>
-        <TabsContent value="procedimentos" className="mt-4"><CrudList table="procedimentos" label="procedimento" /></TabsContent>
-        <TabsContent value="formas" className="mt-4"><CrudList table="formas_pagamento" label="forma de pagamento" withTaxa /></TabsContent>
-        <TabsContent value="laboratorios" className="mt-4"><CrudList table="laboratorios" label="laboratório" /></TabsContent>
-        <TabsContent value="tipos" className="mt-4"><CrudList table="tipos_trabalho" label="tipo de trabalho" /></TabsContent>
+        <TabsContent value="procedimentos" className="mt-4">
+          <CrudList table="procedimentos" label="procedimento" />
+        </TabsContent>
+        <TabsContent value="formas" className="mt-4">
+          <CrudList table="formas_pagamento" label="forma de pagamento" withTaxa />
+        </TabsContent>
+        <TabsContent value="laboratorios" className="mt-4">
+          <CrudList table="laboratorios" label="laboratório" />
+        </TabsContent>
+        <TabsContent value="tipos" className="mt-4">
+          <CrudList table="tipos_trabalho" label="tipo de trabalho" />
+        </TabsContent>
       </Tabs>
     </>
   );

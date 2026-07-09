@@ -13,7 +13,6 @@
 
 import { monthKey } from "./format";
 
-
 export type Entrada = {
   data: string;
   valor_liquido: number;
@@ -89,15 +88,16 @@ export function resumoAtendimento(
   }
 
   const recebido =
-    recs.reduce((s, r) => s + Number(r.valor || 0), 0) +
-    legacy.reduce((s, p) => s + bru(p), 0);
+    recs.reduce((s, r) => s + Number(r.valor || 0), 0) + legacy.reduce((s, p) => s + bru(p), 0);
   const saldo = Math.max(0, total - recebido);
   const qtd = recs.length + legacy.length;
   const status: StatusReceb = recebido <= 0.005 ? "aberto" : saldo <= 0.005 ? "quitado" : "parcial";
 
   const recebidoLiquido =
-    recs.reduce((s, r) => s + (r.valor_liquido != null ? Number(r.valor_liquido) : Number(r.valor || 0) * f), 0) +
-    legacy.reduce((s, p) => s + liq(p), 0);
+    recs.reduce(
+      (s, r) => s + (r.valor_liquido != null ? Number(r.valor_liquido) : Number(r.valor || 0) * f),
+      0,
+    ) + legacy.reduce((s, p) => s + liq(p), 0);
 
   return {
     total,
@@ -132,7 +132,8 @@ export function receitasRecebidas(
         out.push({
           data: r.data,
           valor_bruto: vb,
-          valor_liquido: r.valor_liquido != null ? Number(r.valor_liquido) : Number((vb * f).toFixed(2)),
+          valor_liquido:
+            r.valor_liquido != null ? Number(r.valor_liquido) : Number((vb * f).toFixed(2)),
           forma_pagamento: r.forma_pagamento || a.forma_pagamento || "",
           paciente: a.paciente ?? "",
           procedimento: a.procedimento ?? "",
@@ -153,7 +154,6 @@ export function receitasRecebidas(
       });
     }
   }
-
 
   // Parcelas legadas pagas.
   for (const p of parcelas) {
@@ -223,7 +223,6 @@ export function valoresEmAberto(
     });
   }
 
-
   // Parcelas legadas em aberto.
   for (const p of parcelas) {
     if (p.status === "pago") continue;
@@ -277,7 +276,6 @@ export function contasAReceber(
 
     const r = resumoAtendimento(a, recebimentos, parcelas);
     if (r.saldo <= 0.005) continue; // quitado
-
 
     const recs = recebimentos
       .filter((x) => x.atendimento_id === a.id)
@@ -382,7 +380,10 @@ export function despesasPagasNoMes(despesas: any[] = [], mes: string): any[] {
 }
 
 export function totalDespesasPagasNoMes(despesas: any[] = [], mes: string): number {
-  return despesasPagasNoMes(despesas, mes).reduce((s: number, r: any) => s + Number(r.valor || 0), 0);
+  return despesasPagasNoMes(despesas, mes).reduce(
+    (s: number, r: any) => s + Number(r.valor || 0),
+    0,
+  );
 }
 
 // Despesas pendentes: ainda não pagas. Posicionadas pelo vencimento.
@@ -396,7 +397,10 @@ export function despesasPendentesNoMes(despesas: any[] = [], mes: string): any[]
 }
 
 export function totalDespesasPendentesNoMes(despesas: any[] = [], mes: string): number {
-  return despesasPendentesNoMes(despesas, mes).reduce((s: number, r: any) => s + Number(r.valor || 0), 0);
+  return despesasPendentesNoMes(despesas, mes).reduce(
+    (s: number, r: any) => s + Number(r.valor || 0),
+    0,
+  );
 }
 
 // Caixa realizado = entradas efetivamente recebidas − saídas efetivamente pagas.
@@ -409,4 +413,3 @@ export function caixaRealizado(entradas: number, saidasPagas: number): number {
 export function resultadoPrevisto(caixa: number, despesasPendentesTotal: number): number {
   return caixa - despesasPendentesTotal;
 }
-

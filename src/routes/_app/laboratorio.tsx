@@ -1,13 +1,29 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTable, useDelete } from "@/hooks/use-data";
-import { brl, currentMonthKey, formatDateBR, monthKey, monthLabel, monthOptions } from "@/lib/format";
+import {
+  brl,
+  currentMonthKey,
+  formatDateBR,
+  monthKey,
+  monthLabel,
+  monthOptions,
+} from "@/lib/format";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Search, Loader2 } from "lucide-react";
@@ -25,11 +41,15 @@ function Laboratorio() {
   const del = useDelete("custos_laboratorio");
 
   const rows = useMemo(
-    () => (list.data ?? [])
-      .filter((r) => monthKey(r.data) === mes)
-      .filter((r) => !q ||
-        r.paciente?.toLowerCase().includes(q.toLowerCase()) ||
-        r.laboratorio?.toLowerCase().includes(q.toLowerCase())),
+    () =>
+      (list.data ?? [])
+        .filter((r) => monthKey(r.data) === mes)
+        .filter(
+          (r) =>
+            !q ||
+            r.paciente?.toLowerCase().includes(q.toLowerCase()) ||
+            r.laboratorio?.toLowerCase().includes(q.toLowerCase()),
+        ),
     [list.data, mes, q],
   );
 
@@ -37,7 +57,9 @@ function Laboratorio() {
 
   return (
     <>
-      <PageHeader title="Laboratório" description="Custos laboratoriais por paciente e procedimento"
+      <PageHeader
+        title="Laboratório"
+        description="Custos laboratoriais por paciente e procedimento"
         actions={<CustoLabForm />}
       />
 
@@ -48,18 +70,32 @@ function Laboratorio() {
 
       <div className="flex gap-2 mb-4 flex-wrap">
         <Select value={mes} onValueChange={setMes}>
-          <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
-            {monthOptions(12).map((m) => <SelectItem key={m} value={m} className="capitalize">{monthLabel(m)}</SelectItem>)}
+            {monthOptions(12).map((m) => (
+              <SelectItem key={m} value={m} className="capitalize">
+                {monthLabel(m)}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar paciente ou laboratório..." value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" />
+          <Input
+            placeholder="Buscar paciente ou laboratório..."
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            className="pl-9"
+          />
         </div>
       </div>
 
-      <div className="rounded-2xl border bg-card overflow-hidden" style={{ boxShadow: "var(--shadow-soft)" }}>
+      <div
+        className="rounded-2xl border bg-card overflow-hidden"
+        style={{ boxShadow: "var(--shadow-soft)" }}
+      >
         <Table>
           <TableHeader>
             <TableRow>
@@ -74,12 +110,18 @@ function Laboratorio() {
           </TableHeader>
           <TableBody>
             {list.isLoading && (
-              <TableRow><TableCell colSpan={7} className="text-center py-12">
-                <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
-              </TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-12">
+                  <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
+                </TableCell>
+              </TableRow>
             )}
             {!list.isLoading && rows.length === 0 && (
-              <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-12">Nenhum custo neste mês.</TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={7} className="text-center text-muted-foreground py-12">
+                  Nenhum custo neste mês.
+                </TableCell>
+              </TableRow>
             )}
             {rows.map((r) => (
               <TableRow key={r.id}>

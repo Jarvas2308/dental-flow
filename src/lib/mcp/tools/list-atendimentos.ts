@@ -8,10 +8,7 @@ export default defineTool({
   description:
     "Lista os atendimentos do consultório do usuário autenticado, opcionalmente filtrados por mês (AAAA-MM) e/ou status de pagamento.",
   inputSchema: {
-    month: z
-      .string()
-      .optional()
-      .describe("Filtro de mês no formato AAAA-MM, por exemplo 2026-07."),
+    month: z.string().optional().describe("Filtro de mês no formato AAAA-MM, por exemplo 2026-07."),
     status_pagamento: z
       .string()
       .optional()

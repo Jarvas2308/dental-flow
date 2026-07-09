@@ -24,8 +24,22 @@ const atendParcelado = {
 
 // Recebimentos em meses distintos para o mesmo atendimento.
 const recebimentos = [
-  { id: "r-jul", atendimento_id: "at-1", data: "2026-07-10", valor: 300, valor_liquido: 300, forma_pagamento: "pix" },
-  { id: "r-jun", atendimento_id: "at-1", data: "2026-06-15", valor: 200, valor_liquido: 200, forma_pagamento: "pix" },
+  {
+    id: "r-jul",
+    atendimento_id: "at-1",
+    data: "2026-07-10",
+    valor: 300,
+    valor_liquido: 300,
+    forma_pagamento: "pix",
+  },
+  {
+    id: "r-jun",
+    atendimento_id: "at-1",
+    data: "2026-06-15",
+    valor: 200,
+    valor_liquido: 200,
+    forma_pagamento: "pix",
+  },
 ];
 
 describe("recebimentos entram pela data do recebimento", () => {
@@ -56,7 +70,13 @@ describe("recebimentos entram pela data do recebimento", () => {
 
 // Despesas: uma paga em julho, uma pendente em julho.
 const despesas = [
-  { id: "d-paga", status: "pago", data_pagamento: "2026-07-05", vencimento: "2026-07-01", valor: 100 },
+  {
+    id: "d-paga",
+    status: "pago",
+    data_pagamento: "2026-07-05",
+    vencimento: "2026-07-01",
+    valor: 100,
+  },
   { id: "d-pend", status: "pendente", data_pagamento: null, vencimento: "2026-07-20", valor: 50 },
 ];
 
@@ -100,7 +120,13 @@ describe("fórmulas de caixa e resultado", () => {
 describe("despesa vencida em um mês e paga no mês seguinte", () => {
   // Vence em junho, mas só é paga em julho.
   const despesaAtravessada = [
-    { id: "d-cross", status: "pago", data_pagamento: "2026-07-05", vencimento: "2026-06-30", valor: 100 },
+    {
+      id: "d-cross",
+      status: "pago",
+      data_pagamento: "2026-07-05",
+      vencimento: "2026-06-30",
+      valor: 100,
+    },
   ];
 
   it("só entra no caixa realizado no mês do pagamento", () => {

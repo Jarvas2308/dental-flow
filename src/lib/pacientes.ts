@@ -4,8 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
  * Normaliza o nome do paciente da mesma forma usada no fluxo de atendimento:
  * remove espaços nas pontas e colapsa espaços internos.
  */
-export const normalizePacienteNome = (nome: string) =>
-  nome.replace(/\s+/g, " ").trim();
+export const normalizePacienteNome = (nome: string) => nome.replace(/\s+/g, " ").trim();
 
 /**
  * Resolve o `paciente_id` para um nome de paciente, reutilizando a mesma lógica
@@ -80,6 +79,5 @@ export function buildPacienteHistoryCounter(
     }
   }
   return (p: { id: string; nome?: string | null }) =>
-    (byId[p.id] ?? 0) +
-    (byName[normalizePacienteNome(p.nome ?? "").toLowerCase()] ?? 0);
+    (byId[p.id] ?? 0) + (byName[normalizePacienteNome(p.nome ?? "").toLowerCase()] ?? 0);
 }

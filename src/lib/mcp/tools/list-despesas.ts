@@ -8,10 +8,7 @@ export default defineTool({
   description:
     "Lista as despesas do usuário autenticado, opcionalmente filtradas por status (pago, pendente, atrasado).",
   inputSchema: {
-    status: z
-      .string()
-      .optional()
-      .describe("Filtro por status: 'pago', 'pendente' ou 'atrasado'."),
+    status: z.string().optional().describe("Filtro por status: 'pago', 'pendente' ou 'atrasado'."),
     limit: z
       .number()
       .int()

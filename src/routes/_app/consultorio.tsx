@@ -1,22 +1,54 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useConsultorioData, useUpdate, useDelete } from "@/hooks/use-data";
-import { brl, currentMonthKey, formatDateBR, monthKey, monthLabel, monthOptions, parseLocalDate } from "@/lib/format";
+import {
+  brl,
+  currentMonthKey,
+  formatDateBR,
+  monthKey,
+  monthLabel,
+  monthOptions,
+  parseLocalDate,
+} from "@/lib/format";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
-  DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuRadioGroup, DropdownMenuRadioItem,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
-import { Search, FileCheck2, Loader2, ArrowUpDown, Filter, X, CheckCircle2, Clock } from "lucide-react";
+import {
+  Search,
+  FileCheck2,
+  Loader2,
+  ArrowUpDown,
+  Filter,
+  X,
+  CheckCircle2,
+  Clock,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { AtendimentoForm, EditAtendimentoButton } from "@/components/atendimento-form";
@@ -29,13 +61,30 @@ export const Route = createFileRoute("/_app/consultorio")({
 });
 
 type SortKey =
-  | "data_desc" | "data_asc"
-  | "paciente_asc" | "paciente_desc"
-  | "procedimento" | "forma_pagamento"
-  | "bruto_desc" | "liquido_desc"
-  | "nf" | "lucrativos" | "frequentes";
+  | "data_desc"
+  | "data_asc"
+  | "paciente_asc"
+  | "paciente_desc"
+  | "procedimento"
+  | "forma_pagamento"
+  | "bruto_desc"
+  | "liquido_desc"
+  | "nf"
+  | "lucrativos"
+  | "frequentes";
 
-type QuickFilter = "todos" | "hoje" | "semana" | "mes" | "emitidos" | "pendentes" | "nao_emitidos" | "nao_se_aplica" | "cartao" | "pix" | "dinheiro";
+type QuickFilter =
+  | "todos"
+  | "hoje"
+  | "semana"
+  | "mes"
+  | "emitidos"
+  | "pendentes"
+  | "nao_emitidos"
+  | "nao_se_aplica"
+  | "cartao"
+  | "pix"
+  | "dinheiro";
 
 type StatusPag = "todos" | "pagos" | "abertos";
 
@@ -103,9 +152,9 @@ function Consultorio() {
     return m;
   }, [allData, recebimentosData, parcelasData]);
 
-  const isPendente = (r: any) => (resumoMap.get(r.id)?.status ?? (r.status_pagamento === "pendente" ? "aberto" : "quitado")) !== "quitado";
-
-
+  const isPendente = (r: any) =>
+    (resumoMap.get(r.id)?.status ?? (r.status_pagamento === "pendente" ? "aberto" : "quitado")) !==
+    "quitado";
 
   const procedimentosUnicos = useMemo(
     () => Array.from(new Set(allData.map((r: any) => r.procedimento).filter(Boolean))).sort(),
@@ -122,13 +171,16 @@ function Consultorio() {
     let r = [...allData];
 
     // Quick filter (overrides month when temporal)
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
     const weekStart = startOfWeek(today);
 
     // Fim do mês selecionado — pendentes persistem até a data limite
     const [yy, mm] = mes.split("-").map(Number);
-    const monthEnd = new Date(yy, mm, 0); monthEnd.setHours(23, 59, 59, 999);
+    const monthEnd = new Date(yy, mm, 0);
+    monthEnd.setHours(23, 59, 59, 999);
 
     // Inclui registros do mês OU pendentes que continuam em aberto até o mês selecionado
     const inMonth = (x: any) => {
@@ -138,9 +190,15 @@ function Consultorio() {
     };
 
     if (filter === "hoje") {
-      r = r.filter((x) => { const d = parseLocalDate(x.data); return (!!d && d >= today && d < tomorrow) || isPendente(x); });
+      r = r.filter((x) => {
+        const d = parseLocalDate(x.data);
+        return (!!d && d >= today && d < tomorrow) || isPendente(x);
+      });
     } else if (filter === "semana") {
-      r = r.filter((x) => { const d = parseLocalDate(x.data); return (!!d && d >= weekStart) || isPendente(x); });
+      r = r.filter((x) => {
+        const d = parseLocalDate(x.data);
+        return (!!d && d >= weekStart) || isPendente(x);
+      });
     } else if (filter === "mes" || filter === "todos") {
       r = r.filter(inMonth);
     } else if (filter === "emitidos") {
@@ -152,7 +210,9 @@ function Consultorio() {
     } else if (filter === "nao_se_aplica") {
       r = r.filter((x) => inMonth(x) && x.nota_fiscal_status === "nao_se_aplica");
     } else if (filter === "cartao") {
-      r = r.filter((x) => inMonth(x) && /cart[ãa]o|cr[eé]dito|d[eé]bito/i.test(x.forma_pagamento ?? ""));
+      r = r.filter(
+        (x) => inMonth(x) && /cart[ãa]o|cr[eé]dito|d[eé]bito/i.test(x.forma_pagamento ?? ""),
+      );
     } else if (filter === "pix") {
       r = r.filter((x) => inMonth(x) && /pix/i.test(x.forma_pagamento ?? ""));
     } else if (filter === "dinheiro") {
@@ -168,26 +228,42 @@ function Consultorio() {
 
     if (q) {
       const s = q.toLowerCase();
-      r = r.filter((x) =>
-        (x.paciente ?? "").toLowerCase().includes(s) ||
-        (x.procedimento ?? "").toLowerCase().includes(s),
+      r = r.filter(
+        (x) =>
+          (x.paciente ?? "").toLowerCase().includes(s) ||
+          (x.procedimento ?? "").toLowerCase().includes(s),
       );
     }
 
     const cmp = (a: any, b: any) => {
       switch (sort) {
-        case "data_desc": return +parseLocalDate(b.data)! - +parseLocalDate(a.data)!;
-        case "data_asc": return +parseLocalDate(a.data)! - +parseLocalDate(b.data)!;
-        case "paciente_asc": return (a.paciente ?? "").localeCompare(b.paciente ?? "");
-        case "paciente_desc": return (b.paciente ?? "").localeCompare(a.paciente ?? "");
-        case "procedimento": return (a.procedimento ?? "").localeCompare(b.procedimento ?? "");
-        case "forma_pagamento": return (a.forma_pagamento ?? "").localeCompare(b.forma_pagamento ?? "");
-        case "bruto_desc": return Number(b.valor_bruto || 0) - Number(a.valor_bruto || 0);
-        case "liquido_desc": return Number(b.valor_liquido || 0) - Number(a.valor_liquido || 0);
-        case "lucrativos": return Number(b.valor_liquido || 0) - Number(a.valor_liquido || 0);
-        case "nf": return (b.nota_fiscal_status === "emitida" ? 1 : 0) - (a.nota_fiscal_status === "emitida" ? 1 : 0);
-        case "frequentes": return (freqMap.get(b.procedimento) ?? 0) - (freqMap.get(a.procedimento) ?? 0);
-        default: return 0;
+        case "data_desc":
+          return +parseLocalDate(b.data)! - +parseLocalDate(a.data)!;
+        case "data_asc":
+          return +parseLocalDate(a.data)! - +parseLocalDate(b.data)!;
+        case "paciente_asc":
+          return (a.paciente ?? "").localeCompare(b.paciente ?? "");
+        case "paciente_desc":
+          return (b.paciente ?? "").localeCompare(a.paciente ?? "");
+        case "procedimento":
+          return (a.procedimento ?? "").localeCompare(b.procedimento ?? "");
+        case "forma_pagamento":
+          return (a.forma_pagamento ?? "").localeCompare(b.forma_pagamento ?? "");
+        case "bruto_desc":
+          return Number(b.valor_bruto || 0) - Number(a.valor_bruto || 0);
+        case "liquido_desc":
+          return Number(b.valor_liquido || 0) - Number(a.valor_liquido || 0);
+        case "lucrativos":
+          return Number(b.valor_liquido || 0) - Number(a.valor_liquido || 0);
+        case "nf":
+          return (
+            (b.nota_fiscal_status === "emitida" ? 1 : 0) -
+            (a.nota_fiscal_status === "emitida" ? 1 : 0)
+          );
+        case "frequentes":
+          return (freqMap.get(b.procedimento) ?? 0) - (freqMap.get(a.procedimento) ?? 0);
+        default:
+          return 0;
       }
     };
     // Prioridade máxima: pendentes sempre primeiro, depois ordenação normal
@@ -200,14 +276,15 @@ function Consultorio() {
     return r;
   }, [allData, mes, q, sort, filter, procFilter, statusPag, freqMap]);
 
-
   // Predicado de período (data do RECEBIMENTO), espelhando o filtro temporal da tabela.
   const inPeriodo = (dateStr: string) => {
     const d = parseLocalDate(dateStr);
     if (!d) return false;
-    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     if (filter === "hoje") {
-      const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(today.getDate() + 1);
       return d >= today && d < tomorrow;
     }
     if (filter === "semana") return d >= startOfWeek(today);
@@ -228,7 +305,7 @@ function Consultorio() {
   // Acumulado (todos os recebimentos das linhas) — preservado para "Previsto após receber".
   const totLiqAcumulado = rows.reduce((s, r) => s + (resumoMap.get(r.id)?.recebidoLiquido ?? 0), 0);
   const totPendente = rows.reduce((s, r) => s + (resumoMap.get(r.id)?.saldoLiquido ?? 0), 0);
-  
+
   const abertas = rows.filter((r) => isPendente(r));
 
   // Totais de nota fiscal no período/filtro selecionado.
@@ -239,22 +316,44 @@ function Consultorio() {
   const nfNaoEmitidas = nfCount("nao_emitida");
   const nfNaoSeAplica = nfCount("nao_se_aplica");
 
-
-  const hasActiveFilter = filter !== "todos" || procFilter !== "__all__" || q.length > 0 || statusPag !== "todos";
+  const hasActiveFilter =
+    filter !== "todos" || procFilter !== "__all__" || q.length > 0 || statusPag !== "todos";
 
   return (
     <>
-      <PageHeader title="Consultório" description="Atendimentos e procedimentos realizados"
+      <PageHeader
+        title="Consultório"
+        description="Atendimentos e procedimentos realizados"
         actions={<AtendimentoForm />}
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-6">
-        <StatCard label="Recebido no período (líquido)" value={brl(totLiq)} tone="success" hint={`${qtdReceb} recebimento${qtdReceb === 1 ? "" : "s"} · bruto ${brl(totBruto)}`} />
-        <StatCard label="Em aberto" value={brl(totPendente)} tone={totPendente > 0 ? "destructive" : "success"} icon={<Clock className="h-4 w-4" />} hint={`${abertas.length} pendentes`} />
-        <StatCard label="Previsto após receber" value={brl(totLiqAcumulado + totPendente)} tone="primary" hint="Recebido + pendente" />
-        <StatCard label="NFs no período" value={`${nfEmitidas} emitidas`} icon={<FileCheck2 className="h-4 w-4" />} hint={`${nfPendentes} pendentes · ${nfNaoEmitidas} não emitidas · ${nfNaoSeAplica} não se aplica`} />
+        <StatCard
+          label="Recebido no período (líquido)"
+          value={brl(totLiq)}
+          tone="success"
+          hint={`${qtdReceb} recebimento${qtdReceb === 1 ? "" : "s"} · bruto ${brl(totBruto)}`}
+        />
+        <StatCard
+          label="Em aberto"
+          value={brl(totPendente)}
+          tone={totPendente > 0 ? "destructive" : "success"}
+          icon={<Clock className="h-4 w-4" />}
+          hint={`${abertas.length} pendentes`}
+        />
+        <StatCard
+          label="Previsto após receber"
+          value={brl(totLiqAcumulado + totPendente)}
+          tone="primary"
+          hint="Recebido + pendente"
+        />
+        <StatCard
+          label="NFs no período"
+          value={`${nfEmitidas} emitidas`}
+          icon={<FileCheck2 className="h-4 w-4" />}
+          hint={`${nfPendentes} pendentes · ${nfNaoEmitidas} não emitidas · ${nfNaoSeAplica} não se aplica`}
+        />
       </div>
-
 
       {/* Toolbar */}
       <div className="flex flex-wrap gap-2 mb-3">
@@ -268,10 +367,32 @@ function Consultorio() {
           />
         </div>
 
-        <Select value={mes} onValueChange={setMes} disabled={!["todos", "mes", "emitidos", "pendentes", "nao_emitidos", "nao_se_aplica", "cartao", "pix", "dinheiro"].includes(filter)}>
-          <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+        <Select
+          value={mes}
+          onValueChange={setMes}
+          disabled={
+            ![
+              "todos",
+              "mes",
+              "emitidos",
+              "pendentes",
+              "nao_emitidos",
+              "nao_se_aplica",
+              "cartao",
+              "pix",
+              "dinheiro",
+            ].includes(filter)
+          }
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
-            {monthOptions(12).map((m) => <SelectItem key={m} value={m} className="capitalize">{monthLabel(m)}</SelectItem>)}
+            {monthOptions(12).map((m) => (
+              <SelectItem key={m} value={m} className="capitalize">
+                {monthLabel(m)}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
 
@@ -286,7 +407,9 @@ function Consultorio() {
             <DropdownMenuSeparator />
             <DropdownMenuRadioGroup value={sort} onValueChange={(v) => setSort(v as SortKey)}>
               {(Object.keys(SORT_LABELS) as SortKey[]).map((k) => (
-                <DropdownMenuRadioItem key={k} value={k}>{SORT_LABELS[k]}</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem key={k} value={k}>
+                  {SORT_LABELS[k]}
+                </DropdownMenuRadioItem>
               ))}
             </DropdownMenuRadioGroup>
           </DropdownMenuContent>
@@ -302,17 +425,27 @@ function Consultorio() {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>Status de pagamento</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuRadioGroup value={statusPag} onValueChange={(v) => setStatusPag(v as StatusPag)}>
+            <DropdownMenuRadioGroup
+              value={statusPag}
+              onValueChange={(v) => setStatusPag(v as StatusPag)}
+            >
               {(Object.keys(STATUS_LABELS) as StatusPag[]).map((k) => (
-                <DropdownMenuRadioItem key={k} value={k}>{STATUS_LABELS[k]}</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem key={k} value={k}>
+                  {STATUS_LABELS[k]}
+                </DropdownMenuRadioItem>
               ))}
             </DropdownMenuRadioGroup>
             <DropdownMenuSeparator />
             <DropdownMenuLabel>Filtros rápidos</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuRadioGroup value={filter} onValueChange={(v) => setFilter(v as QuickFilter)}>
+            <DropdownMenuRadioGroup
+              value={filter}
+              onValueChange={(v) => setFilter(v as QuickFilter)}
+            >
               {(Object.keys(FILTER_LABELS) as QuickFilter[]).map((k) => (
-                <DropdownMenuRadioItem key={k} value={k}>{FILTER_LABELS[k]}</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem key={k} value={k}>
+                  {FILTER_LABELS[k]}
+                </DropdownMenuRadioItem>
               ))}
             </DropdownMenuRadioGroup>
             {procedimentosUnicos.length > 0 && (
@@ -322,7 +455,9 @@ function Consultorio() {
                 <DropdownMenuRadioGroup value={procFilter} onValueChange={setProcFilter}>
                   <DropdownMenuRadioItem value="__all__">Todos</DropdownMenuRadioItem>
                   {procedimentosUnicos.map((p) => (
-                    <DropdownMenuRadioItem key={p} value={p}>{p}</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem key={p} value={p}>
+                      {p}
+                    </DropdownMenuRadioItem>
                   ))}
                 </DropdownMenuRadioGroup>
               </>
@@ -331,7 +466,17 @@ function Consultorio() {
         </DropdownMenu>
 
         {hasActiveFilter && (
-          <Button variant="ghost" size="sm" className="gap-1" onClick={() => { setFilter("todos"); setProcFilter("__all__"); setQ(""); setStatusPag("todos"); }}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1"
+            onClick={() => {
+              setFilter("todos");
+              setProcFilter("__all__");
+              setQ("");
+              setStatusPag("todos");
+            }}
+          >
             <X className="h-4 w-4" /> Limpar
           </Button>
         )}
@@ -343,26 +488,34 @@ function Consultorio() {
           {statusPag !== "todos" && (
             <Badge variant="secondary" className="gap-1">
               {STATUS_LABELS[statusPag]}
-              <button onClick={() => setStatusPag("todos")}><X className="h-3 w-3" /></button>
+              <button onClick={() => setStatusPag("todos")}>
+                <X className="h-3 w-3" />
+              </button>
             </Badge>
           )}
           {filter !== "todos" && (
             <Badge variant="secondary" className="gap-1">
               {FILTER_LABELS[filter]}
-              <button onClick={() => setFilter("todos")}><X className="h-3 w-3" /></button>
+              <button onClick={() => setFilter("todos")}>
+                <X className="h-3 w-3" />
+              </button>
             </Badge>
           )}
           {procFilter !== "__all__" && (
             <Badge variant="secondary" className="gap-1">
               {procFilter}
-              <button onClick={() => setProcFilter("__all__")}><X className="h-3 w-3" /></button>
+              <button onClick={() => setProcFilter("__all__")}>
+                <X className="h-3 w-3" />
+              </button>
             </Badge>
           )}
         </div>
       )}
 
-
-      <div className="rounded-2xl border bg-card overflow-hidden" style={{ boxShadow: "var(--shadow-soft)" }}>
+      <div
+        className="rounded-2xl border bg-card overflow-hidden"
+        style={{ boxShadow: "var(--shadow-soft)" }}
+      >
         <Table>
           <TableHeader>
             <TableRow>
@@ -379,106 +532,159 @@ function Consultorio() {
           </TableHeader>
           <TableBody>
             {consultorio.isLoading && (
-              <TableRow><TableCell colSpan={9} className="text-center py-12">
-                <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
-              </TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={9} className="text-center py-12">
+                  <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
+                </TableCell>
+              </TableRow>
             )}
             {!consultorio.isLoading && rows.length === 0 && (
-              <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-12">Nenhum atendimento encontrado.</TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={9} className="text-center text-muted-foreground py-12">
+                  Nenhum atendimento encontrado.
+                </TableCell>
+              </TableRow>
             )}
             {rows.map((r) => {
               const pend = isPendente(r);
               return (
-              <TableRow key={r.id} className={cn(pend && "bg-destructive/5 hover:bg-destructive/10")}>
-                <TableCell className={cn("text-muted-foreground", pend && "text-destructive/80")}>{formatDateBR(r.data)}</TableCell>
-                <TableCell className={cn("font-medium", pend && "text-destructive")}>{r.paciente}</TableCell>
-                <TableCell className={cn(pend && "text-destructive/90")}>{r.procedimento}</TableCell>
-                <TableCell className={cn("text-muted-foreground text-sm", pend && "text-destructive/70")}>{r.forma_pagamento} · {r.taxa}%</TableCell>
-                <TableCell className={cn("text-right", pend && "text-destructive/80")}>{brl(r.valor_bruto)}</TableCell>
-                <TableCell className={cn("text-right font-medium", pend && "text-destructive")}>{brl(r.valor_liquido)}</TableCell>
-                <TableCell>
-                  {(() => {
-                    const rs = resumoMap.get(r.id);
-                    if (r.parcelado && rs) {
-                      const pct = rs.total > 0 ? Math.min(100, (rs.recebido / rs.total) * 100) : 0;
-                      return (
-                        <div className="min-w-[140px] space-y-1">
-                          <Badge variant="outline" className={cn(
-                            rs.status === "quitado" ? "border-success/40 bg-success/10 text-success"
-                              : rs.status === "parcial" ? "border-primary/40 bg-primary/10 text-primary"
-                              : "border-warning/40 bg-warning/10 text-warning",
-                          )}>
-                            {STATUS_LABEL[rs.status]}
-                          </Badge>
-                          <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                            <span>{rs.qtd}/{rs.parcelasCombinadas}</span>
-                            <span>Saldo {brl(rs.saldo)}</span>
-                          </div>
-                          <Progress value={pct} className="h-1.5" />
-                        </div>
-                      );
-                    }
-                    return pend ? (
-                      <Badge variant="outline" className="border-destructive/40 bg-destructive/10 text-destructive gap-1">
-                        <Clock className="h-3 w-3" /> Pendente
-                      </Badge>
-                    ) : (
-                      <Badge className="bg-success text-success-foreground hover:bg-success/90 gap-1">
-                        <CheckCircle2 className="h-3 w-3" /> Pago
-                      </Badge>
-                    );
-                  })()}
-                </TableCell>
-                <TableCell>
-                  {(() => {
-                    const status = (r.nota_fiscal_status ?? "pendente") as string;
-                    const label = status === "emitida" ? "Emitida"
-                      : status === "nao_emitida" ? "Não emitida"
-                      : status === "nao_se_aplica" ? "Não se aplica"
-                      : "Pendente";
-                    const badge = status === "emitida"
-                      ? <Badge className="bg-success text-success-foreground hover:bg-success/90">Emitida</Badge>
-                      : <Badge variant="outline">{label}</Badge>;
-                    return (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button>{badge}</button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="w-40">
-                          <DropdownMenuLabel>Nota fiscal</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuRadioGroup
-                            value={["emitida", "pendente", "nao_emitida"].includes(status) ? status : ""}
-                            onValueChange={(v) => upd.mutate({ id: r.id, values: { nota_fiscal_status: v } })}
-                          >
-                            <DropdownMenuRadioItem value="emitida">Emitida</DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="pendente">Pendente</DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="nao_emitida">Não emitida</DropdownMenuRadioItem>
-                          </DropdownMenuRadioGroup>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    );
-                  })()}
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-1">
+                <TableRow
+                  key={r.id}
+                  className={cn(pend && "bg-destructive/5 hover:bg-destructive/10")}
+                >
+                  <TableCell className={cn("text-muted-foreground", pend && "text-destructive/80")}>
+                    {formatDateBR(r.data)}
+                  </TableCell>
+                  <TableCell className={cn("font-medium", pend && "text-destructive")}>
+                    {r.paciente}
+                  </TableCell>
+                  <TableCell className={cn(pend && "text-destructive/90")}>
+                    {r.procedimento}
+                  </TableCell>
+                  <TableCell
+                    className={cn("text-muted-foreground text-sm", pend && "text-destructive/70")}
+                  >
+                    {r.forma_pagamento} · {r.taxa}%
+                  </TableCell>
+                  <TableCell className={cn("text-right", pend && "text-destructive/80")}>
+                    {brl(r.valor_bruto)}
+                  </TableCell>
+                  <TableCell className={cn("text-right font-medium", pend && "text-destructive")}>
+                    {brl(r.valor_liquido)}
+                  </TableCell>
+                  <TableCell>
                     {(() => {
                       const rs = resumoMap.get(r.id);
-                      if (rs && rs.saldo > 0.005) {
-                        return <RegistrarRecebimento atendimento={r} />;
+                      if (r.parcelado && rs) {
+                        const pct =
+                          rs.total > 0 ? Math.min(100, (rs.recebido / rs.total) * 100) : 0;
+                        return (
+                          <div className="min-w-[140px] space-y-1">
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                rs.status === "quitado"
+                                  ? "border-success/40 bg-success/10 text-success"
+                                  : rs.status === "parcial"
+                                    ? "border-primary/40 bg-primary/10 text-primary"
+                                    : "border-warning/40 bg-warning/10 text-warning",
+                              )}
+                            >
+                              {STATUS_LABEL[rs.status]}
+                            </Badge>
+                            <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                              <span>
+                                {rs.qtd}/{rs.parcelasCombinadas}
+                              </span>
+                              <span>Saldo {brl(rs.saldo)}</span>
+                            </div>
+                            <Progress value={pct} className="h-1.5" />
+                          </div>
+                        );
                       }
-                      return null;
+                      return pend ? (
+                        <Badge
+                          variant="outline"
+                          className="border-destructive/40 bg-destructive/10 text-destructive gap-1"
+                        >
+                          <Clock className="h-3 w-3" /> Pendente
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-success text-success-foreground hover:bg-success/90 gap-1">
+                          <CheckCircle2 className="h-3 w-3" /> Pago
+                        </Badge>
+                      );
                     })()}
+                  </TableCell>
+                  <TableCell>
+                    {(() => {
+                      const status = (r.nota_fiscal_status ?? "pendente") as string;
+                      const label =
+                        status === "emitida"
+                          ? "Emitida"
+                          : status === "nao_emitida"
+                            ? "Não emitida"
+                            : status === "nao_se_aplica"
+                              ? "Não se aplica"
+                              : "Pendente";
+                      const badge =
+                        status === "emitida" ? (
+                          <Badge className="bg-success text-success-foreground hover:bg-success/90">
+                            Emitida
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline">{label}</Badge>
+                        );
+                      return (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button>{badge}</button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" className="w-40">
+                            <DropdownMenuLabel>Nota fiscal</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuRadioGroup
+                              value={
+                                ["emitida", "pendente", "nao_emitida"].includes(status)
+                                  ? status
+                                  : ""
+                              }
+                              onValueChange={(v) =>
+                                upd.mutate({ id: r.id, values: { nota_fiscal_status: v } })
+                              }
+                            >
+                              <DropdownMenuRadioItem value="emitida">Emitida</DropdownMenuRadioItem>
+                              <DropdownMenuRadioItem value="pendente">
+                                Pendente
+                              </DropdownMenuRadioItem>
+                              <DropdownMenuRadioItem value="nao_emitida">
+                                Não emitida
+                              </DropdownMenuRadioItem>
+                            </DropdownMenuRadioGroup>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      );
+                    })()}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-1">
+                      {(() => {
+                        const rs = resumoMap.get(r.id);
+                        if (rs && rs.saldo > 0.005) {
+                          return <RegistrarRecebimento atendimento={r} />;
+                        }
+                        return null;
+                      })()}
 
-                    <EditAtendimentoButton row={r} />
-                    <ConfirmDelete
-                      title="Excluir atendimento?"
-                      description={`O atendimento de ${r.paciente} será removido permanentemente.`}
-                      onConfirm={() => del.mutate(r.id)}
-                    />
-                  </div>
-                </TableCell>
-              </TableRow>
+                      <EditAtendimentoButton row={r} />
+                      <ConfirmDelete
+                        title="Excluir atendimento?"
+                        description={`O atendimento de ${r.paciente} será removido permanentemente.`}
+                        onConfirm={() => del.mutate(r.id)}
+                      />
+                    </div>
+                  </TableCell>
+                </TableRow>
               );
             })}
           </TableBody>

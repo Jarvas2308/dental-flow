@@ -1,16 +1,37 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useTable, useCreate, useUpdate, useDelete } from "@/hooks/use-data";
-import { brl, currentMonthKey, formatDateBR, monthKey, monthLabel, monthOptions } from "@/lib/format";
+import {
+  brl,
+  currentMonthKey,
+  formatDateBR,
+  monthKey,
+  monthLabel,
+  monthOptions,
+} from "@/lib/format";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,8 +66,11 @@ type Receita = {
 };
 
 const empty = (): Receita => ({
-  descricao: "", valor: "", data: new Date().toISOString().slice(0, 10),
-  tipo: "outros", observacoes: "",
+  descricao: "",
+  valor: "",
+  data: new Date().toISOString().slice(0, 10),
+  tipo: "outros",
+  observacoes: "",
 });
 
 function ReceitaForm({ editing, onClose }: { editing?: any; onClose?: () => void }) {
@@ -55,7 +79,9 @@ function ReceitaForm({ editing, onClose }: { editing?: any; onClose?: () => void
   const [open, setOpen] = useState(!!editing);
   const [v, setV] = useState<Receita>(editing ? { ...editing } : empty());
 
-  useEffect(() => { if (open) setV(editing ? { ...editing } : empty()); }, [open, editing]);
+  useEffect(() => {
+    if (open) setV(editing ? { ...editing } : empty());
+  }, [open, editing]);
   const isEdit = !!editing;
   const busy = create.isPending || update.isPending;
 
@@ -77,10 +103,18 @@ function ReceitaForm({ editing, onClose }: { editing?: any; onClose?: () => void
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) onClose?.(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (!o) onClose?.();
+      }}
+    >
       {!isEdit && (
         <DialogTrigger asChild>
-          <Button><Plus className="h-4 w-4" /> Novo ganho</Button>
+          <Button>
+            <Plus className="h-4 w-4" /> Novo ganho
+          </Button>
         </DialogTrigger>
       )}
       <DialogContent className="sm:max-w-md">
@@ -90,32 +124,54 @@ function ReceitaForm({ editing, onClose }: { editing?: any; onClose?: () => void
         <form onSubmit={submit} className="space-y-4">
           <div className="space-y-1.5">
             <Label>Descrição</Label>
-            <Input required value={v.descricao} onChange={(e) => setV({ ...v, descricao: e.target.value })} />
+            <Input
+              required
+              value={v.descricao}
+              onChange={(e) => setV({ ...v, descricao: e.target.value })}
+            />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label>Valor (R$)</Label>
-              <Input type="number" step="0.01" required value={v.valor}
-                onChange={(e) => setV({ ...v, valor: e.target.value })} />
+              <Input
+                type="number"
+                step="0.01"
+                required
+                value={v.valor}
+                onChange={(e) => setV({ ...v, valor: e.target.value })}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Data</Label>
-              <Input type="date" required value={v.data}
-                onChange={(e) => setV({ ...v, data: e.target.value })} />
+              <Input
+                type="date"
+                required
+                value={v.data}
+                onChange={(e) => setV({ ...v, data: e.target.value })}
+              />
             </div>
             <div className="space-y-1.5 sm:col-span-2">
               <Label>Tipo</Label>
               <Select value={v.tipo} onValueChange={(s) => setV({ ...v, tipo: s })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
-                  {TIPOS.map((t) => <SelectItem key={t.v} value={t.v}>{t.l}</SelectItem>)}
+                  {TIPOS.map((t) => (
+                    <SelectItem key={t.v} value={t.v}>
+                      {t.l}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
           </div>
           <div className="space-y-1.5">
             <Label>Observações</Label>
-            <Textarea value={v.observacoes ?? ""} onChange={(e) => setV({ ...v, observacoes: e.target.value })} />
+            <Textarea
+              value={v.observacoes ?? ""}
+              onChange={(e) => setV({ ...v, observacoes: e.target.value })}
+            />
           </div>
           <DialogFooter>
             <Button type="submit" disabled={busy}>
@@ -146,10 +202,13 @@ function Ganhos() {
   const list = useTable<any>("receitas_extras", "data", false);
   const del = useDelete("receitas_extras");
 
-  const rows = useMemo(() => (list.data ?? [])
-    .filter((r) => monthKey(r.data) === mes)
-    .sort((a, b) => b.data.localeCompare(a.data)),
-    [list.data, mes]);
+  const rows = useMemo(
+    () =>
+      (list.data ?? [])
+        .filter((r) => monthKey(r.data) === mes)
+        .sort((a, b) => b.data.localeCompare(a.data)),
+    [list.data, mes],
+  );
 
   const total = rows.reduce((s, r) => s + Number(r.valor || 0), 0);
   const porTipo = useMemo(() => {
@@ -167,26 +226,39 @@ function Ganhos() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 mb-6">
-        <StatCard label={`Total · ${monthLabel(mes)}`} value={brl(total)} tone="success"
-          icon={<PiggyBank className="h-4 w-4" />} />
+        <StatCard
+          label={`Total · ${monthLabel(mes)}`}
+          value={brl(total)}
+          tone="success"
+          icon={<PiggyBank className="h-4 w-4" />}
+        />
         <StatCard label="Lançamentos" value={String(rows.length)} tone="primary" />
-        <StatCard label="Maior categoria"
+        <StatCard
+          label="Maior categoria"
           value={porTipo[0] ? tipoLabel(porTipo[0][0]) : "—"}
-          hint={porTipo[0] ? brl(porTipo[0][1]) : undefined} />
+          hint={porTipo[0] ? brl(porTipo[0][1]) : undefined}
+        />
       </div>
 
       <div className="flex flex-wrap gap-2 mb-4">
         <Select value={mes} onValueChange={setMes}>
-          <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             {monthOptions(12).map((m) => (
-              <SelectItem key={m} value={m} className="capitalize">{monthLabel(m)}</SelectItem>
+              <SelectItem key={m} value={m} className="capitalize">
+                {monthLabel(m)}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
-      <div className="rounded-2xl border bg-card overflow-hidden" style={{ boxShadow: "var(--shadow-soft)" }}>
+      <div
+        className="rounded-2xl border bg-card overflow-hidden"
+        style={{ boxShadow: "var(--shadow-soft)" }}
+      >
         <Table>
           <TableHeader>
             <TableRow>
@@ -199,23 +271,29 @@ function Ganhos() {
           </TableHeader>
           <TableBody>
             {list.isLoading && (
-              <TableRow><TableCell colSpan={5} className="text-center py-12">
-                <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
-              </TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-12">
+                  <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
+                </TableCell>
+              </TableRow>
             )}
             {!list.isLoading && rows.length === 0 && (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-12">
-                Nenhum ganho registrado neste mês.
-              </TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={5} className="text-center text-muted-foreground py-12">
+                  Nenhum ganho registrado neste mês.
+                </TableCell>
+              </TableRow>
             )}
             {rows.map((r) => (
               <TableRow key={r.id}>
-                <TableCell className="text-muted-foreground">
-                  {formatDateBR(r.data)}
-                </TableCell>
+                <TableCell className="text-muted-foreground">{formatDateBR(r.data)}</TableCell>
                 <TableCell className="font-medium">{r.descricao}</TableCell>
-                <TableCell><Badge variant="outline">{tipoLabel(r.tipo)}</Badge></TableCell>
-                <TableCell className="text-right font-medium text-success">{brl(r.valor)}</TableCell>
+                <TableCell>
+                  <Badge variant="outline">{tipoLabel(r.tipo)}</Badge>
+                </TableCell>
+                <TableCell className="text-right font-medium text-success">
+                  {brl(r.valor)}
+                </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
                     <EditReceita row={r} />
