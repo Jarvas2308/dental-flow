@@ -5,17 +5,18 @@ import { useEffect, useMemo, useState } from "react";
 // - Reseta para a primeira página sempre que a lista muda de tamanho
 //   (efeito de mudar busca/filtros) ou quando a página atual fica fora do range.
 // Não altera cálculos: apenas decide o recorte exibido.
-export function usePagination<T>(items: T[], pageSize = 20) {
+export function usePagination<T>(items: T[], pageSize = 20, resetKey?: unknown) {
   const [page, setPage] = useState(1);
 
   const total = items.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   // Volta à primeira página quando o conjunto filtrado muda de tamanho
-  // (troca de busca/filtro/aba) ou quando a página some do range.
+  // (troca de busca/filtro/aba), quando o resetKey muda (mesmo tamanho, outro
+  // filtro) ou quando a página some do range.
   useEffect(() => {
     setPage(1);
-  }, [total, pageSize]);
+  }, [total, pageSize, resetKey]);
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
