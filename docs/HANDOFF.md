@@ -226,3 +226,68 @@ Escopo verificado em todas as 17 tabelas do schema `public`
 
 Nenhuma alteração de banco, layout ou regras financeiras foi feita nesta
 revisão — apenas documentação.
+
+---
+
+## 13. Fase 2 — UX operacional e testes de interface (concluída)
+
+Concluída em 2026-07-09. Nenhuma alteração de banco, layout, regras
+financeiras ou comportamento funcional — apenas melhorias de apresentação/
+navegação e cobertura de testes.
+
+### 13.1 Melhorias de UX implementadas
+
+- **Tela de Pacientes:** linhas expansíveis com card de resumo por paciente
+  (total de atendimentos, valor recebido, saldo em aberto, consultas futuras,
+  follow-ups/propostas em aberto) e histórico cronológico consolidado
+  (atendimentos, recebimentos, consultas, propostas e tentativas de contato).
+  Vínculo prioriza `paciente_id`, com nome normalizado apenas como fallback
+  para registros antigos. Helper: `src/lib/paciente-detalhe.ts`.
+- **Alertas visuais** (componente `AlertBanner`): consultas atrasadas
+  (Consultas), follow-ups pendentes hoje (Follow-up) e contas a receber
+  vencidas (Contas a Receber), com contagens derivadas dos dados existentes.
+- **Atalhos de navegação:** "Receber saldo" (Contas a Receber), "Ver paciente"
+  quando há paciente vinculado (`VerPacienteButton` → Pacientes com filtro por
+  nome) e "Editar atendimento" quando já existe a relação.
+- **Estados vazios** padronizados (componente `EmptyState`) nas telas
+  principais, com mensagens claras. Filtros e paginação mantidos como antes.
+
+### 13.2 Estrutura de testes de interface adicionada
+
+- **Stack:** Vitest + React Testing Library + `@testing-library/user-event` +
+  `@testing-library/jest-dom`, ambiente `jsdom`.
+- **Config:** `vitest.config.ts` (ambiente jsdom, `globals`, setup file).
+- **Infra de testes (`src/test/`):**
+  - `supabase-mock.ts` — mock seguro do cliente Supabase (sem rede), com dados
+    configuráveis por tabela e spies de escrita (`insert`/`update`/`delete`/`rpc`).
+  - `setup.ts` — registra o mock do Supabase e um mock leve do
+    `@tanstack/react-router` (navegação inerte), além de polyfills de jsdom
+    (`matchMedia`, `ResizeObserver`, PointerEvent APIs).
+  - `harness.tsx` — `renderWithProviders` (QueryClient + AuthContext falso) e
+    `getRouteComponent` para renderizar componentes de rota isoladamente.
+
+### 13.3 Cobertura de testes
+
+- **Financeiros** (`src/lib/finance.test.ts`, 9 testes) — todos preservados:
+  recebimento pela data do recebimento; recebimento antigo fora do mês atual;
+  cada recebimento na própria data; despesa paga por `data_pagamento`; despesa
+  pendente por vencimento; pendente não reduz caixa realizado; caixa realizado
+  = recebimentos − despesas pagas; resultado previsto = caixa − pendentes;
+  despesa vencida em um mês e paga no seguinte só entra no caixa no mês do
+  pagamento.
+- **Renderização sem quebrar** (`render-smoke.test.tsx`, 5 testes): Dashboard,
+  Consultório, Contas/Despesas, Consultas, Follow-up.
+- **Recebimento** (`recebimento-form.test.tsx`, 4 testes): botão aparece com
+  saldo em aberto; mensagem de quitado sem saldo; bloqueio de valor acima do
+  saldo; recebimento válido dentro do saldo.
+- **Fluxo de atendimento** (`atendimento-flow.test.tsx`, 2 testes): consulta só
+  vira "realizada" e proposta só vira "fechado" após o fluxo de atendimento
+  (`onSaved`), nunca antes.
+
+### 13.4 Verificação (2026-07-09)
+
+- **Total de testes:** 20 passando (4 arquivos) — 9 financeiros + 11 de interface.
+- **Lint:** sem problemas (exit 0).
+- **Testes:** 20/20 (exit 0).
+- **Typecheck:** sem erros (exit 0).
+- **Build:** sucesso (exit 0).
