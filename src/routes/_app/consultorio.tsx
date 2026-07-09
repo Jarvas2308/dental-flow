@@ -163,9 +163,12 @@ function Consultorio() {
     return m;
   }, [allData, recebimentosData, parcelasData]);
 
-  const isPendente = (r: any) =>
-    (resumoMap.get(r.id)?.status ?? (r.status_pagamento === "pendente" ? "aberto" : "quitado")) !==
-    "quitado";
+  const isPendente = useCallback(
+    (r: any) =>
+      (resumoMap.get(r.id)?.status ??
+        (r.status_pagamento === "pendente" ? "aberto" : "quitado")) !== "quitado",
+    [resumoMap],
+  );
 
   const procedimentosUnicos = useMemo(
     () => Array.from(new Set(allData.map((r: any) => r.procedimento).filter(Boolean))).sort(),
