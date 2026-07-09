@@ -77,6 +77,16 @@ function ContasReceber() {
         description="Tratamentos com saldo pendente — só entram no caixa quando recebidos"
       />
 
+      {!loading && vencidas.length > 0 && (
+        <AlertBanner
+          tone="destructive"
+          icon={<AlertTriangle className="h-5 w-5" />}
+          title={`${vencidas.length} conta(s) a receber vencida(s)`}
+          description={`Saldo vencido de ${brl(totalVencido)} aguardando recebimento.`}
+        />
+      )}
+
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-6">
         <StatCard
           label="Total a receber"
