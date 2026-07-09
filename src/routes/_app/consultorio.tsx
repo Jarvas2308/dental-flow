@@ -319,6 +319,10 @@ function Consultorio() {
   const hasActiveFilter =
     filter !== "todos" || procFilter !== "__all__" || q.length > 0 || statusPag !== "todos";
 
+  // Paginação client-side apenas para renderização (não afeta os totais acima,
+  // que continuam somando sobre a lista completa `rows`).
+  const pag = usePagination(rows, 20);
+
   return (
     <>
       <PageHeader
