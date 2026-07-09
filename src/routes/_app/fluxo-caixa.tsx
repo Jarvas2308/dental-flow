@@ -364,7 +364,7 @@ function FluxoCaixa() {
                       border: "1px solid var(--border)",
                       borderRadius: 12,
                     }}
-                    formatter={(v: any) => brl(Number(v))}
+                    formatter={(v: number | string) => brl(Number(v))}
                     labelFormatter={(l) => `Dia ${l}`}
                   />
                   <Area
@@ -405,7 +405,7 @@ function FluxoCaixa() {
                       border: "1px solid var(--border)",
                       borderRadius: 12,
                     }}
-                    formatter={(v: any) => brl(Number(v))}
+                    formatter={(v: number | string) => brl(Number(v))}
                     labelFormatter={(l) => `Dia ${l}`}
                   />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
@@ -453,7 +453,7 @@ function FluxoCaixa() {
                       border: "1px solid var(--border)",
                       borderRadius: 12,
                     }}
-                    formatter={(v: any) => brl(Number(v))}
+                    formatter={(v: number | string) => brl(Number(v))}
                     labelFormatter={(l) => `Dia ${l}`}
                   />
                   <Line
