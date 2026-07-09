@@ -55,6 +55,9 @@ type Tables<T extends keyof Database["public"]["Tables"]> = Database["public"]["
 type PacienteRow = Tables<"pacientes">;
 
 export const Route = createFileRoute("/_app/pacientes")({
+  validateSearch: (search: Record<string, unknown>): { q?: string } => ({
+    q: typeof search.q === "string" ? search.q : undefined,
+  }),
   component: Pacientes,
 });
 
