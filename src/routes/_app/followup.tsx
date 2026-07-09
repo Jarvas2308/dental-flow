@@ -46,6 +46,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { usePagination } from "@/hooks/use-pagination";
+import { TablePagination } from "@/components/table-pagination";
 
 export const Route = createFileRoute("/_app/followup")({
   component: Followup,
@@ -413,6 +415,8 @@ function Followup() {
   const pendentes = rows.filter((r) => r.pendente).length;
   const valorTotal = rows.reduce((s, r) => s + (Number(r.p.valor_estimado) || 0), 0);
 
+  const pag = usePagination(rows, 20);
+
   const marcarStatus = (id: string, status: string) => update.mutate({ id, values: { status } });
 
   return (
@@ -473,7 +477,7 @@ function Followup() {
                 </TableCell>
               </TableRow>
             )}
-            {rows.map(({ p, prox, pendente }) => (
+            {pag.pageItems.map(({ p, prox, pendente }) => (
               <TableRow key={p.id}>
                 <TableCell className="font-medium">{p.paciente}</TableCell>
                 <TableCell>{p.tratamento}</TableCell>
@@ -508,6 +512,18 @@ function Followup() {
             ))}
           </TableBody>
         </Table>
+        <TablePagination
+          page={pag.page}
+          totalPages={pag.totalPages}
+          from={pag.from}
+          to={pag.to}
+          total={pag.total}
+          canPrev={pag.canPrev}
+          canNext={pag.canNext}
+          onPrev={pag.prev}
+          onNext={pag.next}
+          unitLabel="propostas"
+        />
       </div>
     </>
   );

@@ -54,6 +54,8 @@ import { ConfirmDelete } from "@/components/confirm-delete";
 import { AtendimentoForm, EditAtendimentoButton } from "@/components/atendimento-form";
 import { RegistrarRecebimento } from "@/components/recebimento-form";
 import { resumoAtendimento, receitasRecebidas, noMes, STATUS_LABEL } from "@/lib/finance";
+import { usePagination } from "@/hooks/use-pagination";
+import { TablePagination } from "@/components/table-pagination";
 import { Progress } from "@/components/ui/progress";
 
 export const Route = createFileRoute("/_app/consultorio")({
@@ -319,6 +321,10 @@ function Consultorio() {
   const hasActiveFilter =
     filter !== "todos" || procFilter !== "__all__" || q.length > 0 || statusPag !== "todos";
 
+  // Paginação client-side apenas para renderização (não afeta os totais acima,
+  // que continuam somando sobre a lista completa `rows`).
+  const pag = usePagination(rows, 20, `${mes}|${q}|${sort}|${filter}|${procFilter}|${statusPag}`);
+
   return (
     <>
       <PageHeader
@@ -545,7 +551,7 @@ function Consultorio() {
                 </TableCell>
               </TableRow>
             )}
-            {rows.map((r) => {
+            {pag.pageItems.map((r) => {
               const pend = isPendente(r);
               return (
                 <TableRow
@@ -689,6 +695,18 @@ function Consultorio() {
             })}
           </TableBody>
         </Table>
+        <TablePagination
+          page={pag.page}
+          totalPages={pag.totalPages}
+          from={pag.from}
+          to={pag.to}
+          total={pag.total}
+          canPrev={pag.canPrev}
+          canNext={pag.canNext}
+          onPrev={pag.prev}
+          onNext={pag.next}
+          unitLabel="atendimentos"
+        />
       </div>
     </>
   );

@@ -15,6 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ConfirmDelete } from "@/components/confirm-delete";
+import { usePagination } from "@/hooks/use-pagination";
+import { TablePagination } from "@/components/table-pagination";
 import { ConsultaForm } from "@/components/consulta-form";
 import { AtendimentoForm } from "@/components/atendimento-form";
 import {
@@ -80,6 +82,8 @@ function Consultas() {
     }
     return r.sort((a, b) => (a.data_prevista ?? "").localeCompare(b.data_prevista ?? ""));
   }, [all, q, showRealizadas]);
+
+  const pag = usePagination(rows, 20, `${q}|${showRealizadas}`);
 
   const todayKey = todayISO();
 
@@ -159,7 +163,7 @@ function Consultas() {
                 </TableCell>
               </TableRow>
             )}
-            {rows.map((c) => {
+            {pag.pageItems.map((c) => {
               const atrasada = !c.realizada && c.data_prevista < todayKey;
               return (
                 <TableRow key={c.id} className={cn(c.realizada && "opacity-60")}>
@@ -218,6 +222,18 @@ function Consultas() {
             })}
           </TableBody>
         </Table>
+        <TablePagination
+          page={pag.page}
+          totalPages={pag.totalPages}
+          from={pag.from}
+          to={pag.to}
+          total={pag.total}
+          canPrev={pag.canPrev}
+          canNext={pag.canNext}
+          onPrev={pag.prev}
+          onNext={pag.next}
+          unitLabel="consultas"
+        />
       </div>
     </>
   );

@@ -4,6 +4,8 @@ import { useTable, useCreate, useDelete, useUpdate } from "@/hooks/use-data";
 import { useGerarRecorrentes } from "@/hooks/use-recurring";
 import { brl, currentMonthKey, monthKey, monthLabel, monthOptions } from "@/lib/format";
 import { PageHeader, StatCard } from "@/components/ui-kit";
+import { usePagination } from "@/hooks/use-pagination";
+import { TablePagination } from "@/components/table-pagination";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Table,
@@ -290,6 +292,9 @@ function Contas() {
     [enriched, mes, aba, q],
   );
 
+  // Paginação só para renderização; os totais/rodapé continuam sobre rowsMes.
+  const pag = usePagination(rowsMes, 20, `${mes}|${aba}|${q}`);
+
   const totMes = enriched.filter((r) => monthKey(r.vencimento) === mes);
   const totalPago = totMes
     .filter((r) => r.status === "pago")
@@ -401,7 +406,7 @@ function Contas() {
                     </TableCell>
                   </TableRow>
                 )}
-                {rowsMes.map((r) => (
+                {pag.pageItems.map((r) => (
                   <TableRow key={r.id}>
                     <TableCell className="text-muted-foreground">
                       {new Date(r.vencimento + "T00:00:00").toLocaleDateString("pt-BR")}
@@ -449,6 +454,18 @@ function Contas() {
                 ))}
               </TableBody>
             </Table>
+            <TablePagination
+              page={pag.page}
+              totalPages={pag.totalPages}
+              from={pag.from}
+              to={pag.to}
+              total={pag.total}
+              canPrev={pag.canPrev}
+              canNext={pag.canNext}
+              onPrev={pag.prev}
+              onNext={pag.next}
+              unitLabel="despesas"
+            />
             <div className="flex justify-between items-center px-4 py-3 border-t bg-muted/30">
               <span className="text-sm text-muted-foreground">{rowsMes.length} despesa(s)</span>
               <span className="font-semibold">
