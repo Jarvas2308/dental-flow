@@ -179,7 +179,10 @@ function DespesaForm({ editing, onClose }: { editing?: Despesa; onClose?: () => 
             </div>
             <div className="space-y-1.5">
               <Label>Status</Label>
-              <Select value={v.status} onValueChange={(s) => setV({ ...v, status: s as Despesa["status"] })}>
+              <Select
+                value={v.status}
+                onValueChange={(s) => setV({ ...v, status: s as Despesa["status"] })}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -217,7 +220,9 @@ function DespesaForm({ editing, onClose }: { editing?: Despesa; onClose?: () => 
                 <Label>Tipo de recorrência</Label>
                 <Select
                   value={v.tipo_recorrencia}
-                  onValueChange={(s) => setV({ ...v, tipo_recorrencia: s as Despesa["tipo_recorrencia"] })}
+                  onValueChange={(s) =>
+                    setV({ ...v, tipo_recorrencia: s as Despesa["tipo_recorrencia"] })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
