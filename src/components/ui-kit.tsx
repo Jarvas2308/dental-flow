@@ -82,10 +82,7 @@ export function AlertBanner({
 
   return (
     <div
-      className={cn(
-        "mb-4 flex flex-wrap items-center gap-3 rounded-2xl border px-4 py-3",
-        toneCls,
-      )}
+      className={cn("mb-4 flex flex-wrap items-center gap-3 rounded-2xl border px-4 py-3", toneCls)}
       role="status"
     >
       {icon && <div className="shrink-0">{icon}</div>}
@@ -114,11 +111,8 @@ export function EmptyState({
     <div className="flex flex-col items-center justify-center gap-2 px-4 py-12 text-center">
       {icon && <div className="text-muted-foreground/70">{icon}</div>}
       <div className="text-sm font-medium">{title}</div>
-      {description && (
-        <div className="max-w-sm text-xs text-muted-foreground">{description}</div>
-      )}
+      {description && <div className="max-w-sm text-xs text-muted-foreground">{description}</div>}
       {action && <div className="mt-2">{action}</div>}
     </div>
   );
 }
-

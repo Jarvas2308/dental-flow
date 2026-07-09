@@ -57,12 +57,14 @@ function ContasReceber() {
   // alerta visual; não altera nenhum cálculo financeiro.
   const vencidas = useMemo(() => {
     const hoje = todayISO();
-    return valoresEmAberto(atendimentos.data ?? [], recebimentos.data ?? [], parcelas.data ?? [])
-      .filter((v) => v.vencimento && v.vencimento < hoje);
+    return valoresEmAberto(
+      atendimentos.data ?? [],
+      recebimentos.data ?? [],
+      parcelas.data ?? [],
+    ).filter((v) => v.vencimento && v.vencimento < hoje);
   }, [atendimentos.data, recebimentos.data, parcelas.data]);
 
   const totalVencido = vencidas.reduce((s, v) => s + v.valor_liquido, 0);
-
 
   const rows = useMemo(() => {
     if (!q) return contas;
@@ -91,7 +93,6 @@ function ContasReceber() {
           description={`Saldo vencido de ${brl(totalVencido)} aguardando recebimento.`}
         />
       )}
-
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-6">
         <StatCard
@@ -134,10 +135,7 @@ function ContasReceber() {
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : rows.length === 0 ? (
-        <div
-          className="rounded-2xl border bg-card"
-          style={{ boxShadow: "var(--shadow-soft)" }}
-        >
+        <div className="rounded-2xl border bg-card" style={{ boxShadow: "var(--shadow-soft)" }}>
           <EmptyState
             icon={<CheckCircle2 className="h-8 w-8 text-success" />}
             title={q ? "Nenhum resultado para a busca" : "Nenhuma conta a receber em aberto"}
@@ -149,7 +147,6 @@ function ContasReceber() {
           />
         </div>
       ) : (
-
         <div className="space-y-3">
           {rows.map((c) => {
             const pct = c.total > 0 ? Math.min(100, (c.recebido / c.total) * 100) : 0;
@@ -209,10 +206,7 @@ function ContasReceber() {
                       <RegistrarRecebimento
                         atendimento={atend}
                         trigger={
-                          <Button
-                            size="sm"
-                            className="h-8 gap-1"
-                          >
+                          <Button size="sm" className="h-8 gap-1">
                             <HandCoins className="h-4 w-4" /> Receber saldo
                           </Button>
                         }
@@ -224,7 +218,6 @@ function ContasReceber() {
                     </span>
                   )}
                 </div>
-
               </div>
             );
           })}

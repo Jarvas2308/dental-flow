@@ -465,7 +465,6 @@ function Followup() {
         />
       )}
 
-
       <div
         className="rounded-2xl border bg-card overflow-hidden"
         style={{ boxShadow: "var(--shadow-soft)" }}
