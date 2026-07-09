@@ -242,7 +242,13 @@ function Consultas() {
   );
 }
 
-function RealizarConsulta({ consulta, upd }: { consulta: any; upd: ReturnType<typeof useUpdate> }) {
+function RealizarConsulta({
+  consulta,
+  upd,
+}: {
+  consulta: ConsultaRow;
+  upd: ReturnType<typeof useUpdate>;
+}) {
   // Garante que a consulta seja marcada como realizada uma única vez, mesmo
   // com cliques repetidos. Em caso de falha, libera para nova tentativa.
   const done = useRef(false);
