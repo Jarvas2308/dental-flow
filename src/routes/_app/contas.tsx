@@ -95,7 +95,7 @@ function computeStatus(d: Despesa): "pago" | "pendente" | "atrasado" | "aguardan
   return v < today ? "atrasado" : "pendente";
 }
 
-function DespesaForm({ editing, onClose }: { editing?: any; onClose?: () => void }) {
+function DespesaForm({ editing, onClose }: { editing?: Despesa; onClose?: () => void }) {
   const create = useCreate("despesas");
   const update = useUpdate("despesas");
   const [open, setOpen] = useState(!!editing);
