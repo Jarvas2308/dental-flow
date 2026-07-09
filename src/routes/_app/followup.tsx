@@ -477,7 +477,7 @@ function Followup() {
                 </TableCell>
               </TableRow>
             )}
-            {rows.map(({ p, prox, pendente }) => (
+            {pag.pageItems.map(({ p, prox, pendente }) => (
               <TableRow key={p.id}>
                 <TableCell className="font-medium">{p.paciente}</TableCell>
                 <TableCell>{p.tratamento}</TableCell>
