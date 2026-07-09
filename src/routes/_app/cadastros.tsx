@@ -25,12 +25,14 @@ import { Button } from "@/components/ui/button";
 import { Plus, Pencil, Loader2 } from "lucide-react";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { toast } from "sonner";
+import type { Database } from "@/integrations/supabase/types";
 
 export const Route = createFileRoute("/_app/cadastros")({
   component: Cadastros,
 });
 
 type T = "procedimentos" | "formas_pagamento" | "laboratorios" | "tipos_trabalho";
+type CadastroRow = Database["public"]["Tables"][T]["Row"];
 
 function CadastroForm({
   table,
