@@ -66,9 +66,9 @@ function CadastroForm({
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nome.trim()) return toast.error("Informe o nome");
-    const payload: any = { nome: nome.trim() };
+    const payload: Record<string, unknown> = { nome: nome.trim() };
     if (withTaxa) payload.taxa = Number(taxa) || 0;
-    if (isEdit) await update.mutateAsync({ id: editing.id, values: payload });
+    if (isEdit) await update.mutateAsync({ id: editing!.id, values: payload });
     else await create.mutateAsync(payload);
     setOpen(false);
     onClose?.();
