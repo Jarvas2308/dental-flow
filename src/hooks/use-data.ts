@@ -96,7 +96,11 @@ export function useCreate(table: TableName) {
   return useMutation({
     mutationFn: async (values: Record<string, unknown>) => {
       const payload = { ...values, user_id: user!.id };
-      const { data, error } = await (supabase.from(table) as any).insert(payload).select().single();
+      const { data, error } = await supabase
+        .from(table)
+        .insert(payload as never)
+        .select()
+        .single();
       if (error) throw error;
       return data;
     },
@@ -114,7 +118,10 @@ export function useUpdate(table: TableName) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, values }: { id: string; values: Record<string, unknown> }) => {
-      const { error } = await (supabase.from(table) as any).update(values).eq("id", id);
+      const { error } = await supabase
+        .from(table)
+        .update(values as never)
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
