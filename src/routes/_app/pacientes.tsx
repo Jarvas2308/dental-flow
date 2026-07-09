@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useTable, useCreate, useDelete, useUpdate } from "@/hooks/use-data";
-import { normalizePacienteNome } from "@/lib/pacientes";
+import { buildPacienteHistoryCounter } from "@/lib/pacientes";
 import { PageHeader } from "@/components/ui-kit";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -85,33 +85,26 @@ function PacienteForm({
 function Pacientes() {
   const list = useTable<any>("pacientes", "nome", true);
   const atendimentos = useTable<any>("atendimentos", "data");
+  const consultas = useTable<any>("consultas_previstas", "data_prevista");
+  const propostas = useTable<any>("tratamentos_propostos", "data_proposta");
   const del = useDelete("pacientes");
   const [editing, setEditing] = useState<any | null>(null);
   const [q, setQ] = useState("");
 
   const pacientes = list.data ?? [];
 
-  // Conta atendimentos priorizando paciente_id; registros antigos sem id caem
-  // no fallback pelo nome normalizado. As duas chaves são disjuntas por registro,
-  // então não há duplicação quando paciente_id existe.
-  const { countById, countByName } = useMemo(() => {
-    const byId: Record<string, number> = {};
-    const byName: Record<string, number> = {};
-    for (const a of atendimentos.data ?? []) {
-      if (a.paciente_id) {
-        byId[a.paciente_id] = (byId[a.paciente_id] ?? 0) + 1;
-      } else {
-        const k = normalizePacienteNome(a.paciente ?? "").toLowerCase();
-        if (!k) continue;
-        byName[k] = (byName[k] ?? 0) + 1;
-      }
-    }
-    return { countById: byId, countByName: byName };
-  }, [atendimentos.data]);
+  // Histórico completo do paciente: atendimentos + consultas + propostas/follow-ups.
+  // Prioriza paciente_id e usa o nome normalizado apenas como fallback para
+  // registros antigos sem id, sem duplicar registros que já têm paciente_id.
+  const countFor = useMemo(
+    () => buildPacienteHistoryCounter([
+      atendimentos.data,
+      consultas.data,
+      propostas.data,
+    ]),
+    [atendimentos.data, consultas.data, propostas.data],
+  );
 
-  const countFor = (p: any) =>
-    (countById[p.id] ?? 0) +
-    (countByName[normalizePacienteNome(p.nome ?? "").toLowerCase()] ?? 0);
 
   const rows = useMemo(
     () => pacientes.filter((p) => !q || p.nome?.toLowerCase().includes(q.toLowerCase())),
@@ -155,7 +148,7 @@ function Pacientes() {
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-2">
                     {r.nome}
-                    <Badge variant="secondary">{countFor(r)} atend.</Badge>
+                    <Badge variant="secondary">{countFor(r)} reg.</Badge>
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
