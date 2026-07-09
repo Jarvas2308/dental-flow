@@ -63,7 +63,7 @@ describe("registrar recebimento", () => {
 
     await user.click(screen.getByRole("button", { name: /Receber/i }));
 
-    const valor = await screen.findByLabelText(/Valor recebido/i);
+    const valor = await screen.findByPlaceholderText("0,00");
     await user.clear(valor);
     await user.type(valor, "5000"); // muito acima do saldo de 1000
 
@@ -80,7 +80,7 @@ describe("registrar recebimento", () => {
 
     await user.click(screen.getByRole("button", { name: /Receber/i }));
 
-    const valor = await screen.findByLabelText(/Valor recebido/i);
+    const valor = await screen.findByPlaceholderText("0,00");
     await user.clear(valor);
     await user.type(valor, "300"); // dentro do saldo
 
