@@ -9,26 +9,29 @@ import { resetSupabaseMock, setTableData, spies } from "@/test/supabase-mock";
 // simulando a conclusão do fluxo de atendimento SEM executá-lo de verdade.
 // Assim conseguimos verificar que a mudança de status só acontece através
 // desse callback (ou seja, depois do fluxo de atendimento), nunca antes.
-vi.mock("@/components/atendimento-form", () => ({
-  AtendimentoForm: ({
-    onSaved,
-    trigger,
-  }: {
-    onSaved?: () => void | Promise<void>;
-    trigger?: React.ReactNode;
-  }) =>
-    createElement(
-      "div",
-      null,
+vi.mock("@/components/atendimento-form", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/components/atendimento-form")>();
+  return {
+    ...actual,
+    AtendimentoForm: ({
+      onSaved,
       trigger,
+    }: {
+      onSaved?: () => void | Promise<void>;
+      trigger?: React.ReactNode;
+    }) =>
       createElement(
-        "button",
-        { type: "button", "data-testid": "mock-atendimento-save", onClick: () => onSaved?.() },
-        "salvar atendimento (mock)",
+        "div",
+        null,
+        trigger,
+        createElement(
+          "button",
+          { type: "button", "data-testid": "mock-atendimento-save", onClick: () => onSaved?.() },
+          "salvar atendimento (mock)",
+        ),
       ),
-    ),
-  EditAtendimentoButton: () => null,
-}));
+  };
+});
 
 import { Route as ConsultasRoute } from "@/routes/_app/consultas";
 import { Route as FollowupRoute } from "@/routes/_app/followup";
