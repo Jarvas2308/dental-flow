@@ -154,7 +154,7 @@ function Consultorio() {
   const del = useDelete("atendimentos");
 
   const allData = useMemo(
-    () => (consultorio.data?.atendimentos ?? []) as Tables<"atendimentos">[],
+    () => (consultorio.data?.atendimentos ?? []) as AtendimentoView[],
     [consultorio.data?.atendimentos],
   );
   const recebimentosData = useMemo(
