@@ -48,6 +48,14 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { usePagination } from "@/hooks/use-pagination";
 import { TablePagination } from "@/components/table-pagination";
+import type { Database } from "@/integrations/supabase/types";
+
+type Tables<T extends keyof Database["public"]["Tables"]> =
+  Database["public"]["Tables"][T]["Row"];
+type TratamentoRow = Tables<"tratamentos_propostos">;
+type TentativaRow = Tables<"tentativas_contato">;
+type ProcedimentoRow = Tables<"procedimentos">;
+type PacienteRow = Tables<"pacientes">;
 
 export const Route = createFileRoute("/_app/followup")({
   component: Followup,
