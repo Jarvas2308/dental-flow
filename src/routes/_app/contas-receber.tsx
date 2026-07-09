@@ -195,15 +195,30 @@ function ContasReceber() {
                   <Progress value={pct} className="h-2" />
                 </div>
 
-                <div className="mt-3 flex items-center justify-end gap-2">
+                <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
+                  <VerPacienteButton nome={c.paciente} />
                   {atend ? (
-                    <RegistrarRecebimento atendimento={atend} />
+                    <>
+                      <EditAtendimentoButton row={atend} />
+                      <RegistrarRecebimento
+                        atendimento={atend}
+                        trigger={
+                          <Button
+                            size="sm"
+                            className="h-8 gap-1"
+                          >
+                            <HandCoins className="h-4 w-4" /> Receber saldo
+                          </Button>
+                        }
+                      />
+                    </>
                   ) : (
                     <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                       <Clock className="h-3 w-3" /> Pendente
                     </span>
                   )}
                 </div>
+
               </div>
             );
           })}
