@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useTable, useCreate, useDelete, useUpdate } from "@/hooks/use-data";
+import { normalizePacienteNome } from "@/lib/pacientes";
 import { PageHeader } from "@/components/ui-kit";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
