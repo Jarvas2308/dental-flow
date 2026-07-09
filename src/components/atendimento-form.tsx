@@ -392,7 +392,9 @@ export function AtendimentoForm({
     }
     setPacienteId(editing?.paciente_id ?? null);
     setParcelado(!!editing?.parcelado);
-    setParcelasN(editing?.parcelas_total > 1 ? editing.parcelas_total : 3);
+    setParcelasN(
+      editing?.parcelas_total != null && editing.parcelas_total > 1 ? editing.parcelas_total : 3,
+    );
     setDividido(false);
     setValorInicial("");
     setFormaInicial("");
