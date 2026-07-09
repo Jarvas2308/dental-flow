@@ -323,7 +323,7 @@ function Consultorio() {
 
   // Paginação client-side apenas para renderização (não afeta os totais acima,
   // que continuam somando sobre a lista completa `rows`).
-  const pag = usePagination(rows, 20);
+  const pag = usePagination(rows, 20, `${mes}|${q}|${sort}|${filter}|${procFilter}|${statusPag}`);
 
   return (
     <>
