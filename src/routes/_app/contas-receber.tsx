@@ -35,9 +35,15 @@ export const Route = createFileRoute("/_app/contas-receber")({
   component: ContasReceber,
 });
 
+type NotaFiscalStatus = "pendente" | "emitida" | "nao_emitida" | "nao_se_aplica";
+type AtendimentoFull = Omit<
+  Database["public"]["Tables"]["atendimentos"]["Row"],
+  "nota_fiscal_status"
+> & { nota_fiscal_status: NotaFiscalStatus };
+
 function ContasReceber() {
   const [q, setQ] = useState("");
-  const atendimentos = useTable<AtendimentoRow>("atendimentos", "data");
+  const atendimentos = useTable<AtendimentoFull>("atendimentos", "data");
   const recebimentos = useTable<RecebimentoRow>("recebimentos", "data", true);
   const parcelas = useTable<ParcelaRow>("parcelas", "vencimento", true);
 
