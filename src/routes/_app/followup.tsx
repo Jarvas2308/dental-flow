@@ -415,6 +415,8 @@ function Followup() {
   const pendentes = rows.filter((r) => r.pendente).length;
   const valorTotal = rows.reduce((s, r) => s + (Number(r.p.valor_estimado) || 0), 0);
 
+  const pag = usePagination(rows, 20);
+
   const marcarStatus = (id: string, status: string) => update.mutate({ id, values: { status } });
 
   return (
