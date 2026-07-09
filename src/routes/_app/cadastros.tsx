@@ -173,7 +173,11 @@ function CrudList({
             {(list.data ?? []).map((r) => (
               <TableRow key={r.id}>
                 <TableCell className="font-medium">{r.nome}</TableCell>
-                {withTaxa && <TableCell className="text-right">{r.taxa}%</TableCell>}
+                {withTaxa && (
+                  <TableCell className="text-right">
+                    {(r as { taxa?: number }).taxa}%
+                  </TableCell>
+                )}
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
                     <Button
