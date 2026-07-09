@@ -399,7 +399,7 @@ function Followup() {
   const tentativas = useTable<any>("tentativas_contato", "data", true);
   const update = useUpdate("tratamentos_propostos");
 
-  const allTentativas = tentativas.data ?? [];
+  const allTentativas = useMemo(() => tentativas.data ?? [], [tentativas.data]);
 
   const rows = useMemo(() => {
     return (props.data ?? [])
