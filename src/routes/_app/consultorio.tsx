@@ -18,7 +18,8 @@ import {
   monthOptions,
   parseLocalDate,
 } from "@/lib/format";
-import { PageHeader, StatCard } from "@/components/ui-kit";
+import { PageHeader, StatCard, EmptyState } from "@/components/ui-kit";
+import { VerPacienteButton } from "@/components/paciente-link";
 import {
   Table,
   TableBody,
