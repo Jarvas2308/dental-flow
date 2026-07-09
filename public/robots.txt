@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://annajuliaodonto.lovable.app/sitemap.xml

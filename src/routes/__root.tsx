@@ -61,13 +61,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Odonto Financeiro" },
+      { title: "Odonto Financeiro — Gestão de Consultório Odontológico" },
       {
         name: "description",
         content: "Sistema financeiro e gerencial para consultório odontológico",
       },
-      { property: "og:title", content: "Odonto Financeiro" },
-      { name: "twitter:title", content: "Odonto Financeiro" },
+      { property: "og:title", content: "Odonto Financeiro — Gestão de Consultório Odontológico" },
+      { property: "og:url", content: "https://annajuliaodonto.lovable.app/" },
+      { name: "twitter:title", content: "Odonto Financeiro — Gestão de Consultório Odontológico" },
       {
         property: "og:description",
         content: "Sistema financeiro e gerencial para consultório odontológico",
