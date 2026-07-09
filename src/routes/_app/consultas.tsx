@@ -83,6 +83,8 @@ function Consultas() {
     return r.sort((a, b) => (a.data_prevista ?? "").localeCompare(b.data_prevista ?? ""));
   }, [all, q, showRealizadas]);
 
+  const pag = usePagination(rows, 20, `${q}|${showRealizadas}`);
+
   const todayKey = todayISO();
 
   return (
