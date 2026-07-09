@@ -132,6 +132,7 @@ export function useDelete(table: TableName) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [table] });
+      qc.invalidateQueries({ queryKey: ["consultorio"] });
       toast.success("Excluído");
     },
     onError: (e: any) => toast.error(e.message ?? "Erro ao excluir"),
