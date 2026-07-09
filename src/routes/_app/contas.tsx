@@ -80,7 +80,7 @@ function statusBadge(s: string) {
   return <Badge variant="outline">Pendente</Badge>;
 }
 
-function computeStatus(d: any): "pago" | "pendente" | "atrasado" | "aguardando" {
+function computeStatus(d: Despesa): "pago" | "pendente" | "atrasado" | "aguardando" {
   if (d.status === "pago") return "pago";
   if (
     d.recorrente &&
