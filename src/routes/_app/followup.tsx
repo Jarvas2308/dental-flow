@@ -50,8 +50,7 @@ import { usePagination } from "@/hooks/use-pagination";
 import { TablePagination } from "@/components/table-pagination";
 import type { Database } from "@/integrations/supabase/types";
 
-type Tables<T extends keyof Database["public"]["Tables"]> =
-  Database["public"]["Tables"][T]["Row"];
+type Tables<T extends keyof Database["public"]["Tables"]> = Database["public"]["Tables"][T]["Row"];
 type TratamentoRow = Tables<"tratamentos_propostos">;
 type TentativaRow = Tables<"tentativas_contato">;
 type ProcedimentoRow = Tables<"procedimentos">;
