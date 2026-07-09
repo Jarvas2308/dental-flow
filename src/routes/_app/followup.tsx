@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
 import { useTable, useCreate, useUpdate } from "@/hooks/use-data";
+import { useAuth } from "@/hooks/use-auth";
+import { useQueryClient } from "@tanstack/react-query";
+import { resolvePacienteId } from "@/lib/pacientes";
 import { brl, formatDateBR, todayISO } from "@/lib/format";
 import { proximaTentativa, estaPendenteHoje } from "@/lib/followup";
 import { PacienteCombobox, AtendimentoForm, ProcedimentoCombobox } from "@/components/atendimento-form";
