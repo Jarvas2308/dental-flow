@@ -144,9 +144,18 @@ function Consultorio() {
   const upd = useUpdate("atendimentos");
   const del = useDelete("atendimentos");
 
-  const allData = (consultorio.data?.atendimentos ?? []) as any[];
-  const recebimentosData = (consultorio.data?.recebimentos ?? []) as any[];
-  const parcelasData = (consultorio.data?.parcelas ?? []) as any[];
+  const allData = useMemo(
+    () => (consultorio.data?.atendimentos ?? []) as any[],
+    [consultorio.data?.atendimentos],
+  );
+  const recebimentosData = useMemo(
+    () => (consultorio.data?.recebimentos ?? []) as any[],
+    [consultorio.data?.recebimentos],
+  );
+  const parcelasData = useMemo(
+    () => (consultorio.data?.parcelas ?? []) as any[],
+    [consultorio.data?.parcelas],
+  );
 
   const resumoMap = useMemo(() => {
     const m = new Map<string, ReturnType<typeof resumoAtendimento>>();
