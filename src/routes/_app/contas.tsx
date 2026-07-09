@@ -4,6 +4,8 @@ import { useTable, useCreate, useDelete, useUpdate } from "@/hooks/use-data";
 import { useGerarRecorrentes } from "@/hooks/use-recurring";
 import { brl, currentMonthKey, monthKey, monthLabel, monthOptions } from "@/lib/format";
 import { PageHeader, StatCard } from "@/components/ui-kit";
+import { usePagination } from "@/hooks/use-pagination";
+import { TablePagination } from "@/components/table-pagination";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Table,
