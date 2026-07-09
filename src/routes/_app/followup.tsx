@@ -58,6 +58,11 @@ function PropostaForm({ proposta, onClose }: { proposta?: any; onClose: () => vo
   const create = useCreate("tratamentos_propostos");
   const update = useUpdate("tratamentos_propostos");
   const procedimentos = useTable<any>("procedimentos", "nome", true);
+  const pacientes = useTable<any>("pacientes", "nome", true);
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  // Guarda o id vindo do combobox quando um paciente existente é selecionado.
+  const [pacienteId, setPacienteId] = useState<string | null>(proposta?.paciente_id ?? null);
   const [v, setV] = useState<Proposta>(
     proposta
       ? {
