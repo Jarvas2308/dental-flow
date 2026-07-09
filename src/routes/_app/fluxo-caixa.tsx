@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useTable } from "@/hooks/use-data";
 import { brl, currentMonthKey, monthKey, monthLabel, monthOptions, parseLocalDate } from "@/lib/format";
-import { receitasRecebidas } from "@/lib/finance";
+import { receitasRecebidas, despesasPagas as despesasPagasFn } from "@/lib/finance";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
