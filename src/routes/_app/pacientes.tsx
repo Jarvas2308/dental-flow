@@ -254,9 +254,16 @@ function Pacientes() {
   const propostas = useTable<PropostaFull>("tratamentos_propostos", "data_proposta");
   const tentativas = useTable<TentativaFull>("tentativas_contato", "data");
   const del = useDelete("pacientes");
+  const { q: qParam } = Route.useSearch();
   const [editing, setEditing] = useState<PacienteRow | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [q, setQ] = useState("");
+  const [q, setQ] = useState(qParam ?? "");
+
+  // Ao chegar via "Ver paciente" (com ?q=), sincroniza a busca e já expande
+  // automaticamente o paciente correspondente para agilizar a navegação.
+  useEffect(() => {
+    if (qParam) setQ(qParam);
+  }, [qParam]);
 
   const pacientes = useMemo(() => list.data ?? [], [list.data]);
 
