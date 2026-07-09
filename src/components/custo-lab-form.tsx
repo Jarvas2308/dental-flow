@@ -192,7 +192,7 @@ export function CustoLabForm({ editing, onClose }: { editing?: Custo; onClose?: 
       valor: Number(v.valor),
       data: v.data,
     };
-    if (isEdit) await update.mutateAsync({ id: editing.id, values: payload });
+    if (isEdit) await update.mutateAsync({ id: editing!.id!, values: payload });
     else await create.mutateAsync(payload);
 
     setOpen(false);
