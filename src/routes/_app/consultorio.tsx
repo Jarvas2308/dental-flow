@@ -206,7 +206,7 @@ function Consultorio() {
     monthEnd.setHours(23, 59, 59, 999);
 
     // Inclui registros do mês OU pendentes que continuam em aberto até o mês selecionado
-    const inMonth = (x: any) => {
+    const inMonth = (x: AtendimentoView) => {
       if (monthKey(x.data) === mes) return true;
       const d = parseLocalDate(x.data);
       return isPendente(x) && !!d && d <= monthEnd;
