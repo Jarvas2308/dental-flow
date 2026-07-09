@@ -38,6 +38,57 @@ export function useTable<T = any>(table: TableName, orderBy = "created_at", asc 
   });
 }
 
+// Busca enxuta para a tela de consultório: carrega apenas os atendimentos
+// relevantes ao mês selecionado + todas as pendências antigas (saldo em aberto),
+// evitando trazer todo o histórico quitado. Também traz somente os recebimentos
+// desses atendimentos.
+//
+// Regra de "pendência antiga": um atendimento só possui saldo em aberto quando
+// foi salvo com status_pagamento = 'pendente' (o formulário força isso sempre
+// que há parcelas/divisão) ou quando é parcelado (mecanismo legado de parcelas).
+// Atendimentos à vista quitados nunca entram nessas condições, então ficam de fora.
+export function useConsultorioData(mes: string) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["consultorio", user?.id, mes],
+    enabled: !!user,
+    queryFn: async () => {
+      const [yy, mm] = mes.split("-").map(Number);
+      const start = `${yy}-${String(mm).padStart(2, "0")}-01`;
+      const lastDay = new Date(yy, mm, 0).getDate();
+      const end = `${yy}-${String(mm).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+
+      const { data: atendimentos, error: aErr } = await supabase
+        .from("atendimentos")
+        .select("*")
+        .or(`and(data.gte.${start},data.lte.${end}),status_pagamento.eq.pendente,parcelado.eq.true`)
+        .order("data", { ascending: false });
+      if (aErr) throw aErr;
+
+      const ids = (atendimentos ?? []).map((a: any) => a.id);
+
+      let recebimentos: any[] = [];
+      let parcelas: any[] = [];
+      if (ids.length) {
+        const [{ data: recs, error: rErr }, { data: parc, error: pErr }] = await Promise.all([
+          supabase.from("recebimentos").select("*").in("atendimento_id", ids),
+          supabase.from("parcelas").select("*").in("atendimento_id", ids),
+        ]);
+        if (rErr) throw rErr;
+        if (pErr) throw pErr;
+        recebimentos = recs ?? [];
+        parcelas = parc ?? [];
+      }
+
+      return {
+        atendimentos: (atendimentos ?? []) as any[],
+        recebimentos,
+        parcelas,
+      };
+    },
+  });
+}
+
 export function useCreate(table: TableName) {
   const qc = useQueryClient();
   const { user } = useAuth();
