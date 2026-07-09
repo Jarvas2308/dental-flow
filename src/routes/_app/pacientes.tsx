@@ -155,7 +155,7 @@ function Pacientes() {
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-2">
                     {r.nome}
-                    <Badge variant="secondary">{countByName[r.nome] ?? 0} atend.</Badge>
+                    <Badge variant="secondary">{countFor(r)} atend.</Badge>
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
