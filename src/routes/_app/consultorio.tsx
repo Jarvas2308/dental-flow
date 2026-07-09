@@ -180,7 +180,7 @@ function Consultorio() {
   );
 
   const procedimentosUnicos = useMemo(
-    () => Array.from(new Set(allData.map((r: any) => r.procedimento).filter(Boolean))).sort(),
+    () => Array.from(new Set(allData.map((r) => r.procedimento).filter(Boolean))).sort(),
     [allData],
   );
 
