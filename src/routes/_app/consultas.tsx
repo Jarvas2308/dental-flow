@@ -181,8 +181,22 @@ function Consultas() {
             )}
             {!list.isLoading && rows.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-12">
-                  Nenhuma consulta prevista.
+                <TableCell colSpan={6} className="py-0">
+                  <EmptyState
+                    icon={<CalendarClock className="h-8 w-8" />}
+                    title={
+                      q
+                        ? "Nenhuma consulta encontrada"
+                        : showRealizadas
+                          ? "Nenhuma consulta registrada"
+                          : "Nenhuma consulta prevista"
+                    }
+                    description={
+                      q
+                        ? "Ajuste a busca para localizar o paciente."
+                        : "Use o botão “Nova consulta” para agendar a próxima previsão."
+                    }
+                  />
                 </TableCell>
               </TableRow>
             )}
