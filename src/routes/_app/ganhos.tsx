@@ -202,7 +202,7 @@ function EditReceita({ row }: { row: ReceitaRow }) {
 
 function Ganhos() {
   const [mes, setMes] = useState(currentMonthKey());
-  const list = useTable<any>("receitas_extras", "data", false);
+  const list = useTable<ReceitaRow>("receitas_extras", "data", false);
   const del = useDelete("receitas_extras");
 
   const rows = useMemo(
