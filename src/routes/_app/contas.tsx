@@ -308,9 +308,9 @@ function Contas() {
   const totalAguardando = totMes.filter((r) => r.status === "aguardando").length;
   const totalGeral = totalPago + totalPendente + totalAtrasado;
 
-  const marcarPago = (r: any) => {
+  const marcarPago = (r: Despesa) => {
     upd.mutate({
-      id: r.id,
+      id: r.id!,
       values: { status: "pago", data_pagamento: new Date().toISOString().slice(0, 10) },
     });
   };
