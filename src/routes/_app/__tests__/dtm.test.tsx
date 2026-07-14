@@ -46,18 +46,19 @@ describe("Módulo DTM — Acompanhamento", () => {
     renderWithProviders(<Dtm />);
 
     await user.click(screen.getByRole("button", { name: /Novo acompanhamento/i }));
-    await user.type(await screen.findByTestId("paciente-input"), "Maria DTM");
+    const pacInput = (await screen.findByTestId("paciente-input")) as HTMLInputElement;
+    fireEvent.change(pacInput, { target: { value: "Maria DTM" } });
 
-    const inputs = screen.getAllByRole("spinbutton");
-    await user.clear(inputs[0]);
-    await user.type(inputs[0], "8");
+    const inputs = screen.getAllByRole("spinbutton") as HTMLInputElement[];
+    fireEvent.change(inputs[0], { target: { value: "8" } });
 
-    await user.click(screen.getByRole("button", { name: /^Criar$/i }));
+    // Submete o formulário diretamente para evitar problemas de pointer-events
+    // do Radix Dialog no jsdom.
+    const form = pacInput.closest("form")!;
+    fireEvent.submit(form);
 
     await waitFor(
       () => {
-        // eslint-disable-next-line no-console
-        console.log("INSERTS:", spies.insert.mock.calls);
         expect(spies.insert).toHaveBeenCalledWith(
           "dtm_acompanhamentos",
           expect.objectContaining({ paciente: "Maria DTM", total_consultas: 8 }),
