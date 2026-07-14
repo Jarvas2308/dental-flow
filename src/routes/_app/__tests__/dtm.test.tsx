@@ -52,8 +52,9 @@ describe("Módulo DTM — Acompanhamento", () => {
     const inputs = screen.getAllByRole("spinbutton") as HTMLInputElement[];
     fireEvent.change(inputs[0], { target: { value: "8" } });
 
-    // Submete o formulário diretamente para evitar problemas de pointer-events
-    // do Radix Dialog no jsdom.
+    // eslint-disable-next-line no-console
+    console.log("PAC value:", pacInput.value, "TOTAL:", inputs[0].value);
+
     const form = pacInput.closest("form")!;
     fireEvent.submit(form);
 
