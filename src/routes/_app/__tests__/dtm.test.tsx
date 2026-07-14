@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { screen, waitFor, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import userEvent, { PointerEventsCheckLevel } from "@testing-library/user-event";
 import { createElement } from "react";
 import { renderWithProviders, getRouteComponent } from "@/test/harness";
 import { resetSupabaseMock, setTableData, spies } from "@/test/supabase-mock";
