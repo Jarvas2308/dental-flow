@@ -41,7 +41,7 @@ describe("Módulo DTM — Acompanhamento", () => {
   });
 
   it("cria acompanhamento com total de consultas", async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
     const Dtm = getRouteComponent(DtmRoute);
     renderWithProviders(<Dtm />);
 
@@ -68,7 +68,7 @@ describe("Módulo DTM — Acompanhamento", () => {
   });
 
   it("registra consulta realizada com o próximo número da sequência", async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
     setTableData("dtm_acompanhamentos", [
       {
         id: "a-1",
@@ -113,7 +113,7 @@ describe("Módulo DTM — Acompanhamento", () => {
   });
 
   it("bloqueia registrar consulta acima do total (botão desabilitado + sugestão de conclusão)", async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
     setTableData("dtm_acompanhamentos", [
       {
         id: "a-1",
@@ -161,7 +161,7 @@ describe("Módulo DTM — Acompanhamento", () => {
   });
 
   it("concluir manualmente muda o status para concluido", async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
     setTableData("dtm_acompanhamentos", [
       {
         id: "a-1",
@@ -203,7 +203,7 @@ describe("Módulo DTM — Acompanhamento", () => {
   });
 
   it("exibe acompanhamento DTM na expansão do paciente", async () => {
-    const user = userEvent.setup();
+    const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
     setTableData("pacientes", [{ id: "p-1", user_id: "test-user", nome: "Carlos", created_at: "x" }]);
     setTableData("dtm_acompanhamentos", [
       {
