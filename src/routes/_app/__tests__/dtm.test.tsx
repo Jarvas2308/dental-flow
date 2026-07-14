@@ -52,19 +52,14 @@ describe("Módulo DTM — Acompanhamento", () => {
     const inputs = screen.getAllByRole("spinbutton") as HTMLInputElement[];
     fireEvent.change(inputs[0], { target: { value: "8" } });
 
-    // eslint-disable-next-line no-console
-    console.log("PAC value:", pacInput.value, "TOTAL:", inputs[0].value);
-
     const form = pacInput.closest("form")!;
     fireEvent.submit(form);
 
-    await waitFor(
-      () => {
-        // eslint-disable-next-line no-console
-        console.log("INSERT CALLS:", JSON.stringify(spies.insert.mock.calls));
-        expect(spies.insert.mock.calls.length).toBeGreaterThan(0);
-      },
-      { timeout: 2000 },
+    await waitFor(() =>
+      expect(spies.insert).toHaveBeenCalledWith(
+        "dtm_acompanhamentos",
+        expect.objectContaining({ paciente: "Maria DTM", total_consultas: 8 }),
+      ),
     );
   });
 
