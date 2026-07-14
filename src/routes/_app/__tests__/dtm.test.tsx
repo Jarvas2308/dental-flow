@@ -148,9 +148,7 @@ describe("Módulo DTM — Acompanhamento", () => {
     await user.click(await screen.findByRole("button", { name: /Expandir/i }));
 
     // Sugestão de conclusão aparece.
-    expect(
-      await screen.findByText(/Todas as consultas foram realizadas/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/Todas as consultas foram realizadas/i)).toBeInTheDocument();
 
     const btn = screen.getByRole("button", { name: /Registrar consulta realizada/i });
     expect(btn).toBeDisabled();
@@ -186,9 +184,7 @@ describe("Módulo DTM — Acompanhamento", () => {
     renderWithProviders(<Dtm />);
 
     await user.click(await screen.findByRole("button", { name: /Expandir/i }));
-    await user.click(
-      await screen.findByRole("button", { name: /Concluir acompanhamento/i }),
-    );
+    await user.click(await screen.findByRole("button", { name: /Concluir acompanhamento/i }));
 
     await waitFor(() =>
       expect(spies.update).toHaveBeenCalledWith(
@@ -200,7 +196,9 @@ describe("Módulo DTM — Acompanhamento", () => {
 
   it("exibe acompanhamento DTM na expansão do paciente", async () => {
     const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
-    setTableData("pacientes", [{ id: "p-1", user_id: "test-user", nome: "Carlos", created_at: "x" }]);
+    setTableData("pacientes", [
+      { id: "p-1", user_id: "test-user", nome: "Carlos", created_at: "x" },
+    ]);
     setTableData("dtm_acompanhamentos", [
       {
         id: "a-1",

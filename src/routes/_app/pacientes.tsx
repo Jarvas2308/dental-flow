@@ -320,7 +320,6 @@ function PacienteDetalhe({
   );
 }
 
-
 function Pacientes() {
   const list = useTable<PacienteRow>("pacientes", "nome", true);
   const atendimentos = useTable<AtendimentoFull>("atendimentos", "data");
@@ -375,8 +374,6 @@ function Pacientes() {
       dtmConsultas.data,
     ],
   );
-
-
 
   const rows = useMemo(
     () => pacientes.filter((p) => !q || p.nome?.toLowerCase().includes(q.toLowerCase())),
