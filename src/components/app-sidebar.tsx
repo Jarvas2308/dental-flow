@@ -14,6 +14,7 @@ import {
   PhoneCall,
   MessageCircle,
   Users,
+  Activity,
   Menu,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -30,6 +31,7 @@ const items = [
   { to: "/pacientes", label: "Pacientes", icon: Users },
   { to: "/consultas", label: "Consultas", icon: CalendarClock },
   { to: "/followup", label: "Follow-up", icon: PhoneCall },
+  { to: "/dtm", label: "DTM", icon: Activity },
   { to: "/laboratorio", label: "Laboratório", icon: FlaskConical },
   { to: "/cadastros", label: "Cadastros", icon: Settings },
 ] as const;

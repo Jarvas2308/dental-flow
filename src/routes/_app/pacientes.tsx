@@ -45,14 +45,18 @@ import {
   CalendarClock,
   ClipboardList,
   PhoneCall,
+  Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
+import { Progress } from "@/components/ui/progress";
 
 type Tables<T extends keyof Database["public"]["Tables"]> = Database["public"]["Tables"][T]["Row"];
 type PacienteRow = Tables<"pacientes">;
+type DtmAcompRow = Tables<"dtm_acompanhamentos">;
+type DtmConsultaRow = Tables<"dtm_consultas">;
 
 export const Route = createFileRoute("/_app/pacientes")({
   validateSearch: (search: Record<string, unknown>): { q?: string } => ({
@@ -152,8 +156,35 @@ function PacienteDetalhe({
     consultas: ConsultaFull[];
     propostas: PropostaFull[];
     tentativas: TentativaFull[];
+    dtmAcomp: DtmAcompRow[];
+    dtmConsultas: DtmConsultaRow[];
   };
 }) {
+  // Acompanhamentos DTM do paciente: prioriza paciente_id e cai no nome
+  // normalizado apenas para registros antigos sem id.
+  const dtmDoPaciente = useMemo(() => {
+    const nomeKey = (paciente.nome ?? "").replace(/\s+/g, " ").trim().toLowerCase();
+    return sources.dtmAcomp.filter((a) =>
+      a.paciente_id
+        ? a.paciente_id === paciente.id
+        : (a.paciente ?? "").replace(/\s+/g, " ").trim().toLowerCase() === nomeKey,
+    );
+  }, [sources.dtmAcomp, paciente]);
+
+  const consultasPorAcomp = useMemo(() => {
+    const m = new Map<string, DtmConsultaRow[]>();
+    for (const c of sources.dtmConsultas) {
+      const list = m.get(c.acompanhamento_id) ?? [];
+      list.push(c);
+      m.set(c.acompanhamento_id, list);
+    }
+    for (const [k, list] of m) {
+      list.sort((a, b) => a.numero - b.numero);
+      m.set(k, list);
+    }
+    return m;
+  }, [sources.dtmConsultas]);
+
   const { resumo, historico } = useMemo(
     () =>
       dadosDoPaciente(paciente, {
@@ -241,6 +272,50 @@ function PacienteDetalhe({
           </ul>
         )}
       </div>
+
+      {dtmDoPaciente.length > 0 && (
+        <div className="rounded-2xl border bg-card" style={{ boxShadow: "var(--shadow-soft)" }}>
+          <div className="border-b px-4 py-3 text-sm font-medium flex items-center gap-2">
+            <Activity className="h-4 w-4 text-primary" />
+            Acompanhamentos DTM
+          </div>
+          <ul className="divide-y">
+            {dtmDoPaciente.map((a) => {
+              const cs = consultasPorAcomp.get(a.id) ?? [];
+              const realizadas = cs.length;
+              const faltantes = Math.max(a.total_consultas - realizadas, 0);
+              const ultimas = cs.slice(-3).map((c) => formatDateBR(c.data_realizada));
+              return (
+                <li key={a.id} className="px-4 py-3 space-y-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-sm font-medium">
+                      {realizadas}/{a.total_consultas} consultas
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        ({faltantes} faltante{faltantes === 1 ? "" : "s"})
+                      </span>
+                    </div>
+                    <Badge variant={a.status === "concluido" ? "secondary" : "default"}>
+                      {a.status === "concluido" ? "Concluído" : "Em acompanhamento"}
+                    </Badge>
+                  </div>
+                  <Progress
+                    value={
+                      a.total_consultas > 0
+                        ? Math.min(100, (realizadas / a.total_consultas) * 100)
+                        : 0
+                    }
+                  />
+                  {ultimas.length > 0 && (
+                    <div className="text-xs text-muted-foreground">
+                      Últimas: {ultimas.join(" · ")}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
@@ -253,6 +328,8 @@ function Pacientes() {
   const consultas = useTable<ConsultaFull>("consultas_previstas", "data_prevista");
   const propostas = useTable<PropostaFull>("tratamentos_propostos", "data_proposta");
   const tentativas = useTable<TentativaFull>("tentativas_contato", "data");
+  const dtmAcomp = useTable<DtmAcompRow>("dtm_acompanhamentos", "created_at");
+  const dtmConsultas = useTable<DtmConsultaRow>("dtm_consultas", "numero", true);
   const del = useDelete("pacientes");
   const { q: qParam } = Route.useSearch();
   const [editing, setEditing] = useState<PacienteRow | null>(null);
@@ -283,6 +360,8 @@ function Pacientes() {
       consultas: consultas.data ?? [],
       propostas: propostas.data ?? [],
       tentativas: tentativas.data ?? [],
+      dtmAcomp: dtmAcomp.data ?? [],
+      dtmConsultas: dtmConsultas.data ?? [],
     }),
     [
       atendimentos.data,
@@ -291,6 +370,8 @@ function Pacientes() {
       consultas.data,
       propostas.data,
       tentativas.data,
+      dtmAcomp.data,
+      dtmConsultas.data,
     ],
   );
 

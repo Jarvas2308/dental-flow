@@ -21,7 +21,9 @@ type TableName =
   | "atendimento_procedimentos"
   | "consultas_previstas"
   | "tratamentos_propostos"
-  | "tentativas_contato";
+  | "tentativas_contato"
+  | "dtm_acompanhamentos"
+  | "dtm_consultas";
 
 export function useTable<T = unknown>(table: TableName, orderBy = "created_at", asc = false) {
   const { user } = useAuth();

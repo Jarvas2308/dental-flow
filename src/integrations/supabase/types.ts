@@ -250,6 +250,85 @@ export type Database = {
         }
         Relationships: []
       }
+      dtm_acompanhamentos: {
+        Row: {
+          created_at: string
+          data_inicio: string | null
+          id: string
+          paciente: string
+          paciente_id: string | null
+          status: string
+          total_consultas: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_inicio?: string | null
+          id?: string
+          paciente: string
+          paciente_id?: string | null
+          status?: string
+          total_consultas: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_inicio?: string | null
+          id?: string
+          paciente?: string
+          paciente_id?: string | null
+          status?: string
+          total_consultas?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dtm_acompanhamentos_paciente_id_fkey"
+            columns: ["paciente_id"]
+            isOneToOne: false
+            referencedRelation: "pacientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dtm_consultas: {
+        Row: {
+          acompanhamento_id: string
+          created_at: string
+          data_realizada: string
+          id: string
+          numero: number
+          user_id: string
+        }
+        Insert: {
+          acompanhamento_id: string
+          created_at?: string
+          data_realizada: string
+          id?: string
+          numero: number
+          user_id: string
+        }
+        Update: {
+          acompanhamento_id?: string
+          created_at?: string
+          data_realizada?: string
+          id?: string
+          numero?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dtm_consultas_acompanhamento_id_fkey"
+            columns: ["acompanhamento_id"]
+            isOneToOne: false
+            referencedRelation: "dtm_acompanhamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       formas_pagamento: {
         Row: {
           created_at: string

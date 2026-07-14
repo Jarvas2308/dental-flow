@@ -291,3 +291,70 @@ navegação e cobertura de testes.
 - **Testes:** 20/20 (exit 0).
 - **Typecheck:** sem erros (exit 0).
 - **Build:** sucesso (exit 0).
+
+## 14. Fase 3 — Módulo Acompanhamento DTM (v1)
+
+Módulo **operacional/clínico leve** para controlar consultas realizadas de
+tratamentos DTM já pagos. **Não impacta financeiro**: não cria atendimentos,
+recebimentos ou parcelas, e não aparece em Dashboard, Fluxo de Caixa nem
+Contas a Receber.
+
+### 14.1 Tabelas criadas
+
+- `dtm_acompanhamentos` — `paciente`, `paciente_id` (FK `pacientes`, ON DELETE
+  SET NULL), `total_consultas` (> 0), `status` (`em_acompanhamento` |
+  `concluido`), `data_inicio`, timestamps + trigger `updated_at`.
+- `dtm_consultas` — `acompanhamento_id` (FK, ON DELETE CASCADE), `numero` (> 0),
+  `data_realizada`. `UNIQUE (acompanhamento_id, numero)` impede números
+  duplicados dentro do mesmo acompanhamento.
+
+Ambas com **RLS habilitado** e políticas separadas por operação (select/
+insert/update/delete) restritas ao próprio usuário (`auth.uid() = user_id`);
+`GRANT` explícito para `authenticated` e `service_role`.
+
+### 14.2 Regras funcionais
+
+- Contador de realizadas é derivado das linhas em `dtm_consultas`.
+- Nova consulta recebe `numero = realizadas + 1` (próximo da sequência).
+- Bloqueio de registrar quando `realizadas >= total_consultas` (botão desabilitado).
+- Edição de `total_consultas` não permite valor menor que o já realizado.
+- Quando `realizadas >= total`, um `AlertBanner` sugere a conclusão manual;
+  **nada é concluído automaticamente**. Botão "Concluir acompanhamento" apenas
+  seta `status = 'concluido'`.
+- Vínculo com paciente prioriza `paciente_id` (reutiliza `PacienteCombobox` e
+  `resolvePacienteId` do fluxo existente); nome normalizado é fallback.
+
+### 14.3 UI
+
+- Nova rota `/dtm` no menu lateral (ícone `Activity`, entre Follow-up e
+  Laboratório).
+- Lista com progresso `realizadas/total`, faltantes, status, data de início e
+  última consulta realizada. Linhas expansíveis exibem barra de progresso,
+  lista das consultas realizadas com número/data, botão de registrar e o
+  alerta de conclusão quando aplicável.
+- `EmptyState` claro quando não há acompanhamentos ou consultas.
+- Expansão da tela de Pacientes ganhou uma seção "Acompanhamentos DTM" com
+  progresso, faltantes e últimas datas realizadas (leitura, priorizando
+  `paciente_id`).
+
+### 14.4 Testes adicionados
+
+`src/routes/_app/__tests__/dtm.test.tsx` (6 testes):
+
+- renderização da tela (estado vazio);
+- criar acompanhamento com total de consultas;
+- registrar consulta realizada com o próximo número da sequência;
+- bloqueio de registro acima do total + sugestão de conclusão;
+- conclusão manual muda `status` para `concluido`;
+- exibição do acompanhamento DTM na expansão do paciente.
+
+Mock do Supabase estendido com `.ilike/.like/.not/.is` para suportar
+`resolvePacienteId` nos testes.
+
+### 14.5 Verificação (2026-07-14)
+
+- **Total de testes:** 26 passando (5 arquivos) — 9 financeiros + 17 de interface.
+- **Lint:** exit 0.
+- **Testes:** 26/26 (exit 0).
+- **Typecheck:** exit 0.
+- **Build:** exit 0.
