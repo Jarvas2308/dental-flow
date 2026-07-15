@@ -12,6 +12,7 @@ import {
 } from "@/lib/paciente-detalhe";
 import type { RecebimentoRow, ParcelaRow } from "@/lib/finance";
 import { brl, formatDateBR } from "@/lib/format";
+import { sortDtmAcompanhamentos } from "@/lib/dtm";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import {
   Table,
