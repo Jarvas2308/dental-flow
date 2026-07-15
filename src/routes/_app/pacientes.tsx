@@ -165,12 +165,15 @@ function PacienteDetalhe({
   // normalizado apenas para registros antigos sem id.
   const dtmDoPaciente = useMemo(() => {
     const nomeKey = (paciente.nome ?? "").replace(/\s+/g, " ").trim().toLowerCase();
-    return sources.dtmAcomp.filter((a) =>
+    const filtrados = sources.dtmAcomp.filter((a) =>
       a.paciente_id
         ? a.paciente_id === paciente.id
         : (a.paciente ?? "").replace(/\s+/g, " ").trim().toLowerCase() === nomeKey,
     );
+    // Ordena por data_inicio (nulos ao final) — cronologia clínica.
+    return sortDtmAcompanhamentos(filtrados);
   }, [sources.dtmAcomp, paciente]);
+
 
   const consultasPorAcomp = useMemo(() => {
     const m = new Map<string, DtmConsultaRow[]>();
