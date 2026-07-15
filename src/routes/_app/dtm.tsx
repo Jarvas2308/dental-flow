@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/use-auth-context";
 import { PacienteCombobox } from "@/components/atendimento-form";
 import { resolvePacienteId } from "@/lib/pacientes";
 import { formatDateBR, todayISO } from "@/lib/format";
+import { sortDtmAcompanhamentos } from "@/lib/dtm";
 import { PageHeader, EmptyState, AlertBanner } from "@/components/ui-kit";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import {
