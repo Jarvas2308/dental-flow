@@ -359,7 +359,7 @@ function AcompDetalhe({
 }
 
 function DtmPage() {
-  const list = useTable<DtmAcompanhamentoRow>("dtm_acompanhamentos", "created_at");
+  const list = useTable<DtmAcompanhamentoRow>("dtm_acompanhamentos", "data_inicio", true);
   const consultas = useTable<DtmConsultaRow>("dtm_consultas", "numero", true);
   const del = useDelete("dtm_acompanhamentos");
   const [editing, setEditing] = useState<DtmAcompanhamentoRow | null>(null);
@@ -367,7 +367,10 @@ function DtmPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
 
   const porAcomp = useMemo(() => contarPorAcomp(consultas.data ?? []), [consultas.data]);
-  const rows = list.data ?? [];
+  // Ordenação canônica por data_inicio ASC (nulos ao final), independente do
+  // que o backend devolveu, garantindo consistência entre telas.
+  const rows = useMemo(() => sortDtmAcompanhamentos(list.data ?? []), [list.data]);
+
 
   return (
     <>
