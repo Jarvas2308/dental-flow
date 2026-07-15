@@ -332,7 +332,7 @@ function Pacientes() {
   const consultas = useTable<ConsultaFull>("consultas_previstas", "data_prevista");
   const propostas = useTable<PropostaFull>("tratamentos_propostos", "data_proposta");
   const tentativas = useTable<TentativaFull>("tentativas_contato", "data");
-  const dtmAcomp = useTable<DtmAcompRow>("dtm_acompanhamentos", "created_at");
+  const dtmAcomp = useTable<DtmAcompRow>("dtm_acompanhamentos", "data_inicio", true);
   const dtmConsultas = useTable<DtmConsultaRow>("dtm_consultas", "numero", true);
   const del = useDelete("pacientes");
   const { q: qParam } = Route.useSearch();
