@@ -372,7 +372,6 @@ function DtmPage() {
   // que o backend devolveu, garantindo consistência entre telas.
   const rows = useMemo(() => sortDtmAcompanhamentos(list.data ?? []), [list.data]);
 
-
   return (
     <>
       <PageHeader

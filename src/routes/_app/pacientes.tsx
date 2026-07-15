@@ -174,7 +174,6 @@ function PacienteDetalhe({
     return sortDtmAcompanhamentos(filtrados);
   }, [sources.dtmAcomp, paciente]);
 
-
   const consultasPorAcomp = useMemo(() => {
     const m = new Map<string, DtmConsultaRow[]>();
     for (const c of sources.dtmConsultas) {
