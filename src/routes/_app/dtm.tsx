@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/use-auth-context";
 import { PacienteCombobox } from "@/components/atendimento-form";
 import { resolvePacienteId } from "@/lib/pacientes";
 import { formatDateBR, todayISO } from "@/lib/format";
+import { sortDtmAcompanhamentos } from "@/lib/dtm";
 import { PageHeader, EmptyState, AlertBanner } from "@/components/ui-kit";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import {
@@ -359,7 +360,7 @@ function AcompDetalhe({
 }
 
 function DtmPage() {
-  const list = useTable<DtmAcompanhamentoRow>("dtm_acompanhamentos", "created_at");
+  const list = useTable<DtmAcompanhamentoRow>("dtm_acompanhamentos", "data_inicio", true);
   const consultas = useTable<DtmConsultaRow>("dtm_consultas", "numero", true);
   const del = useDelete("dtm_acompanhamentos");
   const [editing, setEditing] = useState<DtmAcompanhamentoRow | null>(null);
@@ -367,7 +368,9 @@ function DtmPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
 
   const porAcomp = useMemo(() => contarPorAcomp(consultas.data ?? []), [consultas.data]);
-  const rows = list.data ?? [];
+  // Ordenação canônica por data_inicio ASC (nulos ao final), independente do
+  // que o backend devolveu, garantindo consistência entre telas.
+  const rows = useMemo(() => sortDtmAcompanhamentos(list.data ?? []), [list.data]);
 
   return (
     <>

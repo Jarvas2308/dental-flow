@@ -12,6 +12,7 @@ import {
 } from "@/lib/paciente-detalhe";
 import type { RecebimentoRow, ParcelaRow } from "@/lib/finance";
 import { brl, formatDateBR } from "@/lib/format";
+import { sortDtmAcompanhamentos } from "@/lib/dtm";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import {
   Table,
@@ -164,11 +165,13 @@ function PacienteDetalhe({
   // normalizado apenas para registros antigos sem id.
   const dtmDoPaciente = useMemo(() => {
     const nomeKey = (paciente.nome ?? "").replace(/\s+/g, " ").trim().toLowerCase();
-    return sources.dtmAcomp.filter((a) =>
+    const filtrados = sources.dtmAcomp.filter((a) =>
       a.paciente_id
         ? a.paciente_id === paciente.id
         : (a.paciente ?? "").replace(/\s+/g, " ").trim().toLowerCase() === nomeKey,
     );
+    // Ordena por data_inicio (nulos ao final) — cronologia clínica.
+    return sortDtmAcompanhamentos(filtrados);
   }, [sources.dtmAcomp, paciente]);
 
   const consultasPorAcomp = useMemo(() => {
@@ -328,7 +331,7 @@ function Pacientes() {
   const consultas = useTable<ConsultaFull>("consultas_previstas", "data_prevista");
   const propostas = useTable<PropostaFull>("tratamentos_propostos", "data_proposta");
   const tentativas = useTable<TentativaFull>("tentativas_contato", "data");
-  const dtmAcomp = useTable<DtmAcompRow>("dtm_acompanhamentos", "created_at");
+  const dtmAcomp = useTable<DtmAcompRow>("dtm_acompanhamentos", "data_inicio", true);
   const dtmConsultas = useTable<DtmConsultaRow>("dtm_consultas", "numero", true);
   const del = useDelete("pacientes");
   const { q: qParam } = Route.useSearch();
