@@ -309,19 +309,53 @@ function Consultorio() {
     [filter, mes],
   );
 
+  // Mesmos filtros de atributo de `rows` (busca, procedimento, status de
+  // pagamento, NF/forma do quick-filter), mas SEM excluir pela data do
+  // ATENDIMENTO — usado só para o card "Recebido no período" abaixo, que
+  // precisa considerar recebimentos cuja própria data caia no período,
+  // mesmo quando o atendimento em si é de outro mês (ex.: atendimento
+  // parcelado feito em junho, 2ª parcela paga em julho).
+  const atendimentosFiltradosSemData = useMemo(() => {
+    let r = [...allData];
+
+    if (filter === "emitidos") r = r.filter((x) => x.nota_fiscal_status === "emitida");
+    else if (filter === "pendentes")
+      r = r.filter((x) => (x.nota_fiscal_status ?? "pendente") === "pendente");
+    else if (filter === "nao_emitidos") r = r.filter((x) => x.nota_fiscal_status === "nao_emitida");
+    else if (filter === "nao_se_aplica")
+      r = r.filter((x) => x.nota_fiscal_status === "nao_se_aplica");
+    else if (filter === "cartao")
+      r = r.filter((x) => /cart[ãa]o|cr[eé]dito|d[eé]bito/i.test(x.forma_pagamento ?? ""));
+    else if (filter === "pix") r = r.filter((x) => /pix/i.test(x.forma_pagamento ?? ""));
+    else if (filter === "dinheiro")
+      r = r.filter((x) => /dinheiro|esp[eé]cie/i.test(x.forma_pagamento ?? ""));
+
+    if (statusPag === "pagos") r = r.filter((x) => !isPendente(x));
+    else if (statusPag === "abertos") r = r.filter((x) => isPendente(x));
+
+    if (procFilter !== "__all__") r = r.filter((x) => x.procedimento === procFilter);
+
+    if (q) {
+      const s = q.toLowerCase();
+      r = r.filter(
+        (x) =>
+          (x.paciente ?? "").toLowerCase().includes(s) ||
+          (x.procedimento ?? "").toLowerCase().includes(s),
+      );
+    }
+
+    return r;
+  }, [allData, filter, statusPag, procFilter, q, isPendente]);
+
   // "Recebido no período": soma somente recebimentos cuja DATA pertence ao período,
   // usando os próprios campos (bruto/líquido) de cada recebimento. Não usa o
   // acumulado de resumoAtendimento.
-  //
-  // Usa allData (não rows): rows já está filtrada pelo mês/quick-filter do
-  // ATENDIMENTO, o que exclui atendimentos já quitados cuja data é de outro
-  // mês — mesmo quando eles têm um recebimento NOVO datado dentro do período
-  // selecionado (ex.: atendimento parcelado feito em junho, 2ª parcela paga
-  // em julho: o atendimento não aparece em "julho" por rows, mas o
-  // recebimento de julho precisa contar no card do período).
   const recebPeriodo = useMemo(
-    () => receitasRecebidas(allData, recebimentosData, parcelasData).filter((e) => inPeriodo(e.data)),
-    [allData, recebimentosData, parcelasData, inPeriodo],
+    () =>
+      receitasRecebidas(atendimentosFiltradosSemData, recebimentosData, parcelasData).filter((e) =>
+        inPeriodo(e.data),
+      ),
+    [atendimentosFiltradosSemData, recebimentosData, parcelasData, inPeriodo],
   );
   const totBruto = recebPeriodo.reduce((s, e) => s + e.valor_bruto, 0);
   const totLiq = recebPeriodo.reduce((s, e) => s + e.valor_liquido, 0);
