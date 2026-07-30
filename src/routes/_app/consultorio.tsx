@@ -312,9 +312,16 @@ function Consultorio() {
   // "Recebido no período": soma somente recebimentos cuja DATA pertence ao período,
   // usando os próprios campos (bruto/líquido) de cada recebimento. Não usa o
   // acumulado de resumoAtendimento.
+  //
+  // Usa allData (não rows): rows já está filtrada pelo mês/quick-filter do
+  // ATENDIMENTO, o que exclui atendimentos já quitados cuja data é de outro
+  // mês — mesmo quando eles têm um recebimento NOVO datado dentro do período
+  // selecionado (ex.: atendimento parcelado feito em junho, 2ª parcela paga
+  // em julho: o atendimento não aparece em "julho" por rows, mas o
+  // recebimento de julho precisa contar no card do período).
   const recebPeriodo = useMemo(
-    () => receitasRecebidas(rows, recebimentosData, parcelasData).filter((e) => inPeriodo(e.data)),
-    [rows, recebimentosData, parcelasData, inPeriodo],
+    () => receitasRecebidas(allData, recebimentosData, parcelasData).filter((e) => inPeriodo(e.data)),
+    [allData, recebimentosData, parcelasData, inPeriodo],
   );
   const totBruto = recebPeriodo.reduce((s, e) => s + e.valor_bruto, 0);
   const totLiq = recebPeriodo.reduce((s, e) => s + e.valor_liquido, 0);
