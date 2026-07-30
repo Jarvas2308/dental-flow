@@ -182,6 +182,42 @@ function Consultorio() {
     return m;
   }, [allData]);
 
+  // Predicado de período (data do RECEBIMENTO), espelhando o filtro temporal da tabela.
+  const inPeriodo = useCallback(
+    (dateStr: string) => {
+      const d = parseLocalDate(dateStr);
+      if (!d) return false;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (filter === "hoje") {
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+        return d >= today && d < tomorrow;
+      }
+      if (filter === "semana") return d >= startOfWeek(today);
+      return noMes(dateStr, mes);
+    },
+    [filter, mes],
+  );
+
+  // Atendimentos que receberam dinheiro DENTRO do período selecionado, mesmo
+  // que o atendimento em si seja de outro mês e já esteja quitado (ex.:
+  // tratamento parcelado feito em junho com a 2ª parcela paga em julho).
+  // Sem isso, o dinheiro entra no card "Recebido no período" mas a linha de
+  // origem não aparece na tabela.
+  const idsComRecebimentoNoPeriodo = useMemo(() => {
+    const s = new Set<string>();
+    recebimentosData.forEach((r) => {
+      if (r.atendimento_id && r.data && inPeriodo(r.data)) s.add(r.atendimento_id);
+    });
+    parcelasData.forEach((p) => {
+      if (p.status !== "pago" || !p.atendimento_id) return;
+      const d = p.data_pagamento || p.vencimento;
+      if (d && inPeriodo(d)) s.add(p.atendimento_id);
+    });
+    return s;
+  }, [recebimentosData, parcelasData, inPeriodo]);
+
   const rows = useMemo(() => {
     let r = [...allData];
 
@@ -197,9 +233,11 @@ function Consultorio() {
     const monthEnd = new Date(yy, mm, 0);
     monthEnd.setHours(23, 59, 59, 999);
 
-    // Inclui registros do mês OU pendentes que continuam em aberto até o mês selecionado
+    // Inclui registros do mês, pendentes que continuam em aberto até o mês
+    // selecionado, OU atendimentos que receberam dinheiro dentro do período.
     const inMonth = (x: AtendimentoView) => {
       if (monthKey(x.data) === mes) return true;
+      if (idsComRecebimentoNoPeriodo.has(x.id)) return true;
       const d = parseLocalDate(x.data);
       return isPendente(x) && !!d && d <= monthEnd;
     };
@@ -207,12 +245,16 @@ function Consultorio() {
     if (filter === "hoje") {
       r = r.filter((x) => {
         const d = parseLocalDate(x.data);
-        return (!!d && d >= today && d < tomorrow) || isPendente(x);
+        return (
+          (!!d && d >= today && d < tomorrow) ||
+          isPendente(x) ||
+          idsComRecebimentoNoPeriodo.has(x.id)
+        );
       });
     } else if (filter === "semana") {
       r = r.filter((x) => {
         const d = parseLocalDate(x.data);
-        return (!!d && d >= weekStart) || isPendente(x);
+        return (!!d && d >= weekStart) || isPendente(x) || idsComRecebimentoNoPeriodo.has(x.id);
       });
     } else if (filter === "mes" || filter === "todos") {
       r = r.filter(inMonth);
@@ -289,25 +331,18 @@ function Consultorio() {
       return cmp(a, b);
     });
     return r;
-  }, [allData, mes, q, sort, filter, procFilter, statusPag, freqMap, isPendente]);
-
-  // Predicado de período (data do RECEBIMENTO), espelhando o filtro temporal da tabela.
-  const inPeriodo = useCallback(
-    (dateStr: string) => {
-      const d = parseLocalDate(dateStr);
-      if (!d) return false;
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      if (filter === "hoje") {
-        const tomorrow = new Date(today);
-        tomorrow.setDate(today.getDate() + 1);
-        return d >= today && d < tomorrow;
-      }
-      if (filter === "semana") return d >= startOfWeek(today);
-      return noMes(dateStr, mes);
-    },
-    [filter, mes],
-  );
+  }, [
+    allData,
+    mes,
+    q,
+    sort,
+    filter,
+    procFilter,
+    statusPag,
+    freqMap,
+    isPendente,
+    idsComRecebimentoNoPeriodo,
+  ]);
 
   // Mesmos filtros de atributo de `rows` (busca, procedimento, status de
   // pagamento, NF/forma do quick-filter), mas SEM excluir pela data do
