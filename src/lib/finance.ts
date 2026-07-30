@@ -170,10 +170,11 @@ export function receitasRecebidas(
   const legacyIds = new Set(parcelas.map((p) => p.atendimento_id));
 
   for (const a of atend) {
-    if (legacyIds.has(a.id)) continue; // tratado via parcelas legadas
     const recs = recebimentos.filter((x) => x.atendimento_id === a.id);
 
-    // Se há recebimentos registrados, cada um conta na SUA data (regime de caixa).
+    // Se há recebimentos registrados, cada um conta na SUA data (regime de caixa),
+    // mesmo que o atendimento também tenha parcelas legadas (ex.: 1ª parcela paga
+    // no sistema antigo e 2ª registrada já no fluxo atual de recebimentos).
     if (recs.length > 0) {
       const f = fatorLiquido(a);
       for (const r of recs) {
@@ -190,6 +191,8 @@ export function receitasRecebidas(
       }
       continue;
     }
+
+    if (legacyIds.has(a.id)) continue; // sem recebimentos novos: tratado via parcelas legadas abaixo
 
     // Sem recebimentos: atendimento à vista pago conta na data do atendimento.
     if (!a.parcelado && a.status_pagamento !== "pendente") {
@@ -230,8 +233,12 @@ export function valoresEmAberto(
   const legacyIds = new Set(parcelas.map((p) => p.atendimento_id));
 
   for (const a of atend) {
-    if (legacyIds.has(a.id)) continue;
     const recs = recebimentos.filter((r) => r.atendimento_id === a.id);
+
+    // Sem recebimentos novos e com parcelas legadas: tratado no bloco de
+    // parcelas legadas abaixo (evita ignorar recebimentos novos de
+    // atendimentos que também têm parcelas legadas antigas).
+    if (recs.length === 0 && legacyIds.has(a.id)) continue;
 
     // Atendimento à vista, sem recebimentos: aberto apenas se pendente.
     if (!a.parcelado && recs.length === 0) {

@@ -117,6 +117,67 @@ describe("fórmulas de caixa e resultado", () => {
   });
 });
 
+describe("atendimento com parcela legada + recebimento novo (regressão)", () => {
+  // Atendimento que tem uma parcela antiga (sistema legado, 1ª parcela paga
+  // em junho) e um recebimento novo registrado no fluxo atual (2ª parcela,
+  // paga em julho). O recebimento novo não pode ser ignorado só porque o
+  // atendimento também tem parcelas legadas.
+  const atendComLegado = {
+    id: "at-legado",
+    paciente: "Bruno",
+    procedimento: "Canal",
+    parcelado: true,
+    valor_bruto: 1000,
+    valor_liquido: 1000,
+    taxa: 0,
+    forma_pagamento: "pix",
+    data: "2026-06-01",
+    status_pagamento: "pendente",
+    parcelas_total: 2,
+  };
+  const parcelaLegadaPaga = [
+    {
+      id: "p-1",
+      atendimento_id: "at-legado",
+      numero: 1,
+      total: 2,
+      status: "pago",
+      data_pagamento: "2026-06-05",
+      vencimento: "2026-06-05",
+      valor_bruto: 500,
+      valor_liquido: 500,
+      paciente: "Bruno",
+      procedimento: "Canal",
+    },
+  ];
+  const recebimentoNovoJulho = [
+    {
+      id: "r-2",
+      atendimento_id: "at-legado",
+      data: "2026-07-08",
+      valor: 500,
+      valor_liquido: 500,
+      forma_pagamento: "pix",
+    },
+  ];
+
+  it("recebimento novo de julho aparece em julho, não fica invisível", () => {
+    const jul = receitasRecebidas([atendComLegado], recebimentoNovoJulho, parcelaLegadaPaga).filter(
+      (e) => e.data.startsWith("2026-07"),
+    );
+    expect(jul).toHaveLength(1);
+    expect(jul[0].valor_bruto).toBe(500);
+  });
+
+  it("parcela legada de junho continua aparecendo em junho", () => {
+    const jun = receitasRecebidas([atendComLegado], recebimentoNovoJulho, parcelaLegadaPaga).filter(
+      (e) => e.data.startsWith("2026-06"),
+    );
+    expect(jun).toHaveLength(1);
+    expect(jun[0].valor_bruto).toBe(500);
+  });
+});
+
 describe("despesa vencida em um mês e paga no mês seguinte", () => {
   // Vence em junho, mas só é paga em julho.
   const despesaAtravessada = [
