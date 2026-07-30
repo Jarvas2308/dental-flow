@@ -8,6 +8,7 @@ import {
   monthKey,
   monthLabel,
   monthOptions,
+  todayISO,
 } from "@/lib/format";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import {
@@ -71,7 +72,7 @@ type Receita = {
 const empty = (): Receita => ({
   descricao: "",
   valor: "",
-  data: new Date().toISOString().slice(0, 10),
+  data: todayISO(),
   tipo: "outros",
   observacoes: "",
 });

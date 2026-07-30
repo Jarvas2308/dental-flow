@@ -4,7 +4,7 @@ import type { Database } from "@/integrations/supabase/types";
 
 type ConsultaRow = Database["public"]["Tables"]["consultas_previstas"]["Row"];
 import { useTable, useUpdate, useDelete } from "@/hooks/use-data";
-import { brl, formatDateBR, parseLocalDate, todayISO } from "@/lib/format";
+import { brl, endOfWeek, formatDateBR, parseLocalDate, startOfWeek, todayISO } from "@/lib/format";
 import { PageHeader, StatCard, AlertBanner, EmptyState } from "@/components/ui-kit";
 import { VerPacienteButton } from "@/components/paciente-link";
 import {
@@ -39,19 +39,6 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_app/consultas")({
   component: Consultas,
 });
-
-function startOfWeek(d: Date) {
-  const dt = new Date(d);
-  dt.setDate(dt.getDate() - dt.getDay());
-  dt.setHours(0, 0, 0, 0);
-  return dt;
-}
-function endOfWeek(d: Date) {
-  const dt = startOfWeek(d);
-  dt.setDate(dt.getDate() + 6);
-  dt.setHours(23, 59, 59, 999);
-  return dt;
-}
 
 function Consultas() {
   const [q, setQ] = useState("");

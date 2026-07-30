@@ -313,13 +313,13 @@ function Dashboard() {
         </h2>
         <div className="h-px flex-1 bg-border" />
       </div>
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
         <StatCard
           label="Receita Recebida"
           value={brl(totLiquidoAtend)}
           tone="success"
           icon={<HandCoins className="h-4 w-4" />}
-          hint={`${monthLabel(mes)} · caixa`}
+          hint={`${monthLabel(mes)} · mesmo valor de "Receita de Atendimentos" acima`}
         />
         <Link to="/contas-receber" className="block">
           <StatCard

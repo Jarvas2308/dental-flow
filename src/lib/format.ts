@@ -38,6 +38,22 @@ export const monthLabel = (key: string) => {
 
 export const currentMonthKey = () => monthKey(new Date());
 
+// Início (domingo, 00:00) e fim (sábado, 23:59:59.999) da semana local que
+// contém a data informada.
+export const startOfWeek = (d: Date) => {
+  const dt = new Date(d);
+  dt.setDate(dt.getDate() - dt.getDay());
+  dt.setHours(0, 0, 0, 0);
+  return dt;
+};
+
+export const endOfWeek = (d: Date) => {
+  const dt = startOfWeek(d);
+  dt.setDate(dt.getDate() + 6);
+  dt.setHours(23, 59, 59, 999);
+  return dt;
+};
+
 export const monthOptions = (count = 12) => {
   const now = new Date();
   return Array.from({ length: count }, (_, i) => {

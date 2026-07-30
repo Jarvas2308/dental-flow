@@ -40,7 +40,6 @@ import {
   Loader2,
   MessageCircle,
   CheckCircle2,
-  XCircle,
   CalendarClock,
   Pencil,
   CircleDollarSign,
@@ -328,7 +327,10 @@ function ContatadoButton({ proposta }: { proposta: TratamentoRow }) {
       data: todayISO(),
       observacao: obs.trim() || null,
     });
-    update.mutate({
+    // Aguarda o incremento do contador antes de fechar: se falhar, o diálogo
+    // permanece aberto (com o toast de erro do hook) em vez de fechar
+    // silenciosamente com a tentativa registrada mas o contador desatualizado.
+    await update.mutateAsync({
       id: proposta.id,
       values: { tentativas_feitas: Number(proposta.tentativas_feitas) + 1 },
     });
@@ -363,8 +365,8 @@ function ContatadoButton({ proposta }: { proposta: TratamentoRow }) {
           />
         </div>
         <DialogFooter>
-          <Button onClick={confirmar} disabled={create.isPending}>
-            {create.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+          <Button onClick={confirmar} disabled={create.isPending || update.isPending}>
+            {(create.isPending || update.isPending) && <Loader2 className="h-4 w-4 animate-spin" />}
             Confirmar
           </Button>
         </DialogFooter>

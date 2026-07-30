@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useTable, useCreate, useDelete, useUpdate } from "@/hooks/use-data";
 import { useGerarRecorrentes } from "@/hooks/use-recurring";
-import { brl, currentMonthKey, monthKey, monthLabel, monthOptions } from "@/lib/format";
+import { brl, currentMonthKey, monthKey, monthLabel, monthOptions, todayISO } from "@/lib/format";
 import { PageHeader, StatCard } from "@/components/ui-kit";
 import { usePagination } from "@/hooks/use-pagination";
 import { TablePagination } from "@/components/table-pagination";
@@ -60,7 +60,7 @@ type Despesa = {
 const empty = (): Despesa => ({
   nome: "",
   valor: "",
-  vencimento: new Date().toISOString().slice(0, 10),
+  vencimento: todayISO(),
   status: "pendente",
   recorrente: false,
   tipo_recorrencia: "fixo",
@@ -282,6 +282,10 @@ function Contas() {
   const upd = useUpdate("despesas");
   const del = useDelete("despesas");
 
+  // Nota: esta tela agrupa despesas pelo VENCIMENTO (competência da conta),
+  // diferente do Dashboard/Fluxo de Caixa, que agrupam despesas pagas pela
+  // DATA_PAGAMENTO (regime de caixa). Os totais aqui e lá podem divergir
+  // quando uma conta é paga fora do mês de vencimento — isso é esperado.
   // Aplica status calculado (atrasado) e ordena por vencimento ASC
   const enriched = useMemo(() => {
     return (list.data ?? []).map((r) => ({ ...r, status: computeStatus(r) }));
@@ -316,7 +320,7 @@ function Contas() {
   const marcarPago = (r: Despesa) => {
     upd.mutate({
       id: r.id!,
-      values: { status: "pago", data_pagamento: new Date().toISOString().slice(0, 10) },
+      values: { status: "pago", data_pagamento: todayISO() },
     });
   };
 

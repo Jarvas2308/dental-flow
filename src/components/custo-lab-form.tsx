@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useCreate, useTable, useUpdate } from "@/hooks/use-data";
-import { formatDateBR } from "@/lib/format";
+import { formatDateBR, todayISO } from "@/lib/format";
 import {
   Dialog,
   DialogContent,
@@ -50,7 +50,7 @@ const empty = (): Custo => ({
   procedimento: "",
   atendimento_id: null,
   valor: "",
-  data: new Date().toISOString().slice(0, 10),
+  data: todayISO(),
 });
 
 type AtendimentoOption = {

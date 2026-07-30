@@ -353,8 +353,8 @@ Mock do Supabase estendido com `.ilike/.like/.not/.is` para suportar
 
 ### 14.5 Verificação (2026-07-14)
 
-- **Total de testes:** 26 passando (5 arquivos) — 9 financeiros + 17 de interface.
+- **Total de testes:** 30 passando (6 arquivos) — 9 financeiros + 21 de interface.
 - **Lint:** exit 0.
-- **Testes:** 26/26 (exit 0).
+- **Testes:** 30/30 (exit 0).
 - **Typecheck:** exit 0.
 - **Build:** exit 0.

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCreate, useTable } from "@/hooks/use-data";
 import { supabase } from "@/integrations/supabase/client";
+import { resolvePacienteId } from "@/lib/pacientes";
 import { useAuth } from "@/hooks/use-auth-context";
 import { brl, todayISO } from "@/lib/format";
 import {
@@ -55,7 +56,7 @@ function QuickAdd({
 }: {
   table: "procedimentos" | "formas_pagamento";
   label: string;
-  onCreated: (nome: string) => void;
+  onCreated: (nome: string, taxa?: number) => void;
 }) {
   const create = useCreate(table);
   const [open, setOpen] = useState(false);
@@ -67,8 +68,8 @@ function QuickAdd({
     if (!nome.trim()) return toast.error("Informe o nome");
     const values: { nome: string; taxa?: number } = { nome: nome.trim() };
     if (table === "formas_pagamento") values.taxa = Number(taxa) || 0;
-    await create.mutateAsync(values);
-    onCreated(nome.trim());
+    const created = await create.mutateAsync(values);
+    onCreated(nome.trim(), (created as { taxa?: number } | null)?.taxa ?? undefined);
     setNome("");
     setTaxa("0");
     setOpen(false);
@@ -438,7 +439,8 @@ export function AtendimentoForm({
     } else {
       setItems([{ procedimento: "", valor: "" }]);
     }
-  }, [open, editing, initialData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, editing, initialData?.paciente, initialData?.valorEstimado]);
 
   useEffect(() => {
     if (dividido && !formaInicialTocada) {
@@ -449,9 +451,9 @@ export function AtendimentoForm({
   const isEdit = !!editing;
   const busy = saving;
 
-  const onForma = (val: string) => {
+  const onForma = (val: string, taxaOverride?: number) => {
     const f = (formas.data ?? []).find((x) => x.nome === val);
-    setV((p) => ({ ...p, forma_pagamento: val, taxa: f?.taxa ?? p.taxa }));
+    setV((p) => ({ ...p, forma_pagamento: val, taxa: taxaOverride ?? f?.taxa ?? p.taxa }));
   };
 
   const totalBruto = items.reduce((s, it) => s + Number(it.valor || 0), 0);
@@ -487,63 +489,23 @@ export function AtendimentoForm({
     const procedimentoTexto = validItems.map((it) => it.procedimento.trim()).join(", ");
     // Normaliza o nome: remove espaços nas pontas e colapsa espaços internos.
     const nome = v.paciente.replace(/\s+/g, " ").trim();
-    const nomeKey = nome.toLowerCase();
 
     submitLock.current = true;
     setSaving(true);
     try {
       // Resolve o paciente_id definitivo ANTES de salvar o atendimento.
-      let idResolvido = pacienteId;
-      if (!idResolvido && nome) {
-        // 1) Busca na lista já carregada usando o nome normalizado.
-        const existente = (pacientes.data ?? []).find(
-          (p) => (p.nome ?? "").replace(/\s+/g, " ").trim().toLowerCase() === nomeKey,
-        );
-        if (existente) {
-          idResolvido = existente.id;
-        } else {
-          // 2) Confirmação pontual no banco antes de criar (evita falso "inexistente"
-          //    quando a lista ainda não carregou ou houve erro de consulta).
-          try {
-            const { data: encontrados, error: buscaError } = await supabase
-              .from("pacientes")
-              .select("id, nome")
-              .ilike("nome", nome);
-            if (buscaError) throw buscaError;
-            const match = (encontrados ?? []).find(
-              (p) => (p.nome ?? "").replace(/\s+/g, " ").trim().toLowerCase() === nomeKey,
-            );
-            if (match) idResolvido = match.id;
-          } catch (err) {
-            console.error("[AtendimentoForm] Erro ao buscar paciente:", err);
-            toast.error("Não foi possível verificar o paciente. Tente novamente.");
-            return;
-          }
-
-          // 3) Cria o paciente apenas se nenhuma correspondência foi encontrada.
-          if (!idResolvido) {
-            let novo: { id?: string } | null = null;
-            try {
-              const { data, error } = await supabase
-                .from("pacientes")
-                .insert({ nome, user_id: user!.id })
-                .select()
-                .single();
-              if (error) throw error;
-              novo = data;
-            } catch (err) {
-              console.error("[AtendimentoForm] Erro ao criar paciente:", err);
-              toast.error("Não foi possível cadastrar o paciente. Tente novamente.");
-              return;
-            }
-            idResolvido = novo?.id ?? null;
-            if (!idResolvido) {
-              console.error("[AtendimentoForm] Criação de paciente não retornou ID.");
-              toast.error("Não foi possível cadastrar o paciente. Tente novamente.");
-              return;
-            }
-          }
-        }
+      let idResolvido: string | null;
+      try {
+        idResolvido = await resolvePacienteId({
+          nome,
+          userId: user!.id,
+          knownId: pacienteId,
+          cache: pacientes.data ?? [],
+        });
+      } catch (err) {
+        console.error("[AtendimentoForm] Erro ao resolver paciente:", err);
+        toast.error("Não foi possível cadastrar/verificar o paciente. Tente novamente.");
+        return;
       }
 
       const taxaInicial = Number(
@@ -750,9 +712,7 @@ export function AtendimentoForm({
                 <QuickAdd
                   table="formas_pagamento"
                   label="forma de pagamento"
-                  onCreated={(nome) => {
-                    setTimeout(() => onForma(nome), 100);
-                  }}
+                  onCreated={(nome, taxa) => onForma(nome, taxa)}
                 />
               </div>
               <Select value={v.forma_pagamento} onValueChange={onForma}>

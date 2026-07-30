@@ -1,12 +1,6 @@
 import { defineTool, type ToolContext } from "@lovable.dev/mcp-js";
 import { z } from "zod";
-import { supabaseForUser, unauthenticated, formatBRL } from "./_supabase";
-
-function nextMonth(month: string) {
-  const [y, m] = month.split("-").map(Number);
-  const d = new Date(y, m, 1);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
-}
+import { supabaseForUser, unauthenticated, formatBRL, nextMonth } from "./_supabase";
 
 export default defineTool({
   name: "resumo_financeiro",

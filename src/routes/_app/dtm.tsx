@@ -8,6 +8,8 @@ import { formatDateBR, todayISO } from "@/lib/format";
 import { sortDtmAcompanhamentos } from "@/lib/dtm";
 import { PageHeader, EmptyState, AlertBanner } from "@/components/ui-kit";
 import { ConfirmDelete } from "@/components/confirm-delete";
+import { usePagination } from "@/hooks/use-pagination";
+import { TablePagination } from "@/components/table-pagination";
 import {
   Table,
   TableBody,
@@ -262,7 +264,7 @@ function AcompDetalhe({
   const realizadas = consultas.length;
   const total = acomp.total_consultas;
   const faltantes = Math.max(total - realizadas, 0);
-  const proximoNumero = realizadas + 1;
+  const proximoNumero = consultas.reduce((max, c) => Math.max(max, c.numero), 0) + 1;
   const completou = realizadas >= total;
   const emAcompanhamento = acomp.status === "em_acompanhamento";
 
@@ -371,6 +373,7 @@ function DtmPage() {
   // Ordenação canônica por data_inicio ASC (nulos ao final), independente do
   // que o backend devolveu, garantindo consistência entre telas.
   const rows = useMemo(() => sortDtmAcompanhamentos(list.data ?? []), [list.data]);
+  const pag = usePagination(rows, 20);
 
   return (
     <>
@@ -416,7 +419,7 @@ function DtmPage() {
                 </TableCell>
               </TableRow>
             )}
-            {rows.map((r) => {
+            {pag.pageItems.map((r) => {
               const isOpen = expanded === r.id;
               const cs = porAcomp.get(r.id) ?? [];
               const realizadas = cs.length;
@@ -491,6 +494,18 @@ function DtmPage() {
             })}
           </TableBody>
         </Table>
+        <TablePagination
+          page={pag.page}
+          totalPages={pag.totalPages}
+          from={pag.from}
+          to={pag.to}
+          total={pag.total}
+          canPrev={pag.canPrev}
+          canNext={pag.canNext}
+          onPrev={pag.prev}
+          onNext={pag.next}
+          unitLabel="acompanhamentos"
+        />
       </div>
 
       {editing && (

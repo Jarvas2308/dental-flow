@@ -12,7 +12,6 @@ import {
   HandCoins,
   CalendarClock,
   PhoneCall,
-  MessageCircle,
   Users,
   Activity,
   Menu,

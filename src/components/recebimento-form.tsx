@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useCreate, useDelete, useTable } from "@/hooks/use-data";
 import { brl, formatDateBR, todayISO } from "@/lib/format";
 import { resumoAtendimento, STATUS_LABEL } from "@/lib/finance";
-import type { AtendimentoRow, RecebimentoRow } from "@/lib/finance";
+import type { AtendimentoRow, RecebimentoRow, ParcelaRow } from "@/lib/finance";
 import {
   Dialog,
   DialogContent,
@@ -23,7 +23,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { HandCoins, Loader2, Plus, Trash2 } from "lucide-react";
+import { HandCoins, Loader2, Plus } from "lucide-react";
+import { ConfirmDelete } from "@/components/confirm-delete";
 import { toast } from "sonner";
 
 type FormaPagamento = { id: string; nome: string; taxa?: number | null };
@@ -38,6 +39,7 @@ export function RegistrarRecebimento({
 }) {
   const formas = useTable<FormaPagamento>("formas_pagamento", "nome", true);
   const recebimentos = useTable<RecebimentoRegistro>("recebimentos", "data", true);
+  const parcelas = useTable<ParcelaRow>("parcelas", "vencimento", true);
   const create = useCreate("recebimentos");
   const del = useDelete("recebimentos");
   const [open, setOpen] = useState(false);
@@ -53,8 +55,8 @@ export function RegistrarRecebimento({
   );
 
   const resumo = useMemo(
-    () => resumoAtendimento(atendimento, recsDoAtend),
-    [atendimento, recsDoAtend],
+    () => resumoAtendimento(atendimento, recsDoAtend, parcelas.data ?? []),
+    [atendimento, recsDoAtend, parcelas.data],
   );
 
   const pct = resumo.total > 0 ? Math.min(100, (resumo.recebido / resumo.total) * 100) : 0;
@@ -230,14 +232,13 @@ export function RegistrarRecebimento({
                         {r.observacao ? ` · ${r.observacao}` : ""}
                       </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                      onClick={() => r.id && del.mutate(r.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <ConfirmDelete
+                      title="Excluir recebimento?"
+                      description={`O recebimento de ${brl(r.valor)} será removido permanentemente.`}
+                      onConfirm={() => {
+                        if (r.id) del.mutate(r.id);
+                      }}
+                    />
                   </div>
                 ))}
             </div>

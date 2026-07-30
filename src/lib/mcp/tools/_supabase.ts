@@ -22,3 +22,10 @@ const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" 
 export function formatBRL(value: number) {
   return brl.format(value || 0);
 }
+
+// Primeiro dia (YYYY-MM-DD) do mês seguinte ao informado (YYYY-MM).
+export function nextMonth(month: string) {
+  const [y, m] = month.split("-").map(Number);
+  const d = new Date(y, m, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+}

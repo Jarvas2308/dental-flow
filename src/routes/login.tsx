@@ -32,9 +32,11 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
 
-// Only allow same-origin relative paths as redirect targets.
+// Only allow same-origin relative paths as redirect targets. Rejects
+// protocol-relative ("//host") and backslash-prefixed ("/\host", which
+// browsers normalize to "//host") paths to prevent open redirects.
 function safeNext(next: string) {
-  return next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
+  return /^\/[^/\\]/.test(next) ? next : "/dashboard";
 }
 
 function LoginPage() {

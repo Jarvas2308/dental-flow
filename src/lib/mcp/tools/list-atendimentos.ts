@@ -1,6 +1,6 @@
 import { defineTool, type ToolContext } from "@lovable.dev/mcp-js";
 import { z } from "zod";
-import { supabaseForUser, unauthenticated, formatBRL } from "./_supabase";
+import { supabaseForUser, unauthenticated, formatBRL, nextMonth } from "./_supabase";
 
 export default defineTool({
   name: "list_atendimentos",
@@ -26,7 +26,7 @@ export default defineTool({
     let query = supabase
       .from("atendimentos")
       .select(
-        "id, data, paciente, procedimento, valor_bruto, valor_liquido, forma_pagamento, status_pagamento, nota_fiscal",
+        "id, data, paciente, procedimento, valor_bruto, valor_liquido, forma_pagamento, status_pagamento, nota_fiscal_status",
       )
       .order("data", { ascending: false })
       .limit(Math.min(Math.max(limit ?? 50, 1), 200));
@@ -57,9 +57,3 @@ export default defineTool({
     };
   },
 });
-
-function nextMonth(month: string) {
-  const [y, m] = month.split("-").map(Number);
-  const d = new Date(y, m, 1);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
-}

@@ -9,8 +9,6 @@ type TableName =
   | "formas_pagamento"
   | "laboratorios"
   | "tipos_trabalho"
-  | "gastos_fixos"
-  | "gastos_variaveis"
   | "despesas"
   | "atendimentos"
   | "custos_laboratorio"

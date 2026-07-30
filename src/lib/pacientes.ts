@@ -7,6 +7,12 @@ import { supabase } from "@/integrations/supabase/client";
 export const normalizePacienteNome = (nome: string) => nome.replace(/\s+/g, " ").trim();
 
 /**
+ * Escapa os curingas do PostgREST (`%`, `_`) para uso em `.ilike()`, evitando
+ * que caracteres digitados pelo usuário sejam interpretados como pattern.
+ */
+export const escapeIlike = (s: string) => s.replace(/[%_]/g, "\\$&");
+
+/**
  * Resolve o `paciente_id` para um nome de paciente, reutilizando a mesma lógica
  * de normalização do atendimento para evitar duplicados. Se já houver um id
  * conhecido, retorna-o. Caso contrário procura na lista carregada, depois no
@@ -37,7 +43,7 @@ export async function resolvePacienteId(opts: {
   const { data: encontrados, error: buscaError } = await supabase
     .from("pacientes")
     .select("id, nome")
-    .ilike("nome", nome);
+    .ilike("nome", escapeIlike(nome));
   if (buscaError) throw buscaError;
   const match = (encontrados ?? []).find(
     (p) => (p.nome ?? "").replace(/\s+/g, " ").trim().toLowerCase() === nomeKey,

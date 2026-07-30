@@ -432,9 +432,11 @@ export function totalDespesasPagasNoMes(despesas: DespesaRow[] = [], mes: string
   return despesasPagasNoMes(despesas, mes).reduce((s, r) => s + Number(r.valor || 0), 0);
 }
 
-// Despesas pendentes: ainda não pagas. Posicionadas pelo vencimento.
+// Despesas pendentes: ainda não pagas, ou marcadas como pagas sem data_pagamento
+// (não podem ser posicionadas em despesasPagas, então continuam pendentes pelo
+// vencimento até que a data de pagamento seja preenchida).
 export function despesasPendentes(despesas: DespesaRow[] = []): DespesaRow[] {
-  return (despesas ?? []).filter((r) => r.status !== "pago");
+  return (despesas ?? []).filter((r) => r.status !== "pago" || !r.data_pagamento);
 }
 
 // Despesas pendentes do mês (pelo vencimento).

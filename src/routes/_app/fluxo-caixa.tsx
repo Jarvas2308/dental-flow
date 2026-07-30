@@ -137,7 +137,7 @@ function FluxoCaixa() {
       (isClinica
         ? 0
         : (ganhos.data ?? [])
-            .filter((r) => new Date(r.data) <= limite)
+            .filter((r) => (parseLocalDate(r.data) ?? new Date(0)) <= limite)
             .reduce((s, r) => s + Number(r.valor || 0), 0));
     const sds =
       (isClinica
@@ -146,7 +146,7 @@ function FluxoCaixa() {
             .filter((r) => (parseLocalDate(r.data) ?? new Date(0)) <= limite)
             .reduce((s, r) => s + Number(r.valor || 0), 0)) +
       (lab.data ?? [])
-        .filter((r) => new Date(r.data) <= limite)
+        .filter((r) => (parseLocalDate(r.data) ?? new Date(0)) <= limite)
         .reduce((s, r) => s + Number(r.valor || 0), 0);
     return ents - sds;
   }, [recebidas, despesasPagas, lab.data, ganhos.data, year, monthNum, diasNoMes, isClinica]);
@@ -160,7 +160,7 @@ function FluxoCaixa() {
       (isClinica
         ? 0
         : (ganhos.data ?? [])
-            .filter((r) => new Date(r.data) <= hoje)
+            .filter((r) => (parseLocalDate(r.data) ?? new Date(0)) <= hoje)
             .reduce((s, r) => s + Number(r.valor || 0), 0));
     const sds =
       (isClinica
@@ -169,7 +169,7 @@ function FluxoCaixa() {
             .filter((r) => (parseLocalDate(r.data) ?? new Date(0)) <= hoje)
             .reduce((s, r) => s + Number(r.valor || 0), 0)) +
       (lab.data ?? [])
-        .filter((r) => new Date(r.data) <= hoje)
+        .filter((r) => (parseLocalDate(r.data) ?? new Date(0)) <= hoje)
         .reduce((s, r) => s + Number(r.valor || 0), 0);
     return ents - sds;
   }, [recebidas, despesasPagas, lab.data, ganhos.data, isClinica, hoje]);
@@ -205,7 +205,22 @@ function FluxoCaixa() {
   const projecaoEntradas = ehMesAtual
     ? totalEntradas + mediaDiariaEnt * (diasNoMes - diaAtual)
     : totalEntradas;
-  const projecaoSaldo = projecaoEntradas - totalSaidas;
+  // Saídas ainda por vir: despesas do mês com vencimento nos dias restantes
+  // que ainda não foram pagas (evita projeção otimista que ignora contas
+  // já lançadas mas com vencimento futuro).
+  const saidasFuturas =
+    ehMesAtual && !isClinica
+      ? (despesas.data ?? [])
+          .filter((r) => r.status !== "pago")
+          .filter((r) => monthKey(r.vencimento) === mes)
+          .filter((r) => {
+            const dia = parseLocalDate(r.vencimento)?.getDate() ?? 0;
+            return dia > diaAtual;
+          })
+          .reduce((s, r) => s + Number(r.valor || 0), 0)
+      : 0;
+  const projecaoSaidas = totalSaidas + saidasFuturas;
+  const projecaoSaldo = projecaoEntradas - projecaoSaidas;
   const tendencia = projecaoSaldo >= lucroLiquido ? "alta" : "baixa";
 
   const labelMes = monthLabel(mes);

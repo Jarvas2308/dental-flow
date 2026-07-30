@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { useTable, useCreate, useDelete, useUpdate } from "@/hooks/use-data";
-import { buildPacienteHistoryCounter } from "@/lib/pacientes";
+import { buildPacienteHistoryCounter, normalizePacienteNome } from "@/lib/pacientes";
 import {
   dadosDoPaciente,
   type AtendimentoFull,
@@ -50,6 +50,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ConfirmDelete } from "@/components/confirm-delete";
+import { usePagination } from "@/hooks/use-pagination";
+import { TablePagination } from "@/components/table-pagination";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
 import { Progress } from "@/components/ui/progress";
@@ -89,10 +91,12 @@ function PacienteForm({
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const nomeTrim = nome.trim();
+    const nomeTrim = normalizePacienteNome(nome);
     if (!nomeTrim) return toast.error("Informe o nome");
     const dup = pacientes.some(
-      (p) => p.nome?.toLowerCase() === nomeTrim.toLowerCase() && (!isEdit || p.id !== editing.id),
+      (p) =>
+        normalizePacienteNome(p.nome ?? "").toLowerCase() === nomeTrim.toLowerCase() &&
+        (!isEdit || p.id !== editing.id),
     );
     if (dup) return toast.error("Já existe um paciente com esse nome");
     if (isEdit) await update.mutateAsync({ id: editing.id, values: { nome: nomeTrim } });
@@ -382,6 +386,7 @@ function Pacientes() {
     () => pacientes.filter((p) => !q || p.nome?.toLowerCase().includes(q.toLowerCase())),
     [pacientes, q],
   );
+  const pag = usePagination(rows, 20, q);
 
   // Expande automaticamente quando a busca resolve para um único paciente
   // (fluxo "Ver paciente"), sem interferir na navegação manual.
@@ -436,7 +441,7 @@ function Pacientes() {
                 </TableCell>
               </TableRow>
             )}
-            {rows.map((r) => {
+            {pag.pageItems.map((r) => {
               const isOpen = expanded === r.id;
               return (
                 <Fragment key={r.id}>
@@ -498,6 +503,18 @@ function Pacientes() {
             })}
           </TableBody>
         </Table>
+        <TablePagination
+          page={pag.page}
+          totalPages={pag.totalPages}
+          from={pag.from}
+          to={pag.to}
+          total={pag.total}
+          canPrev={pag.canPrev}
+          canNext={pag.canNext}
+          onPrev={pag.prev}
+          onNext={pag.next}
+          unitLabel="pacientes"
+        />
       </div>
 
       {editing && (

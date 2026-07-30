@@ -17,6 +17,7 @@ import {
   monthLabel,
   monthOptions,
   parseLocalDate,
+  startOfWeek,
 } from "@/lib/format";
 import { PageHeader, StatCard, EmptyState } from "@/components/ui-kit";
 import { VerPacienteButton } from "@/components/paciente-link";
@@ -41,7 +42,6 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -132,14 +132,6 @@ const FILTER_LABELS: Record<QuickFilter, string> = {
   pix: "PIX",
   dinheiro: "Dinheiro",
 };
-
-function startOfWeek(d: Date) {
-  const dt = new Date(d);
-  const day = dt.getDay();
-  dt.setDate(dt.getDate() - day);
-  dt.setHours(0, 0, 0, 0);
-  return dt;
-}
 
 function Consultorio() {
   const [mes, setMes] = useState(currentMonthKey());
