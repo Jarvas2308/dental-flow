@@ -509,7 +509,15 @@ export type Database = {
           valor?: number
           valor_liquido?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "recebimentos_atendimento_id_fkey"
+            columns: ["atendimento_id"]
+            isOneToOne: false
+            referencedRelation: "atendimentos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       receitas_extras: {
         Row: {
