@@ -40,7 +40,8 @@ export function RegistrarRecebimento({
   const formas = useTable<FormaPagamento>("formas_pagamento", "nome", true);
   const recebimentos = useTable<RecebimentoRegistro>("recebimentos", "data", true);
   const parcelas = useTable<ParcelaRow>("parcelas", "vencimento", true);
-  const create = useCreate("recebimentos");
+  // Silencia o toast genérico: o aviso específico é disparado após o submit.
+  const create = useCreate("recebimentos", { mensagemSucesso: false });
   const del = useDelete("recebimentos");
   const [open, setOpen] = useState(false);
 

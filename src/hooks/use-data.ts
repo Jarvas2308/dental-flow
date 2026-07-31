@@ -4,6 +4,24 @@ import { useAuth } from "./use-auth-context";
 import { toast } from "sonner";
 import type { AtendimentoRow, RecebimentoRow, ParcelaRow } from "@/lib/finance";
 
+// Traduz o erro do Postgres para uma frase acionável. Sem isso o usuário
+// recebia o texto cru do banco ("duplicate key value violates unique
+// constraint ..."), que não diz o que fazer a respeito.
+function mensagemDeErro(e: unknown, acaoPadrao: string): string {
+  const bruto = e instanceof Error ? e.message : "";
+  if (/duplicate key|already exists/i.test(bruto)) return "Já existe um registro com esses dados.";
+  if (/violates foreign key/i.test(bruto)) {
+    return "Este registro está vinculado a outros e não pode ser removido.";
+  }
+  if (/violates row-level security|permission denied/i.test(bruto)) {
+    return "Você não tem permissão para esta ação.";
+  }
+  if (/network|fetch failed|Failed to fetch/i.test(bruto)) {
+    return "Sem conexão com o servidor. Verifique a internet e tente de novo.";
+  }
+  return acaoPadrao;
+}
+
 type TableName =
   | "procedimentos"
   | "formas_pagamento"
@@ -90,9 +108,12 @@ export function useConsultorioData(mes: string) {
   });
 }
 
-export function useCreate(table: TableName) {
+// `mensagemSucesso: false` silencia o toast genérico para quem já exibe um
+// aviso próprio, mais específico — evita dois toasts para uma única ação.
+export function useCreate(table: TableName, opts?: { mensagemSucesso?: string | false }) {
   const qc = useQueryClient();
   const { user } = useAuth();
+  const mensagemSucesso = opts?.mensagemSucesso ?? "Salvo com sucesso";
   return useMutation({
     mutationFn: async (values: Record<string, unknown>) => {
       const payload = { ...values, user_id: user!.id };
@@ -107,9 +128,9 @@ export function useCreate(table: TableName) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [table] });
       qc.invalidateQueries({ queryKey: ["consultorio"] });
-      toast.success("Salvo com sucesso");
+      if (mensagemSucesso !== false) toast.success(mensagemSucesso);
     },
-    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Erro ao salvar"),
+    onError: (e: unknown) => toast.error(mensagemDeErro(e, "Não foi possível salvar.")),
   });
 }
 
@@ -126,8 +147,12 @@ export function useUpdate(table: TableName) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [table] });
       qc.invalidateQueries({ queryKey: ["consultorio"] });
+      // Criar avisava e editar era silencioso: o diálogo simplesmente fechava
+      // e não havia como saber se a alteração tinha sido gravada.
+      toast.success("Alterações salvas");
     },
-    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Erro ao atualizar"),
+    onError: (e: unknown) =>
+      toast.error(mensagemDeErro(e, "Não foi possível salvar as alterações.")),
   });
 }
 
@@ -143,6 +168,6 @@ export function useDelete(table: TableName) {
       qc.invalidateQueries({ queryKey: ["consultorio"] });
       toast.success("Excluído");
     },
-    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Erro ao excluir"),
+    onError: (e: unknown) => toast.error(mensagemDeErro(e, "Não foi possível excluir.")),
   });
 }
