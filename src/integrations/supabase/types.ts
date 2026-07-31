@@ -55,7 +55,6 @@ export type Database = {
           data: string
           forma_pagamento: string
           id: string
-          nota_fiscal: boolean
           nota_fiscal_status: string
           paciente: string
           paciente_id: string | null
@@ -73,7 +72,6 @@ export type Database = {
           data: string
           forma_pagamento: string
           id?: string
-          nota_fiscal?: boolean
           nota_fiscal_status?: string
           paciente: string
           paciente_id?: string | null
@@ -91,7 +89,6 @@ export type Database = {
           data?: string
           forma_pagamento?: string
           id?: string
-          nota_fiscal?: boolean
           nota_fiscal_status?: string
           paciente?: string
           paciente_id?: string | null
@@ -350,72 +347,6 @@ export type Database = {
           nome?: string
           taxa?: number
           user_id?: string
-        }
-        Relationships: []
-      }
-      gastos_fixos: {
-        Row: {
-          categoria: string | null
-          created_at: string
-          data: string
-          id: string
-          nome: string
-          observacoes: string | null
-          user_id: string
-          valor: number
-        }
-        Insert: {
-          categoria?: string | null
-          created_at?: string
-          data: string
-          id?: string
-          nome: string
-          observacoes?: string | null
-          user_id: string
-          valor: number
-        }
-        Update: {
-          categoria?: string | null
-          created_at?: string
-          data?: string
-          id?: string
-          nome?: string
-          observacoes?: string | null
-          user_id?: string
-          valor?: number
-        }
-        Relationships: []
-      }
-      gastos_variaveis: {
-        Row: {
-          categoria: string | null
-          created_at: string
-          data: string
-          id: string
-          nome: string
-          observacoes: string | null
-          user_id: string
-          valor: number
-        }
-        Insert: {
-          categoria?: string | null
-          created_at?: string
-          data: string
-          id?: string
-          nome: string
-          observacoes?: string | null
-          user_id: string
-          valor: number
-        }
-        Update: {
-          categoria?: string | null
-          created_at?: string
-          data?: string
-          id?: string
-          nome?: string
-          observacoes?: string | null
-          user_id?: string
-          valor?: number
         }
         Relationships: []
       }
