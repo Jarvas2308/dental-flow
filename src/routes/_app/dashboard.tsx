@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useCallback, useMemo } from "react";
 import { useTable } from "@/hooks/use-data";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -13,6 +13,7 @@ import {
   parseLocalDate,
   todayISO,
 } from "@/lib/format";
+import { parseMes } from "@/lib/search-params";
 import {
   receitasRecebidas,
   valoresEmAberto,
@@ -22,14 +23,7 @@ import {
   resultadoPrevisto as calcResultadoPrevisto,
 } from "@/lib/finance";
 import { proximaTentativa, estaPendenteHoje } from "@/lib/followup";
-import { PageHeader, StatCard } from "@/components/ui-kit";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { PageHeader, StatCard, MonthSelect } from "@/components/ui-kit";
 import {
   ResponsiveContainer,
   BarChart,
@@ -56,13 +50,27 @@ import {
 } from "lucide-react";
 import { ProceduresAnalytics } from "@/components/procedures-analytics";
 
+// `mes` fica opcional de propósito: um schema obrigatório tornaria `search`
+// obrigatório em todo <Link to="/dashboard">, quebrando a navegação genérica
+// da sidebar. Ausente, a tela cai no mês corrente.
+type DashboardSearch = { mes?: string };
+
 export const Route = createFileRoute("/_app/dashboard")({
+  validateSearch: (s: Record<string, unknown>): DashboardSearch => ({ mes: parseMes(s.mes) }),
   component: Dashboard,
 });
 
 function Dashboard() {
-  const [mes, setMes] = useState(currentMonthKey());
-  const opts = monthOptions(12);
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: "/dashboard" });
+  const mes = search.mes ?? currentMonthKey();
+
+  // Atualização funcional para preservar quaisquer outros params; `replace`
+  // evita empilhar uma entrada de histórico por troca de mês.
+  const setMes = useCallback(
+    (novo: string) => navigate({ search: (prev) => ({ ...prev, mes: novo }), replace: true }),
+    [navigate],
+  );
 
   const atendimentos = useTable<Tables<"atendimentos">>("atendimentos", "data");
   const recebimentos = useTable<Tables<"recebimentos">>("recebimentos", "data", true);
@@ -214,20 +222,7 @@ function Dashboard() {
       <PageHeader
         title="Dashboard"
         description="Visão geral financeira do consultório"
-        actions={
-          <Select value={mes} onValueChange={setMes}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {opts.map((m) => (
-                <SelectItem key={m} value={m} className="capitalize">
-                  {monthLabel(m)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        }
+        actions={<MonthSelect value={mes} onChange={setMes} />}
       />
 
       <div className="mb-2 flex items-center gap-2">

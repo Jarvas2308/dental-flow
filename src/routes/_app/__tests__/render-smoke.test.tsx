@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { renderWithProviders, getRouteComponent } from "@/test/harness";
+import { renderRoute } from "@/test/harness";
 import { resetSupabaseMock } from "@/test/supabase-mock";
 
 import { Route as DashboardRoute } from "@/routes/_app/dashboard";
@@ -24,8 +24,9 @@ describe("telas principais renderizam sem quebrar", () => {
     ["Follow-up", FollowupRoute],
   ];
 
+  // Sem search: exercita justamente o caminho em que a rota cai no padrão
+  // (mês corrente, filtros zerados) por não haver nada na URL.
   it.each(telas)("%s monta sem lançar", (_nome, route) => {
-    const Component = getRouteComponent(route);
-    expect(() => renderWithProviders(<Component />)).not.toThrow();
+    expect(() => renderRoute(route)).not.toThrow();
   });
 });
