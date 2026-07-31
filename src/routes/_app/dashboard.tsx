@@ -23,7 +23,7 @@ import {
   resultadoPrevisto as calcResultadoPrevisto,
 } from "@/lib/finance";
 import { proximaTentativa, estaPendenteHoje } from "@/lib/followup";
-import { PageHeader, StatCard, MonthSelect } from "@/components/ui-kit";
+import { PageHeader, StatCard, ErrorState, MonthSelect } from "@/components/ui-kit";
 import {
   ResponsiveContainer,
   BarChart,
@@ -92,6 +92,28 @@ function Dashboard() {
     "data",
     true,
   );
+
+  const isError =
+    atendimentos.isError ||
+    recebimentos.isError ||
+    parcelas.isError ||
+    despesas.isError ||
+    lab.isError ||
+    ganhos.isError ||
+    consultas.isError ||
+    tratamentosPropostos.isError ||
+    tentativasContato.isError;
+  const refetch = () => {
+    atendimentos.refetch();
+    recebimentos.refetch();
+    parcelas.refetch();
+    despesas.refetch();
+    lab.refetch();
+    ganhos.refetch();
+    consultas.refetch();
+    tratamentosPropostos.refetch();
+    tentativasContato.refetch();
+  };
 
   // Previsão de consultas futuras (hoje / semana)
   const previsao = useMemo(() => {
@@ -223,6 +245,19 @@ function Dashboard() {
         description="Visão geral financeira do consultório"
         actions={<MonthSelect value={mes} onChange={setMes} />}
       />
+
+      {isError && (
+        <div
+          className="rounded-2xl border bg-card mb-6"
+          style={{ boxShadow: "var(--shadow-soft)" }}
+        >
+          <ErrorState
+            title="Não foi possível carregar o dashboard"
+            description="Os totais abaixo podem estar incompletos. Recarregue para ver os números corretos."
+            onRetry={refetch}
+          />
+        </div>
+      )}
 
       <div className="mb-2 flex items-center gap-2">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
