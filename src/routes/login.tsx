@@ -40,10 +40,9 @@ function safeNext(next: string) {
 }
 
 function LoginPage() {
-  const { signIn, signUp, session, loading } = useAuth();
+  const { signIn, session, loading } = useAuth();
   const navigate = useNavigate();
   const { next } = Route.useSearch();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -59,11 +58,9 @@ function LoginPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
-    const { error } =
-      mode === "signin" ? await signIn(email, password) : await signUp(email, password);
+    const { error } = await signIn(email, password);
     setBusy(false);
     if (error) return toast.error(error);
-    if (mode === "signup") toast.success("Conta criada! Verifique seu e-mail se necessário.");
   };
 
   if (loading) return null;
@@ -106,12 +103,8 @@ function LoginPage() {
             <div className="font-semibold tracking-tight">Odonto Financeiro</div>
           </div>
 
-          <h2 className="text-2xl font-semibold tracking-tight">
-            {mode === "signin" ? "Bem-vindo de volta" : "Criar conta"}
-          </h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            {mode === "signin" ? "Entre para acessar o painel." : "Cadastre-se para começar."}
-          </p>
+          <h2 className="text-2xl font-semibold tracking-tight">Bem-vindo de volta</h2>
+          <p className="text-sm text-muted-foreground mt-1">Entre para acessar o painel.</p>
 
           <form onSubmit={submit} className="mt-8 space-y-4">
             <div className="space-y-1.5">
@@ -139,20 +132,9 @@ function LoginPage() {
             </div>
             <Button type="submit" className="w-full h-11" disabled={busy}>
               {busy && <Loader2 className="h-4 w-4 animate-spin" />}
-              {mode === "signin" ? "Entrar" : "Criar conta"}
+              Entrar
             </Button>
           </form>
-
-          <div className="mt-6 text-center text-sm text-muted-foreground">
-            {mode === "signin" ? "Primeira vez?" : "Já tem conta?"}{" "}
-            <button
-              type="button"
-              onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-              className="text-primary font-medium hover:underline"
-            >
-              {mode === "signin" ? "Criar conta" : "Entrar"}
-            </button>
-          </div>
         </div>
       </div>
     </main>
