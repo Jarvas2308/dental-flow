@@ -11,7 +11,7 @@ import {
 } from "@/lib/finance";
 import type { Database } from "@/integrations/supabase/types";
 import { RegistrarRecebimento } from "@/components/recebimento-form";
-import { EditAtendimentoButton } from "@/components/atendimento-form";
+import { EditAtendimentoButton, AtendimentoForm } from "@/components/atendimento-form";
 import { VerPacienteButton } from "@/components/paciente-link";
 import { PageHeader, StatCard, AlertBanner, EmptyState } from "@/components/ui-kit";
 import { Input } from "@/components/ui/input";
@@ -42,6 +42,7 @@ type AtendimentoFull = Omit<
 
 function ContasReceber() {
   const [q, setQ] = useState("");
+  const [editing, setEditing] = useState<AtendimentoFull | null>(null);
   const atendimentos = useTable<AtendimentoFull>("atendimentos", "data");
   const recebimentos = useTable<RecebimentoRow>("recebimentos", "data", true);
   const parcelas = useTable<ParcelaRow>("parcelas", "vencimento", true);
@@ -80,6 +81,7 @@ function ContasReceber() {
 
   return (
     <>
+      {editing && <AtendimentoForm editing={editing} onClose={() => setEditing(null)} />}
       <PageHeader
         title="Valores em Aberto"
         description="Tratamentos com saldo pendente — só entram no caixa quando recebidos"
@@ -154,7 +156,8 @@ function ContasReceber() {
             return (
               <div
                 key={c.atendimento_id}
-                className="rounded-2xl border bg-card p-4 sm:p-5"
+                className="rounded-2xl border bg-card p-4 sm:p-5 cursor-pointer hover:border-primary/50 hover:bg-card/50 transition-colors"
+                onClick={() => atend && setEditing(atend)}
                 style={{ boxShadow: "var(--shadow-soft)" }}
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
