@@ -9,41 +9,32 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AppRouteImport } from './routes/_app'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as McpRouteImport } from './routes/mcp'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
-import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
-import { Route as AppCadastrosRouteImport } from './routes/_app/cadastros'
-import { Route as AppConsultasRouteImport } from './routes/_app/consultas'
-import { Route as AppConsultorioRouteImport } from './routes/_app/consultorio'
-import { Route as AppContasRouteImport } from './routes/_app/contas'
-import { Route as AppContasReceberRouteImport } from './routes/_app/contas-receber'
-import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
-import { Route as AppDtmRouteImport } from './routes/_app/dtm'
-import { Route as AppFluxoCaixaRouteImport } from './routes/_app/fluxo-caixa'
-import { Route as AppFollowupRouteImport } from './routes/_app/followup'
-import { Route as AppGanhosRouteImport } from './routes/_app/ganhos'
+import { Route as McpRouteImport } from './routes/mcp'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AppRouteImport } from './routes/_app'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppLaboratorioRouteImport } from './routes/_app/laboratorio'
-import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
-import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as AppGanhosRouteImport } from './routes/_app/ganhos'
+import { Route as AppFollowupRouteImport } from './routes/_app/followup'
+import { Route as AppFluxoCaixaRouteImport } from './routes/_app/fluxo-caixa'
+import { Route as AppDtmRouteImport } from './routes/_app/dtm'
+import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
+import { Route as AppContasReceberRouteImport } from './routes/_app/contas-receber'
+import { Route as AppContasRouteImport } from './routes/_app/contas'
+import { Route as AppConsultorioRouteImport } from './routes/_app/consultorio'
+import { Route as AppConsultasRouteImport } from './routes/_app/consultas'
+import { Route as AppCadastrosRouteImport } from './routes/_app/cadastros'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as AppPacientesIndexRouteImport } from './routes/_app/pacientes.index'
 import { Route as AppPacientesIdRouteImport } from './routes/_app/pacientes.$id'
+import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AppRoute = AppRouteImport.update({
-  id: '/_app',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const McpRoute = McpRouteImport.update({
@@ -51,66 +42,23 @@ const McpRoute = McpRouteImport.update({
   path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const Char91DotmcpChar93ListToolsRoute =
-  Char91DotmcpChar93ListToolsRouteImport.update({
-    id: '/.mcp/list-tools',
-    path: '/.mcp/list-tools',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const Char91DotwellKnownChar93OauthProtectedResourceRoute =
-  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
-    id: '/.well-known/oauth-protected-resource',
-    path: '/.well-known/oauth-protected-resource',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const AppCadastrosRoute = AppCadastrosRouteImport.update({
-  id: '/cadastros',
-  path: '/cadastros',
-  getParentRoute: () => AppRoute,
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AppConsultasRoute = AppConsultasRouteImport.update({
-  id: '/consultas',
-  path: '/consultas',
-  getParentRoute: () => AppRoute,
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AppConsultorioRoute = AppConsultorioRouteImport.update({
-  id: '/consultorio',
-  path: '/consultorio',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppContasRoute = AppContasRouteImport.update({
-  id: '/contas',
-  path: '/contas',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppContasReceberRoute = AppContasReceberRouteImport.update({
-  id: '/contas-receber',
-  path: '/contas-receber',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppDashboardRoute = AppDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppDtmRoute = AppDtmRouteImport.update({
-  id: '/dtm',
-  path: '/dtm',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppFluxoCaixaRoute = AppFluxoCaixaRouteImport.update({
-  id: '/fluxo-caixa',
-  path: '/fluxo-caixa',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppFollowupRoute = AppFollowupRouteImport.update({
-  id: '/followup',
-  path: '/followup',
+const AppLaboratorioRoute = AppLaboratorioRouteImport.update({
+  id: '/laboratorio',
+  path: '/laboratorio',
   getParentRoute: () => AppRoute,
 } as any)
 const AppGanhosRoute = AppGanhosRouteImport.update({
@@ -118,20 +66,61 @@ const AppGanhosRoute = AppGanhosRouteImport.update({
   path: '/ganhos',
   getParentRoute: () => AppRoute,
 } as any)
-const AppLaboratorioRoute = AppLaboratorioRouteImport.update({
-  id: '/laboratorio',
-  path: '/laboratorio',
+const AppFollowupRoute = AppFollowupRouteImport.update({
+  id: '/followup',
+  path: '/followup',
   getParentRoute: () => AppRoute,
 } as any)
-const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
-  id: '/.lovable/oauth/consent',
-  path: '/.lovable/oauth/consent',
-  getParentRoute: () => rootRouteImport,
+const AppFluxoCaixaRoute = AppFluxoCaixaRouteImport.update({
+  id: '/fluxo-caixa',
+  path: '/fluxo-caixa',
+  getParentRoute: () => AppRoute,
 } as any)
-const Char91DotmcpChar93InvokeToolToolRoute =
-  Char91DotmcpChar93InvokeToolToolRouteImport.update({
-    id: '/.mcp/invoke-tool/$tool',
-    path: '/.mcp/invoke-tool/$tool',
+const AppDtmRoute = AppDtmRouteImport.update({
+  id: '/dtm',
+  path: '/dtm',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDashboardRoute = AppDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppContasReceberRoute = AppContasReceberRouteImport.update({
+  id: '/contas-receber',
+  path: '/contas-receber',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppContasRoute = AppContasRouteImport.update({
+  id: '/contas',
+  path: '/contas',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppConsultorioRoute = AppConsultorioRouteImport.update({
+  id: '/consultorio',
+  path: '/consultorio',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppConsultasRoute = AppConsultasRouteImport.update({
+  id: '/consultas',
+  path: '/consultas',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCadastrosRoute = AppCadastrosRouteImport.update({
+  id: '/cadastros',
+  path: '/cadastros',
+  getParentRoute: () => AppRoute,
+} as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const Char91DotmcpChar93ListToolsRoute =
+  Char91DotmcpChar93ListToolsRouteImport.update({
+    id: '/.mcp/list-tools',
+    path: '/.mcp/list-tools',
     getParentRoute: () => rootRouteImport,
   } as any)
 const AppPacientesIndexRoute = AppPacientesIndexRouteImport.update({
@@ -143,6 +132,17 @@ const AppPacientesIdRoute = AppPacientesIdRouteImport.update({
   id: '/pacientes/$id',
   path: '/pacientes/$id',
   getParentRoute: () => AppRoute,
+} as any)
+const Char91DotmcpChar93InvokeToolToolRoute =
+  Char91DotmcpChar93InvokeToolToolRouteImport.update({
+    id: '/.mcp/invoke-tool/$tool',
+    path: '/.mcp/invoke-tool/$tool',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -303,25 +303,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_app': {
-      id: '/_app'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AppRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mcp': {
@@ -331,88 +317,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof McpRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/.mcp/list-tools': {
-      id: '/.mcp/list-tools'
-      path: '/.mcp/list-tools'
-      fullPath: '/.mcp/list-tools'
-      preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/.well-known/oauth-protected-resource': {
-      id: '/.well-known/oauth-protected-resource'
-      path: '/.well-known/oauth-protected-resource'
-      fullPath: '/.well-known/oauth-protected-resource'
-      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/cadastros': {
-      id: '/_app/cadastros'
-      path: '/cadastros'
-      fullPath: '/cadastros'
-      preLoaderRoute: typeof AppCadastrosRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/consultas': {
-      id: '/_app/consultas'
-      path: '/consultas'
-      fullPath: '/consultas'
-      preLoaderRoute: typeof AppConsultasRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/consultorio': {
-      id: '/_app/consultorio'
-      path: '/consultorio'
-      fullPath: '/consultorio'
-      preLoaderRoute: typeof AppConsultorioRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/contas': {
-      id: '/_app/contas'
-      path: '/contas'
-      fullPath: '/contas'
-      preLoaderRoute: typeof AppContasRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/contas-receber': {
-      id: '/_app/contas-receber'
-      path: '/contas-receber'
-      fullPath: '/contas-receber'
-      preLoaderRoute: typeof AppContasReceberRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/dashboard': {
-      id: '/_app/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AppDashboardRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/dtm': {
-      id: '/_app/dtm'
-      path: '/dtm'
-      fullPath: '/dtm'
-      preLoaderRoute: typeof AppDtmRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/fluxo-caixa': {
-      id: '/_app/fluxo-caixa'
-      path: '/fluxo-caixa'
-      fullPath: '/fluxo-caixa'
-      preLoaderRoute: typeof AppFluxoCaixaRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/followup': {
-      id: '/_app/followup'
-      path: '/followup'
-      fullPath: '/followup'
-      preLoaderRoute: typeof AppFollowupRouteImport
+    '/_app/laboratorio': {
+      id: '/_app/laboratorio'
+      path: '/laboratorio'
+      fullPath: '/laboratorio'
+      preLoaderRoute: typeof AppLaboratorioRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/ganhos': {
@@ -422,25 +352,81 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppGanhosRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/laboratorio': {
-      id: '/_app/laboratorio'
-      path: '/laboratorio'
-      fullPath: '/laboratorio'
-      preLoaderRoute: typeof AppLaboratorioRouteImport
+    '/_app/followup': {
+      id: '/_app/followup'
+      path: '/followup'
+      fullPath: '/followup'
+      preLoaderRoute: typeof AppFollowupRouteImport
       parentRoute: typeof AppRoute
     }
-    '/.lovable/oauth/consent': {
-      id: '/.lovable/oauth/consent'
-      path: '/.lovable/oauth/consent'
-      fullPath: '/.lovable/oauth/consent'
-      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+    '/_app/fluxo-caixa': {
+      id: '/_app/fluxo-caixa'
+      path: '/fluxo-caixa'
+      fullPath: '/fluxo-caixa'
+      preLoaderRoute: typeof AppFluxoCaixaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/dtm': {
+      id: '/_app/dtm'
+      path: '/dtm'
+      fullPath: '/dtm'
+      preLoaderRoute: typeof AppDtmRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/dashboard': {
+      id: '/_app/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AppDashboardRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/contas-receber': {
+      id: '/_app/contas-receber'
+      path: '/contas-receber'
+      fullPath: '/contas-receber'
+      preLoaderRoute: typeof AppContasReceberRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/contas': {
+      id: '/_app/contas'
+      path: '/contas'
+      fullPath: '/contas'
+      preLoaderRoute: typeof AppContasRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/consultorio': {
+      id: '/_app/consultorio'
+      path: '/consultorio'
+      fullPath: '/consultorio'
+      preLoaderRoute: typeof AppConsultorioRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/consultas': {
+      id: '/_app/consultas'
+      path: '/consultas'
+      fullPath: '/consultas'
+      preLoaderRoute: typeof AppConsultasRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/cadastros': {
+      id: '/_app/cadastros'
+      path: '/cadastros'
+      fullPath: '/cadastros'
+      preLoaderRoute: typeof AppCadastrosRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/.mcp/invoke-tool/$tool': {
-      id: '/.mcp/invoke-tool/$tool'
-      path: '/.mcp/invoke-tool/$tool'
-      fullPath: '/.mcp/invoke-tool/$tool'
-      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+    '/.mcp/list-tools': {
+      id: '/.mcp/list-tools'
+      path: '/.mcp/list-tools'
+      fullPath: '/.mcp/list-tools'
+      preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/pacientes/': {
@@ -456,6 +442,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/pacientes/$id'
       preLoaderRoute: typeof AppPacientesIdRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/.mcp/invoke-tool/$tool': {
+      id: '/.mcp/invoke-tool/$tool'
+      path: '/.mcp/invoke-tool/$tool'
+      fullPath: '/.mcp/invoke-tool/$tool'
+      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.lovable/oauth/consent': {
+      id: '/.lovable/oauth/consent'
+      path: '/.lovable/oauth/consent'
+      fullPath: '/.lovable/oauth/consent'
+      preLoaderRoute: typeof DotlovableOauthConsentRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
