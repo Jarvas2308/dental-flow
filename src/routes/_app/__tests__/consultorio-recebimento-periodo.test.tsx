@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { screen } from "@testing-library/react";
-import { renderWithProviders, getRouteComponent } from "@/test/harness";
+import { renderRoute } from "@/test/harness";
 import { resetSupabaseMock, setTableData } from "@/test/supabase-mock";
 import { toISODate } from "@/lib/format";
 
@@ -87,8 +87,7 @@ describe("Consultório — recebimento no período de atendimento de outro mês"
   });
 
   it("mostra na tabela o atendimento de outro mês que recebeu neste mês", async () => {
-    const Component = getRouteComponent(ConsultorioRoute);
-    renderWithProviders(<Component />);
+    renderRoute(ConsultorioRoute);
 
     // O atendimento do próprio mês aparece (comportamento já existente).
     expect(await screen.findByText("Joao Do Mes")).toBeInTheDocument();
@@ -99,8 +98,7 @@ describe("Consultório — recebimento no período de atendimento de outro mês"
   });
 
   it("soma no card do período apenas os recebimentos com data no mês", async () => {
-    const Component = getRouteComponent(ConsultorioRoute);
-    renderWithProviders(<Component />);
+    renderRoute(ConsultorioRoute);
 
     await screen.findByText("Sophia Parcelada");
 

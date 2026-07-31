@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useMemo, useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useConsultorioData, useUpdate, useDelete } from "@/hooks/use-data";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -14,12 +14,11 @@ import {
   currentMonthKey,
   formatDateBR,
   monthKey,
-  monthLabel,
-  monthOptions,
   parseLocalDate,
   startOfWeek,
 } from "@/lib/format";
-import { PageHeader, StatCard, EmptyState } from "@/components/ui-kit";
+import { parseMes, parseOpcao, parseTexto } from "@/lib/search-params";
+import { PageHeader, StatCard, EmptyState, MonthSelect } from "@/components/ui-kit";
 import { VerPacienteButton } from "@/components/paciente-link";
 import {
   Table,
@@ -29,13 +28,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -66,10 +58,6 @@ import { resumoAtendimento, receitasRecebidas, noMes, STATUS_LABEL } from "@/lib
 import { usePagination } from "@/hooks/use-pagination";
 import { TablePagination } from "@/components/table-pagination";
 import { Progress } from "@/components/ui/progress";
-
-export const Route = createFileRoute("/_app/consultorio")({
-  component: Consultorio,
-});
 
 type SortKey =
   | "data_desc"
@@ -133,13 +121,79 @@ const FILTER_LABELS: Record<QuickFilter, string> = {
   dinheiro: "Dinheiro",
 };
 
+// As listas de opções saem dos mapas de rótulos acima, então não há um segundo
+// lugar para manter em sincronia quando surgir um filtro novo.
+const SORT_KEYS = Object.keys(SORT_LABELS) as SortKey[];
+const FILTER_KEYS = Object.keys(FILTER_LABELS) as QuickFilter[];
+const STATUS_KEYS = Object.keys(STATUS_LABELS) as StatusPag[];
+
+// `proc` é texto livre porque a lista de procedimentos é dinâmica; um valor
+// desconhecido apenas filtra para zero linhas, que é um resultado correto.
+type ConsultorioSearch = {
+  mes?: string;
+  q?: string;
+  sort?: SortKey;
+  f?: QuickFilter;
+  proc?: string;
+  status?: StatusPag;
+};
+
+export const Route = createFileRoute("/_app/consultorio")({
+  validateSearch: (s: Record<string, unknown>): ConsultorioSearch => ({
+    mes: parseMes(s.mes),
+    q: parseTexto(s.q),
+    sort: parseOpcao(s.sort, SORT_KEYS),
+    f: parseOpcao(s.f, FILTER_KEYS),
+    proc: parseTexto(s.proc),
+    status: parseOpcao(s.status, STATUS_KEYS),
+  }),
+  component: Consultorio,
+});
+
 function Consultorio() {
-  const [mes, setMes] = useState(currentMonthKey());
-  const [q, setQ] = useState("");
-  const [sort, setSort] = useState<SortKey>("data_desc");
-  const [filter, setFilter] = useState<QuickFilter>("todos");
-  const [procFilter, setProcFilter] = useState<string>("__all__");
-  const [statusPag, setStatusPag] = useState<StatusPag>("todos");
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: "/consultorio" });
+
+  const mes = search.mes ?? currentMonthKey();
+  const sort = search.sort ?? "data_desc";
+  const filter = search.f ?? "todos";
+  const statusPag = search.status ?? "todos";
+  // O sentinela "__all__" é detalhe interno do <Select>; na URL a ausência do
+  // param já significa "todos os procedimentos".
+  const procFilter = search.proc ?? "__all__";
+
+  const setSearch = useCallback(
+    (patch: Partial<ConsultorioSearch>) =>
+      navigate({ search: (prev) => ({ ...prev, ...patch }), replace: true }),
+    [navigate],
+  );
+
+  const setMes = useCallback((novo: string) => setSearch({ mes: novo }), [setSearch]);
+  const setSort = useCallback((novo: SortKey) => setSearch({ sort: novo }), [setSearch]);
+  const setFilter = useCallback((novo: QuickFilter) => setSearch({ f: novo }), [setSearch]);
+  const setStatusPag = useCallback((novo: StatusPag) => setSearch({ status: novo }), [setSearch]);
+  const setProcFilter = useCallback(
+    (novo: string) => setSearch({ proc: novo === "__all__" ? undefined : novo }),
+    [setSearch],
+  );
+
+  // A busca fica em estado local e é empurrada para a URL com atraso: navegar a
+  // cada tecla digitada travaria a digitação. A filtragem lê o estado local,
+  // então continua instantânea; a URL é só a camada de persistência.
+  const [qLocal, setQLocal] = useState(search.q ?? "");
+  const q = qLocal;
+  useEffect(() => {
+    setQLocal(search.q ?? "");
+  }, [search.q]);
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if ((search.q ?? "") !== qLocal) setSearch({ q: qLocal || undefined });
+    }, 300);
+    return () => clearTimeout(t);
+    // `search.q` fora das deps de propósito: incluí-lo reagendaria o timer a
+    // cada navegação e a URL nunca estabilizaria.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [qLocal, setSearch]);
 
   const consultorio = useConsultorioData(mes);
   const upd = useUpdate("atendimentos");
@@ -459,40 +513,20 @@ function Consultorio() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar paciente ou procedimento..."
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
+            value={qLocal}
+            onChange={(e) => setQLocal(e.target.value)}
             className="pl-9"
           />
         </div>
 
-        <Select
+        <MonthSelect
           value={mes}
-          onValueChange={setMes}
-          disabled={
-            ![
-              "todos",
-              "mes",
-              "emitidos",
-              "pendentes",
-              "nao_emitidos",
-              "nao_se_aplica",
-              "cartao",
-              "pix",
-              "dinheiro",
-            ].includes(filter)
-          }
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {monthOptions(12).map((m) => (
-              <SelectItem key={m} value={m} className="capitalize">
-                {monthLabel(m)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          onChange={setMes}
+          className="w-[180px]"
+          // Os filtros rápidos "hoje"/"semana" têm recorte próprio e ignoram o
+          // mês, então o seletor fica desabilitado enquanto um deles está ativo.
+          disabled={["hoje", "semana"].includes(filter)}
+        />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -568,11 +602,11 @@ function Consultorio() {
             variant="ghost"
             size="sm"
             className="gap-1"
+            // Uma única navegação: chamar os setters individualmente
+            // dispararia quatro entradas de navegação em sequência.
             onClick={() => {
-              setFilter("todos");
-              setProcFilter("__all__");
-              setQ("");
-              setStatusPag("todos");
+              setQLocal("");
+              setSearch({ f: undefined, proc: undefined, q: undefined, status: undefined });
             }}
           >
             <X className="h-4 w-4" /> Limpar

@@ -6,6 +6,7 @@ import { navigateSpy } from "@/test/router-mock";
 import { resetSupabaseMock } from "@/test/supabase-mock";
 
 import { Route as DashboardRoute } from "@/routes/_app/dashboard";
+import { Route as ConsultorioRoute } from "@/routes/_app/consultorio";
 
 // O mês de cada tela mora na URL, não em useState. Isso é o que faz um link
 // compartilhado abrir o mesmo período e o drill-down do Dashboard levar o mês
@@ -82,6 +83,7 @@ describe("Dashboard — drill-down preserva o mês", () => {
     expect(hrefDoCard("Despesas Pendentes")).toBe("/contas?mes=2026-05");
     expect(hrefDoCard("Receitas Extras")).toBe("/ganhos?mes=2026-05");
     expect(hrefDoCard("Laboratório")).toBe("/laboratorio?mes=2026-05");
+    expect(hrefDoCard("Receita de Atendimentos")).toBe("/consultorio?mes=2026-05");
   });
 
   it("não leva o mês para telas que são de todos os meses", () => {
@@ -90,5 +92,50 @@ describe("Dashboard — drill-down preserva o mês", () => {
     expect(hrefDoCard("Valores em Aberto")).toBe("/contas-receber");
     expect(hrefDoCard("Consultas hoje")).toBe("/consultas");
     expect(hrefDoCard("Follow-up hoje")).toBe("/followup");
+  });
+});
+
+// O Consultório é a maior superfície: seis filtros que antes viviam só em
+// memória e sumiam em qualquer refresh ou navegação.
+describe("Consultório — filtros vindos da URL", () => {
+  beforeEach(() => {
+    resetSupabaseMock();
+  });
+
+  it("aplica os filtros do search e mostra os chips ativos", async () => {
+    renderRoute(ConsultorioRoute, {
+      search: { mes: "2026-07", f: "pendentes", proc: "Limpeza", status: "abertos" },
+    });
+
+    expect(await screen.findByText("NF Pendentes")).toBeInTheDocument();
+    expect(screen.getByText("Somente pendentes")).toBeInTheDocument();
+    expect(screen.getByText("Limpeza")).toBeInTheDocument();
+  });
+
+  it("semeia a busca a partir da URL", async () => {
+    renderRoute(ConsultorioRoute, { search: { q: "sophia" } });
+
+    const busca = await screen.findByPlaceholderText(/Buscar paciente ou procedimento/i);
+    expect(busca).toHaveValue("sophia");
+  });
+
+  it("limpa todos os filtros numa navegação só", async () => {
+    const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
+    renderRoute(ConsultorioRoute, {
+      search: { mes: "2026-07", f: "pendentes", proc: "Limpeza", status: "abertos" },
+    });
+
+    await user.click(await screen.findByRole("button", { name: /Limpar/i }));
+
+    // Uma navegação, não quatro — os setters individuais empilhariam chamadas.
+    expect(navigateSpy).toHaveBeenCalledTimes(1);
+
+    const arg = navigateSpy.mock.calls[0][0] as {
+      search: (prev: Record<string, unknown>) => Record<string, unknown>;
+    };
+    // O mês sobrevive ao "Limpar": ele é recorte de período, não filtro.
+    expect(
+      arg.search({ mes: "2026-07", f: "pendentes", proc: "Limpeza", status: "abertos" }),
+    ).toEqual({ mes: "2026-07", f: undefined, proc: undefined, q: undefined, status: undefined });
   });
 });

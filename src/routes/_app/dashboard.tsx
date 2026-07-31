@@ -275,7 +275,7 @@ function Dashboard() {
         <div className="h-px flex-1 bg-border" />
       </div>
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
-        <Link to="/consultorio" className="block">
+        <Link to="/consultorio" search={{ mes }} className="block">
           <StatCard
             label="Receita de Atendimentos"
             value={brl(totLiquidoAtend)}
