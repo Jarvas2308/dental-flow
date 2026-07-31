@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { screen } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
+import userEvent, { PointerEventsCheckLevel } from "@testing-library/user-event";
 import { renderWithProviders, getRouteComponent } from "@/test/harness";
 import { resetSupabaseMock, setTableData } from "@/test/supabase-mock";
 
@@ -67,5 +68,37 @@ describe("Contas a Receber — atendimento com parcela legada + recebimento novo
     expect(screen.getAllByText("R$ 200,00").length).toBeGreaterThan(0);
     // Recebido combinando as duas fontes: 500 + 300 = 800.
     expect(screen.getByText(/Recebido R\$ 800,00/)).toBeInTheDocument();
+  });
+
+  // O card inteiro é clicável para abrir a edição, mas os botões de ação dentro
+  // dele precisam parar a propagação — senão "Receber saldo" abre o diálogo de
+  // recebimento E o de edição atrás dele.
+  it("não abre a edição ao clicar em Receber saldo dentro do card", async () => {
+    const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
+    const Component = getRouteComponent(ContasReceberRoute);
+    renderWithProviders(<Component />);
+
+    await screen.findByText("Fernanda Estado Misto");
+    await user.click(screen.getByRole("button", { name: /Receber saldo/i }));
+
+    const dialog = await screen.findByRole("dialog");
+    expect(
+      within(dialog).getByRole("heading", { name: "Registrar recebimento" }),
+    ).toBeInTheDocument();
+    // Só um diálogo pode estar aberto: o de edição não pode ter vindo junto.
+    expect(screen.getAllByRole("dialog")).toHaveLength(1);
+    expect(screen.queryByText("Editar atendimento")).not.toBeInTheDocument();
+  });
+
+  it("abre a edição ao clicar em área livre do card", async () => {
+    const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
+    const Component = getRouteComponent(ContasReceberRoute);
+    renderWithProviders(<Component />);
+
+    await user.click(await screen.findByText("Fernanda Estado Misto"));
+
+    await waitFor(() =>
+      expect(screen.getByText("Editar atendimento")).toBeInTheDocument(),
+    );
   });
 });

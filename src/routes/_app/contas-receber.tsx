@@ -201,7 +201,10 @@ function ContasReceber() {
                   <Progress value={pct} className="h-2" />
                 </div>
 
-                <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
+                <div
+                  className="mt-3 flex flex-wrap items-center justify-end gap-2"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <VerPacienteButton nome={c.paciente} />
                   {atend ? (
                     <>
