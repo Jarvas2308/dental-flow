@@ -88,6 +88,28 @@ export type AbertoItem = {
 const liq = (r: MonetaryRow | null | undefined) => Number(r?.valor_liquido || 0);
 const bru = (r: MonetaryRow | null | undefined) => Number(r?.valor_bruto || 0);
 
+// IDs de atendimento que têm ao menos um recebimento no sistema ATUAL
+// (tabela `recebimentos`). Um atendimento pode ter parcelas legadas E
+// recebimentos novos ao mesmo tempo (ex.: 1ª parcela paga no sistema antigo,
+// 2ª parcela registrada já no fluxo atual). Ponto único de verdade: qualquer
+// função que precise decidir "trato este atendimento pelo fluxo novo ou caio
+// no fallback de parcelas legadas?" deve consultar este Set, nunca
+// reimplementar a checagem localmente — foi exatamente a duplicação dessa
+// lógica em cada função que fez o mesmo bug (atendimento com estado misto
+// sendo pulado por inteiro) escapar em uma função, ser corrigido, e
+// reaparecer em outra.
+export function idsComRecebimentoNovo(recebimentos: RecebimentoRow[]): Set<string> {
+  return new Set(recebimentos.map((r) => r.atendimento_id));
+}
+
+// IDs de atendimento que têm ao menos uma linha na tabela legada `parcelas`
+// (independente de status pago/pendente). Companheiro de idsComRecebimentoNovo
+// acima — usar SEMPRE este helper em vez de recriar o Set localmente em cada
+// função, pelo mesmo motivo.
+export function idsComParcelaLegada(parcelas: ParcelaRow[]): Set<string> {
+  return new Set(parcelas.map((p) => p.atendimento_id));
+}
+
 // Fator de conversão bruto -> líquido de um atendimento (considera a taxa).
 export const fatorLiquido = (a: AtendimentoRow) => {
   const b = bru(a);
@@ -167,7 +189,7 @@ export function receitasRecebidas(
   parcelas: ParcelaRow[] = [],
 ): Entrada[] {
   const out: Entrada[] = [];
-  const legacyIds = new Set(parcelas.map((p) => p.atendimento_id));
+  const legacyIds = idsComParcelaLegada(parcelas);
 
   for (const a of atend) {
     const recs = recebimentos.filter((x) => x.atendimento_id === a.id);
@@ -230,7 +252,7 @@ export function valoresEmAberto(
   parcelas: ParcelaRow[] = [],
 ): AbertoItem[] {
   const out: AbertoItem[] = [];
-  const legacyIds = new Set(parcelas.map((p) => p.atendimento_id));
+  const legacyIds = idsComParcelaLegada(parcelas);
 
   for (const a of atend) {
     const recs = recebimentos.filter((r) => r.atendimento_id === a.id);
@@ -321,12 +343,17 @@ export function contasAReceber(
   recebimentos: RecebimentoRow[] = [],
   parcelas: ParcelaRow[] = [],
 ): ContaReceber[] {
-  const legacyIds = new Set(parcelas.map((p) => p.atendimento_id));
+  const legacyIds = idsComParcelaLegada(parcelas);
+  const recIds = idsComRecebimentoNovo(recebimentos);
   const out: ContaReceber[] = [];
 
   for (const a of atend) {
-    if (legacyIds.has(a.id)) continue; // legado tratado abaixo
-    const temRecs = recebimentos.some((x) => x.atendimento_id === a.id);
+    const temRecs = recIds.has(a.id);
+    // Sem recebimentos novos e com parcela legada: tratado no bloco de
+    // parcelas legadas abaixo (evita ignorar recebimentos novos de
+    // atendimentos que também têm parcelas legadas antigas — ver
+    // idsComRecebimentoNovo/idsComParcelaLegada acima).
+    if (!temRecs && legacyIds.has(a.id)) continue;
     // À vista, quitado e sem recebimentos parciais: não é conta a receber.
     if (!a.parcelado && a.status_pagamento !== "pendente" && !temRecs) continue;
 
@@ -353,9 +380,15 @@ export function contasAReceber(
     });
   }
 
-  // Atendimentos legados com parcelas em aberto.
+  // Atendimentos legados com parcelas em aberto — só quando NÃO há
+  // recebimento novo para o mesmo atendimento_id, pois esses já foram
+  // tratados no loop acima (via resumoAtendimento, que combina as duas
+  // fontes). Sem esse filtro, um atendimento misto entraria duas vezes,
+  // ou a versão legada (que ignora `recebimentos`) sobrescreveria/duplicaria
+  // a entrada correta.
   const byAtend = new Map<string, ParcelaRow[]>();
   for (const p of parcelas) {
+    if (recIds.has(p.atendimento_id)) continue;
     const arr = byAtend.get(p.atendimento_id) ?? [];
     arr.push(p);
     byAtend.set(p.atendimento_id, arr);

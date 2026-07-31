@@ -6,6 +6,7 @@ import {
   totalDespesasPendentesNoMes,
   caixaRealizado,
   resultadoPrevisto,
+  contasAReceber,
 } from "./finance";
 
 // Atendimento parcelado usado como fonte de recebimentos livres.
@@ -175,6 +176,94 @@ describe("atendimento com parcela legada + recebimento novo (regressão)", () =>
     );
     expect(jun).toHaveLength(1);
     expect(jun[0].valor_bruto).toBe(500);
+  });
+});
+
+describe("contasAReceber com atendimento em estado misto (regressão)", () => {
+  // Mesmo atendimento base das suítes acima: total 1000, dividido em 2x.
+  const base = {
+    id: "at-misto",
+    paciente: "Carla",
+    procedimento: "Ortodontia",
+    parcelado: true,
+    valor_bruto: 1000,
+    valor_liquido: 1000,
+    taxa: 0,
+    forma_pagamento: "pix",
+    data: "2026-06-01",
+    status_pagamento: "pendente",
+    parcelas_total: 2,
+  };
+  const parcela1Paga = {
+    id: "p-1",
+    atendimento_id: "at-misto",
+    numero: 1,
+    total: 2,
+    status: "pago",
+    data_pagamento: "2026-06-05",
+    vencimento: "2026-06-05",
+    valor_bruto: 500,
+    valor_liquido: 500,
+    paciente: "Carla",
+    procedimento: "Ortodontia",
+  };
+  const parcela2Pendente = {
+    id: "p-2",
+    atendimento_id: "at-misto",
+    numero: 2,
+    total: 2,
+    status: "pendente",
+    data_pagamento: null,
+    vencimento: "2026-07-05",
+    valor_bruto: 500,
+    valor_liquido: 500,
+    paciente: "Carla",
+    procedimento: "Ortodontia",
+  };
+
+  it("só parcela legada, ainda com parcela pendente: comportamento atual não muda", () => {
+    // Sem nenhum recebimento novo — cai inteiro no fallback legado.
+    const contas = contasAReceber([base], [], [parcela1Paga, parcela2Pendente]);
+    expect(contas).toHaveLength(1);
+    expect(contas[0].recebido).toBe(500);
+    expect(contas[0].saldo).toBe(500);
+  });
+
+  it("parcela legada paga + recebimento novo que ainda deixa saldo: aparece com saldo correto", () => {
+    // Bug anterior: esse atendimento desaparecia inteiro da lista, pois a
+    // única parcela legada já estava paga (pend.length === 0 no fallback),
+    // e o recebimento novo nunca era somado.
+    const recebimentoNovoParcial = [
+      {
+        id: "r-parcial",
+        atendimento_id: "at-misto",
+        data: "2026-07-08",
+        valor: 300,
+        valor_liquido: 300,
+        forma_pagamento: "pix",
+      },
+    ];
+    const contas = contasAReceber([base], recebimentoNovoParcial, [parcela1Paga]);
+    expect(contas).toHaveLength(1);
+    expect(contas[0].recebido).toBe(800); // 500 (parcela) + 300 (recebimento)
+    expect(contas[0].saldo).toBe(200);
+    // Não pode haver entrada duplicada vinda do fallback legado.
+    expect(contas.filter((c) => c.atendimento_id === "at-misto")).toHaveLength(1);
+  });
+
+  it("parcela legada paga + recebimento novo que quita o saldo: não aparece (quitado)", () => {
+    const recebimentoNovoQuita = [
+      {
+        id: "r-quita",
+        atendimento_id: "at-misto",
+        data: "2026-07-08",
+        valor: 500,
+        valor_liquido: 500,
+        forma_pagamento: "pix",
+      },
+    ];
+    const contas = contasAReceber([base], recebimentoNovoQuita, [parcela1Paga]);
+    expect(contas.find((c) => c.atendimento_id === "at-misto")).toBeUndefined();
   });
 });
 
