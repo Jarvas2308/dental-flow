@@ -61,3 +61,12 @@ export const monthOptions = (count = 12) => {
     return monthKey(d);
   });
 };
+
+// Mesma lista, garantindo que o mês atualmente selecionado esteja presente.
+// Um link compartilhado com um mês fora da janela padrão (ex.: ?mes=2024-03)
+// deixaria o <Select> com o gatilho em branco, embora a tela mostre os dados
+// corretos daquele mês.
+export const monthOptionsIncluding = (mes: string, count = 12) => {
+  const base = monthOptions(count);
+  return base.includes(mes) ? base : [...base, mes].sort().reverse();
+};

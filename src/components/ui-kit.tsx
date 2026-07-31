@@ -1,5 +1,13 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { monthLabel, monthOptionsIncluding } from "@/lib/format";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export function PageHeader({
   title,
@@ -18,6 +26,36 @@ export function PageHeader({
       </div>
       {actions && <div className="flex items-center gap-2">{actions}</div>}
     </div>
+  );
+}
+
+// Seletor de mês compartilhado pelas telas com recorte mensal. Antes o mesmo
+// bloco de <Select> estava copiado em seis rotas, com larguras divergentes.
+export function MonthSelect({
+  value,
+  onChange,
+  disabled,
+  className,
+}: {
+  value: string;
+  onChange: (mes: string) => void;
+  disabled?: boolean;
+  className?: string;
+}) {
+  const opcoes = monthOptionsIncluding(value, 12);
+  return (
+    <Select value={value} onValueChange={onChange} disabled={disabled}>
+      <SelectTrigger className={className ?? "w-[200px]"}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {opcoes.map((m) => (
+          <SelectItem key={m} value={m} className="capitalize">
+            {monthLabel(m)}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 
