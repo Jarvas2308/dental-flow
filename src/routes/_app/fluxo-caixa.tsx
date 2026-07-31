@@ -7,7 +7,7 @@ type Tables<T extends keyof Database["public"]["Tables"]> = Database["public"]["
 import { brl, currentMonthKey, monthKey, monthLabel, parseLocalDate } from "@/lib/format";
 import { parseMes, parseOpcao, parseTexto } from "@/lib/search-params";
 import { receitasRecebidas, despesasPagas as despesasPagasFn } from "@/lib/finance";
-import { PageHeader, StatCard, MonthSelect } from "@/components/ui-kit";
+import { PageHeader, StatCard, ErrorState, MonthSelect } from "@/components/ui-kit";
 import {
   Select,
   SelectContent,
@@ -93,6 +93,15 @@ function FluxoCaixa() {
     despesas.isLoading ||
     lab.isLoading ||
     ganhos.isLoading;
+  const isError =
+    atendimentos.isError || parcelas.isError || despesas.isError || lab.isError || ganhos.isError;
+  const refetch = () => {
+    atendimentos.refetch();
+    parcelas.refetch();
+    despesas.refetch();
+    lab.refetch();
+    ganhos.refetch();
+  };
 
   const [year, monthNum] = mes.split("-").map(Number);
   const diasNoMes = new Date(year, monthNum, 0).getDate();
@@ -305,6 +314,14 @@ function FluxoCaixa() {
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="rounded-2xl border bg-card p-5 animate-pulse h-32" />
           ))}
+        </div>
+      ) : isError ? (
+        <div className="rounded-2xl border bg-card" style={{ boxShadow: "var(--shadow-soft)" }}>
+          <ErrorState
+            title="Não foi possível carregar o fluxo de caixa"
+            description="Os totais acima podem estar incompletos. Recarregue para ver os números corretos."
+            onRetry={refetch}
+          />
         </div>
       ) : (
         <>

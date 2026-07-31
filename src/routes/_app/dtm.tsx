@@ -6,7 +6,7 @@ import { PacienteCombobox } from "@/components/atendimento-form";
 import { resolvePacienteId } from "@/lib/pacientes";
 import { formatDateBR, todayISO } from "@/lib/format";
 import { sortDtmAcompanhamentos } from "@/lib/dtm";
-import { PageHeader, EmptyState, AlertBanner } from "@/components/ui-kit";
+import { PageHeader, EmptyState, ErrorState, AlertBanner } from "@/components/ui-kit";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { usePagination } from "@/hooks/use-pagination";
 import { TablePagination } from "@/components/table-pagination";
@@ -408,7 +408,17 @@ function DtmPage() {
                 </TableCell>
               </TableRow>
             )}
-            {!list.isLoading && rows.length === 0 && (
+            {list.isError && !list.isLoading && (
+              <TableRow>
+                <TableCell colSpan={8}>
+                  <ErrorState
+                    title="Não foi possível carregar os acompanhamentos"
+                    onRetry={() => list.refetch()}
+                  />
+                </TableCell>
+              </TableRow>
+            )}
+            {!list.isLoading && !list.isError && rows.length === 0 && (
               <TableRow>
                 <TableCell colSpan={8}>
                   <EmptyState

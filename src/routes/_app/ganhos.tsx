@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTable, useCreate, useUpdate, useDelete } from "@/hooks/use-data";
 import { brl, currentMonthKey, formatDateBR, monthKey, monthLabel, todayISO } from "@/lib/format";
 import { parseMes } from "@/lib/search-params";
-import { PageHeader, StatCard, MonthSelect } from "@/components/ui-kit";
+import { PageHeader, StatCard, ErrorState, MonthSelect } from "@/components/ui-kit";
 import {
   Table,
   TableBody,
@@ -272,7 +272,17 @@ function Ganhos() {
                 </TableCell>
               </TableRow>
             )}
-            {!list.isLoading && rows.length === 0 && (
+            {list.isError && !list.isLoading && (
+              <TableRow>
+                <TableCell colSpan={5} className="py-0">
+                  <ErrorState
+                    title="Não foi possível carregar os ganhos"
+                    onRetry={() => list.refetch()}
+                  />
+                </TableCell>
+              </TableRow>
+            )}
+            {!list.isLoading && !list.isError && rows.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} className="text-center text-muted-foreground py-12">
                   Nenhum ganho registrado neste mês.

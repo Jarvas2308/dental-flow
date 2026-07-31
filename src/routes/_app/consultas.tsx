@@ -5,7 +5,7 @@ import type { Database } from "@/integrations/supabase/types";
 type ConsultaRow = Database["public"]["Tables"]["consultas_previstas"]["Row"];
 import { useTable, useUpdate, useDelete } from "@/hooks/use-data";
 import { brl, endOfWeek, formatDateBR, parseLocalDate, startOfWeek, todayISO } from "@/lib/format";
-import { PageHeader, StatCard, AlertBanner, EmptyState } from "@/components/ui-kit";
+import { PageHeader, StatCard, AlertBanner, EmptyState, ErrorState } from "@/components/ui-kit";
 import { VerPacienteButton } from "@/components/paciente-link";
 import {
   Table,
@@ -165,7 +165,17 @@ function Consultas() {
                 </TableCell>
               </TableRow>
             )}
-            {!list.isLoading && rows.length === 0 && (
+            {list.isError && !list.isLoading && (
+              <TableRow>
+                <TableCell colSpan={6} className="py-0">
+                  <ErrorState
+                    title="Não foi possível carregar as consultas"
+                    onRetry={() => list.refetch()}
+                  />
+                </TableCell>
+              </TableRow>
+            )}
+            {!list.isLoading && !list.isError && rows.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} className="py-0">
                   <EmptyState

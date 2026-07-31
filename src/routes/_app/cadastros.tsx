@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useTable, useCreate, useDelete, useUpdate } from "@/hooks/use-data";
-import { PageHeader } from "@/components/ui-kit";
+import { PageHeader, ErrorState } from "@/components/ui-kit";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Table,
@@ -160,7 +160,17 @@ function CrudList({
                 </TableCell>
               </TableRow>
             )}
-            {!list.isLoading && (list.data ?? []).length === 0 && (
+            {list.isError && !list.isLoading && (
+              <TableRow>
+                <TableCell colSpan={withTaxa ? 3 : 2} className="py-0">
+                  <ErrorState
+                    title="Não foi possível carregar os cadastros"
+                    onRetry={() => list.refetch()}
+                  />
+                </TableCell>
+              </TableRow>
+            )}
+            {!list.isLoading && !list.isError && (list.data ?? []).length === 0 && (
               <TableRow>
                 <TableCell
                   colSpan={withTaxa ? 3 : 2}

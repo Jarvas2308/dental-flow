@@ -11,7 +11,7 @@ import {
   AtendimentoForm,
   ProcedimentoCombobox,
 } from "@/components/atendimento-form";
-import { PageHeader, StatCard, AlertBanner, EmptyState } from "@/components/ui-kit";
+import { PageHeader, StatCard, AlertBanner, EmptyState, ErrorState } from "@/components/ui-kit";
 import { VerPacienteButton } from "@/components/paciente-link";
 import {
   Table,
@@ -490,7 +490,17 @@ function Followup() {
                 </TableCell>
               </TableRow>
             )}
-            {!props.isLoading && rows.length === 0 && (
+            {props.isError && !props.isLoading && (
+              <TableRow>
+                <TableCell colSpan={6} className="py-0">
+                  <ErrorState
+                    title="Não foi possível carregar os acompanhamentos"
+                    onRetry={() => props.refetch()}
+                  />
+                </TableCell>
+              </TableRow>
+            )}
+            {!props.isLoading && !props.isError && rows.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} className="py-0">
                   <EmptyState
