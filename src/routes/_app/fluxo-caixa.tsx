@@ -17,8 +17,6 @@ import {
 } from "@/components/ui/select";
 import {
   ResponsiveContainer,
-  AreaChart,
-  Area,
   BarChart,
   Bar,
   LineChart,
@@ -341,13 +339,19 @@ function FluxoCaixa() {
               icon={<Activity className="h-4 w-4" />}
               hint={isClinica ? "Performance clínica pura" : "Inclui ganhos extras e despesas"}
             />
-            <StatCard
-              label="Saldo acumulado"
-              value={brl(saldoAcumulado)}
-              tone={saldoAcumulado >= 0 ? "success" : "destructive"}
-              icon={<TrendingUp className="h-4 w-4" />}
-              hint="Histórico até fim do mês"
-            />
+            {/* "Saldo atual" (até hoje) e "Saldo acumulado" (até o fim do mês
+                selecionado) são o mesmo número quando o mês em tela já passou
+                ou é o corrente sem lançamentos futuros. Nesses casos o card só
+                repetia o valor de cima, então some. */}
+            {Math.abs(saldoAcumulado - saldoAtual) > 0.005 && (
+              <StatCard
+                label="Saldo acumulado"
+                value={brl(saldoAcumulado)}
+                tone={saldoAcumulado >= 0 ? "success" : "destructive"}
+                icon={<TrendingUp className="h-4 w-4" />}
+                hint={`Histórico até o fim de ${labelMes}`}
+              />
+            )}
             <StatCard
               label="Projeção do mês"
               value={brl(projecaoSaldo)}
@@ -359,15 +363,12 @@ function FluxoCaixa() {
 
           {/* Charts */}
           <div className="mt-6 grid gap-4 lg:grid-cols-2">
-            <ChartCard title="Saldo diário acumulado" subtitle={`${labelMes}`}>
+            {/* Antes havia dois gráficos aqui plotando a mesma série
+                `acumulado` — um de área e outro de linha. Ficou só o de
+                linha, que já mostrava o acumulado E o saldo do dia. */}
+            <ChartCard title="Saldo acumulado" subtitle={`Dia a dia · ${labelMes}`}>
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={diario}>
-                  <defs>
-                    <linearGradient id="grad-saldo" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.4} />
-                      <stop offset="100%" stopColor="var(--chart-1)" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
+                <LineChart data={diario}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                   <XAxis
                     dataKey="diaLabel"
@@ -392,16 +393,27 @@ function FluxoCaixa() {
                     formatter={(v: number | string) => brl(Number(v))}
                     labelFormatter={(l) => `Dia ${l}`}
                   />
-                  <Area
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Line
                     type="monotone"
                     dataKey="acumulado"
-                    name="Acumulado"
+                    name="Saldo acumulado"
                     stroke="var(--chart-1)"
-                    strokeWidth={2}
-                    fill="url(#grad-saldo)"
-                    animationDuration={700}
+                    strokeWidth={2.5}
+                    dot={false}
+                    animationDuration={800}
                   />
-                </AreaChart>
+                  <Line
+                    type="monotone"
+                    dataKey="saldoDia"
+                    name="Saldo do dia"
+                    stroke="var(--chart-2)"
+                    strokeWidth={1.5}
+                    strokeDasharray="4 4"
+                    dot={false}
+                    animationDuration={900}
+                  />
+                </LineChart>
               </ResponsiveContainer>
             </ChartCard>
 
@@ -449,58 +461,6 @@ function FluxoCaixa() {
                     animationDuration={700}
                   />
                 </BarChart>
-              </ResponsiveContainer>
-            </ChartCard>
-          </div>
-
-          <div className="mt-4">
-            <ChartCard title="Crescimento financeiro" subtitle="Evolução do saldo ao longo do mês">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={diario}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                  <XAxis
-                    dataKey="diaLabel"
-                    stroke="var(--muted-foreground)"
-                    fontSize={10}
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <YAxis
-                    stroke="var(--muted-foreground)"
-                    fontSize={10}
-                    tickLine={false}
-                    axisLine={false}
-                    tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      background: "var(--card)",
-                      border: "1px solid var(--border)",
-                      borderRadius: 12,
-                    }}
-                    formatter={(v: number | string) => brl(Number(v))}
-                    labelFormatter={(l) => `Dia ${l}`}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="acumulado"
-                    name="Saldo acumulado"
-                    stroke="var(--chart-1)"
-                    strokeWidth={2.5}
-                    dot={false}
-                    animationDuration={800}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="saldoDia"
-                    name="Saldo do dia"
-                    stroke="var(--chart-2)"
-                    strokeWidth={1.5}
-                    strokeDasharray="4 4"
-                    dot={false}
-                    animationDuration={900}
-                  />
-                </LineChart>
               </ResponsiveContainer>
             </ChartCard>
           </div>

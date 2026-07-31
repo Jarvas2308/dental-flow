@@ -239,12 +239,15 @@ export function ProceduresAnalytics({ mes }: { mes: string }) {
           icon={<CalendarDays className="h-4 w-4" />}
           hint={`${diasUnicos} ${diasUnicos === 1 ? "dia" : "dias"} com atendimento`}
         />
+        {/* Aqui havia um card "Mais realizado" idêntico ao insight "Mais
+            frequente" logo abaixo (mesmo nome, mesma contagem). Trocado por
+            um número que não aparece em nenhum outro lugar da tela. */}
         <StatCard
-          label="Mais realizado"
-          value={maisRealizado?.nome ?? "—"}
+          label="Tipos de procedimento"
+          value={String(agrupado.length)}
           tone="success"
           icon={<Trophy className="h-4 w-4" />}
-          hint={maisRealizado ? `${maisRealizado.qtd} atendimentos` : "sem dados"}
+          hint={agrupado.length === 1 ? "procedimento distinto" : "procedimentos distintos"}
         />
       </div>
 

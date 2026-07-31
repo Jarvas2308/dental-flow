@@ -42,7 +42,6 @@ import {
   FlaskConical,
   CircleDollarSign,
   Clock,
-  HandCoins,
   FileSignature,
   CalendarDays,
   CalendarClock,
@@ -308,14 +307,11 @@ function Dashboard() {
         </h2>
         <div className="h-px flex-1 bg-border" />
       </div>
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
-        <StatCard
-          label="Receita Recebida"
-          value={brl(totLiquidoAtend)}
-          tone="success"
-          icon={<HandCoins className="h-4 w-4" />}
-          hint={`${monthLabel(mes)} · mesmo valor de "Receita de Atendimentos" acima`}
-        />
+      {/* O card "Receita Recebida" que existia aqui foi removido: era a mesma
+          variável do card "Receita de Atendimentos" logo acima, e o próprio
+          hint dizia isso. Duas leituras do mesmo número na mesma tela só
+          geram dúvida sobre qual é a certa. */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
         {/* Sem `search={{ mes }}`: esta tela é deliberadamente de todos os
             meses (o próprio hint diz isso). Levar o mês sugeriria um recorte
             que o destino não tem. Vale o mesmo para /consultas e /followup. */}
