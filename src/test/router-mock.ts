@@ -14,11 +14,7 @@ export function resetRouterMock() {
 // ("/pacientes/$id" + { id: "p-1" } vira "/pacientes/p-1") e serializa o
 // search. Sem isso o stub de <Link> renderiza "/pacientes/$id" cru e nenhum
 // teste consegue afirmar para onde um link aponta.
-export function hrefDe(
-  to?: string,
-  params?: Record<string, unknown>,
-  search?: unknown,
-): string {
+export function hrefDe(to?: string, params?: Record<string, unknown>, search?: unknown): string {
   let href = typeof to === "string" ? to : "#";
   for (const [chave, valor] of Object.entries(params ?? {})) {
     href = href.replace(`$${chave}`, encodeURIComponent(String(valor)));

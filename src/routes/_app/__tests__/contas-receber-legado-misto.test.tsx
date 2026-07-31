@@ -97,8 +97,6 @@ describe("Contas a Receber — atendimento com parcela legada + recebimento novo
 
     await user.click(await screen.findByText("Fernanda Estado Misto"));
 
-    await waitFor(() =>
-      expect(screen.getByText("Editar atendimento")).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByText("Editar atendimento")).toBeInTheDocument());
   });
 });
