@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { monthLabel, monthOptionsIncluding } from "@/lib/format";
 import {
@@ -129,6 +130,38 @@ export function AlertBanner({
         {description && <div className="text-xs opacity-80">{description}</div>}
       </div>
       {action && <div className="shrink-0">{action}</div>}
+    </div>
+  );
+}
+
+// Estado de erro de carregamento. Sem isto, uma falha de rede era renderizada
+// como lista vazia — indistinguível de "não há nada", o que num app financeiro
+// comunica um número errado (R$ 0,00 em vez de "não sei").
+export function ErrorState({
+  title = "Não foi possível carregar",
+  description = "Verifique sua conexão e tente novamente.",
+  onRetry,
+}: {
+  title?: string;
+  description?: string;
+  onRetry?: () => void;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-2 px-4 py-12 text-center">
+      <div className="text-destructive">
+        <AlertTriangle className="h-8 w-8" />
+      </div>
+      <div className="text-sm font-medium">{title}</div>
+      <div className="max-w-sm text-xs text-muted-foreground">{description}</div>
+      {onRetry && (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="mt-2 rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-muted"
+        >
+          Tentar de novo
+        </button>
+      )}
     </div>
   );
 }

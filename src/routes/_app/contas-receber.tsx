@@ -13,7 +13,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { RegistrarRecebimento } from "@/components/recebimento-form";
 import { EditAtendimentoButton, AtendimentoForm } from "@/components/atendimento-form";
 import { VerPacienteButton } from "@/components/paciente-link";
-import { PageHeader, StatCard, AlertBanner, EmptyState } from "@/components/ui-kit";
+import { PageHeader, StatCard, AlertBanner, EmptyState, ErrorState } from "@/components/ui-kit";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -48,6 +48,13 @@ function ContasReceber() {
   const parcelas = useTable<ParcelaRow>("parcelas", "vencimento", true);
 
   const loading = atendimentos.isLoading || recebimentos.isLoading || parcelas.isLoading;
+  // Qualquer uma das três falhando já invalida os totais da tela.
+  const erro = atendimentos.isError || recebimentos.isError || parcelas.isError;
+  const recarregar = () => {
+    atendimentos.refetch();
+    recebimentos.refetch();
+    parcelas.refetch();
+  };
 
   const contas = useMemo(
     () => contasAReceber(atendimentos.data ?? [], recebimentos.data ?? [], parcelas.data ?? []),
@@ -135,6 +142,14 @@ function ContasReceber() {
       {loading ? (
         <div className="grid place-items-center py-16">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : erro ? (
+        <div className="rounded-2xl border bg-card" style={{ boxShadow: "var(--shadow-soft)" }}>
+          <ErrorState
+            title="Não foi possível carregar os valores em aberto"
+            description="Os totais acima podem estar incompletos. Recarregue para ver os números corretos."
+            onRetry={recarregar}
+          />
         </div>
       ) : rows.length === 0 ? (
         <div className="rounded-2xl border bg-card" style={{ boxShadow: "var(--shadow-soft)" }}>

@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
+import userEvent, { PointerEventsCheckLevel } from "@testing-library/user-event";
 import { renderRoute } from "@/test/harness";
 import { resetSupabaseMock, setTableData } from "@/test/supabase-mock";
 import { toISODate } from "@/lib/format";
@@ -105,5 +106,27 @@ describe("Consultório — recebimento no período de atendimento de outro mês"
     // 280 (à vista do mês) + 900 (2ª parcela paga no mês) = 1180.
     // Os 900 da 1ª parcela (mês anterior) NÃO podem entrar.
     expect(screen.getByText("2 recebimentos · bruto R$ 1.180,00")).toBeInTheDocument();
+  });
+
+  // A linha virou clicável para abrir a edição, mesmo gesto do card em Contas
+  // a Receber. Os controles dentro dela precisam parar a propagação — senão
+  // cada botão abre também a edição por trás do próprio diálogo.
+  it("clicar na linha abre a edição do atendimento", async () => {
+    const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
+    renderRoute(ConsultorioRoute);
+
+    await user.click(await screen.findByText("Joao Do Mes"));
+
+    await waitFor(() => expect(screen.getByText("Editar atendimento")).toBeInTheDocument());
+  });
+
+  it("clicar no status da NF não abre a edição junto", async () => {
+    const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
+    renderRoute(ConsultorioRoute);
+
+    await screen.findByText("Joao Do Mes");
+    await user.click(screen.getAllByText("Pendente")[0]);
+
+    expect(screen.queryByText("Editar atendimento")).not.toBeInTheDocument();
   });
 });

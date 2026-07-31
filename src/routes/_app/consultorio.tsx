@@ -18,7 +18,7 @@ import {
   startOfWeek,
 } from "@/lib/format";
 import { parseMes, parseOpcao, parseTexto } from "@/lib/search-params";
-import { PageHeader, StatCard, EmptyState, MonthSelect } from "@/components/ui-kit";
+import { PageHeader, StatCard, EmptyState, ErrorState, MonthSelect } from "@/components/ui-kit";
 import { VerPacienteButton } from "@/components/paciente-link";
 import {
   Table,
@@ -198,6 +198,7 @@ function Consultorio() {
   const consultorio = useConsultorioData(mes);
   const upd = useUpdate("atendimentos");
   const del = useDelete("atendimentos");
+  const [editando, setEditando] = useState<AtendimentoView | null>(null);
 
   const allData = useMemo(
     () => (consultorio.data?.atendimentos ?? []) as AtendimentoView[],
@@ -473,6 +474,7 @@ function Consultorio() {
 
   return (
     <>
+      {editando && <AtendimentoForm editing={editando} onClose={() => setEditando(null)} />}
       <PageHeader
         title="Consultório"
         description="Atendimentos e procedimentos realizados"
@@ -670,7 +672,18 @@ function Consultorio() {
                 </TableCell>
               </TableRow>
             )}
-            {!consultorio.isLoading && rows.length === 0 && (
+            {consultorio.isError && !consultorio.isLoading && (
+              <TableRow>
+                <TableCell colSpan={9} className="py-0">
+                  <ErrorState
+                    title="Não foi possível carregar os atendimentos"
+                    description="Os totais acima podem estar incompletos. Recarregue para ver os números corretos."
+                    onRetry={() => consultorio.refetch()}
+                  />
+                </TableCell>
+              </TableRow>
+            )}
+            {!consultorio.isLoading && !consultorio.isError && rows.length === 0 && (
               <TableRow>
                 <TableCell colSpan={9} className="py-0">
                   <EmptyState
@@ -694,7 +707,13 @@ function Consultorio() {
               return (
                 <TableRow
                   key={r.id}
-                  className={cn(pend && "bg-destructive/5 hover:bg-destructive/10")}
+                  // Mesma entidade e mesmo gesto do card em Contas a Receber:
+                  // clicar na linha abre a edição do atendimento.
+                  className={cn(
+                    "cursor-pointer",
+                    pend && "bg-destructive/5 hover:bg-destructive/10",
+                  )}
+                  onClick={() => setEditando(r)}
                 >
                   <TableCell className={cn("text-muted-foreground", pend && "text-destructive/80")}>
                     {formatDateBR(r.data)}
@@ -760,7 +779,9 @@ function Consultorio() {
                       );
                     })()}
                   </TableCell>
-                  <TableCell>
+                  {/* O status da NF é editável inline; o clique nele não pode
+                      abrir a edição do atendimento junto. */}
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     {(() => {
                       const status = (r.nota_fiscal_status ?? "pendente") as string;
                       const label =
@@ -811,7 +832,9 @@ function Consultorio() {
                     })()}
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
+                    {/* Sem stopPropagation, cada botão daqui abriria também a
+                        edição da linha por trás do próprio diálogo. */}
+                    <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                       {(() => {
                         const rs = resumoMap.get(r.id);
                         if (rs && rs.saldo > 0.005) {
