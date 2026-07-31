@@ -54,7 +54,13 @@ import { cn } from "@/lib/utils";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { AtendimentoForm, EditAtendimentoButton } from "@/components/atendimento-form";
 import { RegistrarRecebimento } from "@/components/recebimento-form";
-import { resumoAtendimento, receitasRecebidas, noMes, STATUS_LABEL } from "@/lib/finance";
+import {
+  resumoAtendimento,
+  receitasRecebidas,
+  noMes,
+  STATUS_LABEL,
+  MONETARY_EPSILON,
+} from "@/lib/finance";
 import { usePagination } from "@/hooks/use-pagination";
 import { TablePagination } from "@/components/table-pagination";
 import { Progress } from "@/components/ui/progress";
@@ -837,7 +843,7 @@ function Consultorio() {
                     <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                       {(() => {
                         const rs = resumoMap.get(r.id);
-                        if (rs && rs.saldo > 0.005) {
+                        if (rs && rs.saldo > MONETARY_EPSILON) {
                           return <RegistrarRecebimento atendimento={r} />;
                         }
                         return null;

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useCreate, useDelete, useTable } from "@/hooks/use-data";
 import { brl, formatDateBR, todayISO } from "@/lib/format";
-import { resumoAtendimento, STATUS_LABEL } from "@/lib/finance";
+import { resumoAtendimento, STATUS_LABEL, MONETARY_EPSILON } from "@/lib/finance";
 import type { AtendimentoRow, RecebimentoRow, ParcelaRow } from "@/lib/finance";
 import {
   Dialog,
@@ -79,7 +79,7 @@ export function RegistrarRecebimento({
     if (create.isPending) return; // evita recebimentos duplicados por clique duplo
     const v = Number(valor);
     if (!v || v <= 0) return toast.error("Informe um valor válido");
-    if (v > resumo.saldo + 0.005) {
+    if (v > resumo.saldo + MONETARY_EPSILON) {
       return toast.error(`Valor acima do saldo pendente (${brl(resumo.saldo)})`);
     }
 
@@ -145,7 +145,7 @@ export function RegistrarRecebimento({
           <Progress value={pct} className="h-2" />
         </div>
 
-        {resumo.saldo > 0.005 ? (
+        {resumo.saldo > MONETARY_EPSILON ? (
           <form onSubmit={submit} className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">

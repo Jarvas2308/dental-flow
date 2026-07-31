@@ -10,7 +10,12 @@ import {
   type TentativaFull,
   type EventoTipo,
 } from "@/lib/paciente-detalhe";
-import { resumoAtendimento, type RecebimentoRow, type ParcelaRow } from "@/lib/finance";
+import {
+  resumoAtendimento,
+  MONETARY_EPSILON,
+  type RecebimentoRow,
+  type ParcelaRow,
+} from "@/lib/finance";
 import { brl, formatDateBR } from "@/lib/format";
 import { sortDtmAcompanhamentos } from "@/lib/dtm";
 import { PageHeader, StatCard, EmptyState } from "@/components/ui-kit";
@@ -88,7 +93,7 @@ function PacienteDetalhePage() {
           dados.parcelas as ParcelaRow[],
         ),
       }))
-      .filter((x) => x.resumo.saldo > 0.005)
+      .filter((x) => x.resumo.saldo > MONETARY_EPSILON)
       .sort((a, b) => (b.atendimento.data ?? "").localeCompare(a.atendimento.data ?? ""));
   }, [dados]);
 

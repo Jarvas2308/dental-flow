@@ -6,7 +6,11 @@ import type { Database } from "@/integrations/supabase/types";
 type Tables<T extends keyof Database["public"]["Tables"]> = Database["public"]["Tables"][T]["Row"];
 import { brl, currentMonthKey, monthKey, monthLabel, parseLocalDate } from "@/lib/format";
 import { parseMes, parseOpcao, parseTexto } from "@/lib/search-params";
-import { receitasRecebidas, despesasPagas as despesasPagasFn } from "@/lib/finance";
+import {
+  receitasRecebidas,
+  despesasPagas as despesasPagasFn,
+  MONETARY_EPSILON,
+} from "@/lib/finance";
 import { PageHeader, StatCard, ErrorState, MonthSelect } from "@/components/ui-kit";
 import {
   Select,
@@ -360,7 +364,7 @@ function FluxoCaixa() {
                 selecionado) são o mesmo número quando o mês em tela já passou
                 ou é o corrente sem lançamentos futuros. Nesses casos o card só
                 repetia o valor de cima, então some. */}
-            {Math.abs(saldoAcumulado - saldoAtual) > 0.005 && (
+            {Math.abs(saldoAcumulado - saldoAtual) > MONETARY_EPSILON && (
               <StatCard
                 label="Saldo acumulado"
                 value={brl(saldoAcumulado)}

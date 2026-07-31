@@ -88,6 +88,10 @@ export type AbertoItem = {
 const liq = (r: MonetaryRow | null | undefined) => Number(r?.valor_liquido || 0);
 const bru = (r: MonetaryRow | null | undefined) => Number(r?.valor_bruto || 0);
 
+// Tolerância para comparações de valores monetários (arredondamento).
+// Acima disso, não é "quitado" / "zero" / "negligenciável".
+export const MONETARY_EPSILON = 0.005;
+
 // IDs de atendimento que têm ao menos um recebimento no sistema ATUAL
 // (tabela `recebimentos`). Um atendimento pode ter parcelas legadas E
 // recebimentos novos ao mesmo tempo (ex.: 1ª parcela paga no sistema antigo,
@@ -162,7 +166,8 @@ export function resumoAtendimento(
     recs.reduce((s, r) => s + Number(r.valor || 0), 0) + legacy.reduce((s, p) => s + bru(p), 0);
   const saldo = Math.max(0, total - recebido);
   const qtd = recs.length + legacy.length;
-  const status: StatusReceb = recebido <= 0.005 ? "aberto" : saldo <= 0.005 ? "quitado" : "parcial";
+  const status: StatusReceb =
+    recebido <= MONETARY_EPSILON ? "aberto" : saldo <= MONETARY_EPSILON ? "quitado" : "parcial";
 
   const recebidoLiquido =
     recs.reduce(
@@ -285,7 +290,7 @@ export function valoresEmAberto(
     const f = fatorLiquido(a);
     const recebido = recs.reduce((s, r) => s + Number(r.valor || 0), 0);
     const saldoBruto = Math.max(0, bru(a) - recebido);
-    if (saldoBruto <= 0.005) continue;
+    if (saldoBruto <= MONETARY_EPSILON) continue;
     out.push({
       id: a.id,
       atendimento_id: a.id,
@@ -358,7 +363,7 @@ export function contasAReceber(
     if (!a.parcelado && a.status_pagamento !== "pendente" && !temRecs) continue;
 
     const r = resumoAtendimento(a, recebimentos, parcelas);
-    if (r.saldo <= 0.005) continue; // quitado
+    if (r.saldo <= MONETARY_EPSILON) continue; // quitado
 
     const recs = recebimentos
       .filter((x) => x.atendimento_id === a.id)
