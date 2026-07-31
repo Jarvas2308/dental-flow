@@ -40,10 +40,15 @@ export function ConsultaForm({
   editing,
   onClose,
   trigger,
+  initialData,
 }: {
   editing?: Consulta;
   onClose?: () => void;
   trigger?: React.ReactNode;
+  // Pré-preenche o paciente ao abrir a partir da tela dele. `pacienteId` evita
+  // resolver por nome — se houver dois pacientes com nome equivalente, a
+  // resolução escolheria um arbitrariamente.
+  initialData?: { paciente?: string; pacienteId?: string | null };
 }) {
   const create = useCreate("consultas_previstas");
   const update = useUpdate("consultas_previstas");
@@ -51,16 +56,23 @@ export function ConsultaForm({
   const { user } = useAuth();
   const qc = useQueryClient();
   const [open, setOpen] = useState(!!editing);
-  const [v, setV] = useState<Consulta>(editing ? { ...editing } : empty());
+  const semear = () => ({ ...empty(), paciente: initialData?.paciente ?? "" });
+  const [v, setV] = useState<Consulta>(editing ? { ...editing } : semear());
   // Guarda o id vindo do combobox quando um paciente existente é selecionado.
-  const [pacienteId, setPacienteId] = useState<string | null>(editing?.paciente_id ?? null);
+  const [pacienteId, setPacienteId] = useState<string | null>(
+    editing?.paciente_id ?? initialData?.pacienteId ?? null,
+  );
 
+  const nomeInicial = initialData?.paciente;
+  const idInicial = initialData?.pacienteId;
   useEffect(() => {
     if (open) {
-      setV(editing ? { ...editing } : empty());
-      setPacienteId(editing?.paciente_id ?? null);
+      setV(editing ? { ...editing } : { ...empty(), paciente: nomeInicial ?? "" });
+      setPacienteId(editing?.paciente_id ?? idInicial ?? null);
     }
-  }, [open, editing]);
+    // `initialData` desestruturado em primitivos: o objeto literal do chamador
+    // muda de identidade a cada render e reiniciaria o formulário digitado.
+  }, [open, editing, nomeInicial, idInicial]);
 
   const isEdit = !!editing;
   const busy = create.isPending || update.isPending;
@@ -97,6 +109,8 @@ export function ConsultaForm({
     else await create.mutateAsync(payload);
 
     qc.invalidateQueries({ queryKey: ["pacientes"] });
+    qc.invalidateQueries({ queryKey: ["consultas_previstas"] });
+    qc.invalidateQueries({ queryKey: ["paciente-detalhe"] });
     setOpen(false);
     onClose?.();
   };

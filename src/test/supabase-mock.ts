@@ -10,11 +10,16 @@ type Row = Record<string, unknown>;
 const store: Record<string, Row[]> = {};
 
 // Spies das operações de escrita, para asserções de fluxo.
+//
+// `or` é de leitura, mas fica registrado porque o mock não aplica filtros —
+// devolve a tabela inteira. Sem gravar o argumento, nenhum teste conseguiria
+// verificar QUAL recorte a tela pediu ao banco.
 export const spies = {
   insert: vi.fn(),
   update: vi.fn(),
   delete: vi.fn(),
   rpc: vi.fn(),
+  or: vi.fn(),
 };
 
 export function setTableData(table: string, rows: Row[]) {
@@ -27,6 +32,7 @@ export function resetSupabaseMock() {
   spies.update.mockReset();
   spies.delete.mockReset();
   spies.rpc.mockReset();
+  spies.or.mockReset();
 }
 
 function makeChain(table: string) {
@@ -36,7 +42,10 @@ function makeChain(table: string) {
   const chain: Record<string, unknown> = {
     select: () => chain,
     order: () => chain,
-    or: () => chain,
+    or: (filtro: unknown) => {
+      spies.or(table, filtro);
+      return chain;
+    },
     in: () => chain,
     eq: () => chain,
     ilike: () => chain,

@@ -205,7 +205,7 @@ function ContasReceber() {
                   className="mt-3 flex flex-wrap items-center justify-end gap-2"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <VerPacienteButton nome={c.paciente} />
+                  <VerPacienteButton nome={c.paciente} pacienteId={atend?.paciente_id} />
                   {atend ? (
                     <>
                       <EditAtendimentoButton row={atend} />

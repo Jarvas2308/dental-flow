@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { screen, waitFor, within, fireEvent } from "@testing-library/react";
 import userEvent, { PointerEventsCheckLevel } from "@testing-library/user-event";
 import { createElement } from "react";
-import { renderWithProviders, getRouteComponent } from "@/test/harness";
+import { renderWithProviders, getRouteComponent, renderRoute } from "@/test/harness";
 import { resetSupabaseMock, setTableData, spies } from "@/test/supabase-mock";
 
 // Mock do combobox de paciente para evitar dependência do Radix Popover no jsdom.
@@ -26,7 +26,7 @@ vi.mock("@/components/atendimento-form", async (importOriginal) => {
 });
 
 import { Route as DtmRoute } from "@/routes/_app/dtm";
-import { Route as PacientesRoute } from "@/routes/_app/pacientes";
+import { Route as PacienteDetalheRoute } from "@/routes/_app/pacientes.$id";
 
 describe("Módulo DTM — Acompanhamento", () => {
   beforeEach(() => {
@@ -194,8 +194,9 @@ describe("Módulo DTM — Acompanhamento", () => {
     );
   });
 
-  it("exibe acompanhamento DTM na expansão do paciente", async () => {
-    const user = userEvent.setup({ pointerEventsCheck: PointerEventsCheckLevel.Never });
+  // O acompanhamento DTM do paciente saiu do acordeão da lista e passou a
+  // viver na rota /pacientes/$id.
+  it("exibe acompanhamento DTM na ficha do paciente", async () => {
     setTableData("pacientes", [
       { id: "p-1", user_id: "test-user", nome: "Carlos", created_at: "x" },
     ]);
@@ -223,12 +224,8 @@ describe("Módulo DTM — Acompanhamento", () => {
       },
     ]);
 
-    // Silencia useSearch — a rota tem validateSearch, mas o harness ignora o router.
-    vi.spyOn(PacientesRoute, "useSearch" as never).mockReturnValue({} as never);
-    const Pacientes = getRouteComponent(PacientesRoute);
-    renderWithProviders(<Pacientes />);
+    renderRoute(PacienteDetalheRoute, { params: { id: "p-1" } });
 
-    await user.click(await screen.findByRole("button", { name: /Expandir/i }));
     const secao = await screen.findByText(/Acompanhamentos DTM/i);
     const container = secao.closest("div")?.parentElement as HTMLElement;
     expect(within(container).getByText(/1\/4 consultas/)).toBeInTheDocument();

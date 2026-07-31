@@ -340,7 +340,11 @@ export function AtendimentoForm({
   onClose?: () => void;
   onSaved?: () => void | Promise<void>;
   trigger?: React.ReactNode;
-  initialData?: { paciente?: string; valorEstimado?: number };
+  // `pacienteId` evita resolver o paciente por nome quando quem abre o
+  // formulário já sabe de qual paciente se trata (a tela de detalhe). Se
+  // existirem dois cadastros com nome equivalente, a resolução por nome
+  // escolheria um arbitrariamente e o atendimento iria para o paciente errado.
+  initialData?: { paciente?: string; valorEstimado?: number; pacienteId?: string | null };
 }) {
   const { user } = useAuth();
   const procedimentos = useTable<{ id: string; nome: string }>("procedimentos", "nome", true);
@@ -391,7 +395,7 @@ export function AtendimentoForm({
     } else {
       setV(empty());
     }
-    setPacienteId(editing?.paciente_id ?? null);
+    setPacienteId(editing?.paciente_id ?? initialData?.pacienteId ?? null);
     setParcelado(!!editing?.parcelado);
     setParcelasN(
       editing?.parcelas_total != null && editing.parcelas_total > 1 ? editing.parcelas_total : 3,
@@ -440,7 +444,7 @@ export function AtendimentoForm({
       setItems([{ procedimento: "", valor: "" }]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, editing, initialData?.paciente, initialData?.valorEstimado]);
+  }, [open, editing, initialData?.paciente, initialData?.valorEstimado, initialData?.pacienteId]);
 
   useEffect(() => {
     if (dividido && !formaInicialTocada) {
@@ -587,6 +591,9 @@ export function AtendimentoForm({
       qc.invalidateQueries({ queryKey: ["atendimento_procedimentos"] });
       qc.invalidateQueries({ queryKey: ["recebimentos"] });
       qc.invalidateQueries({ queryKey: ["consultorio"] });
+      // Este formulário grava via RPC, fora dos hooks de mutação, então as
+      // chaves precisam ser listadas na mão aqui também.
+      qc.invalidateQueries({ queryKey: ["paciente-detalhe"] });
 
       // Aguarda o callback do fluxo pai (ex.: marcar consulta/proposta) antes
       // de sinalizar sucesso e fechar o modal. Se ele falhar, mantém o modal

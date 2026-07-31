@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./use-auth-context";
 import { toast } from "sonner";
 import type { AtendimentoRow, RecebimentoRow, ParcelaRow } from "@/lib/finance";
+import { pertenceAoPaciente } from "@/lib/paciente-detalhe";
 
 // Traduz o erro do Postgres para uma frase acionável. Sem isso o usuário
 // recebia o texto cru do banco ("duplicate key value violates unique
@@ -108,6 +109,92 @@ export function useConsultorioData(mes: string) {
   });
 }
 
+// Dados de um único paciente, para a tela de detalhe.
+//
+// Cuidado central: `pertenceAoPaciente` (lib/paciente-detalhe.ts) casa por
+// `paciente_id` quando existe e cai no NOME normalizado para registros
+// legados que não têm id. Um filtro server-side só por `paciente_id`
+// perderia silenciosamente esses registros antigos — e num app financeiro
+// "menos atendimentos do que a realidade" é a pior falha possível.
+//
+// Filtrar por nome no SQL também não serve: `normalizePacienteNome` colapsa
+// espaços internos e o `ilike` do Postgres não faz isso, então "Ana  Maria"
+// (com dois espaços) escaparia. Além disso o nome seria interpolado na
+// gramática do `.or()`, onde vírgulas e parênteses (ex.: "Silva, Jr.")
+// quebram o filtro.
+//
+// Por isso a busca traz um SUPERSET deliberado — os registros do paciente
+// MAIS todos os registros sem `paciente_id` — e a decisão final continua
+// sendo de `pertenceAoPaciente`, no cliente. O filtro SQL nunca é mais
+// estreito que a regra real, então é correto por construção.
+export function usePacienteDetalhe(pacienteId: string) {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["paciente-detalhe", user?.id, pacienteId],
+    enabled: !!user && !!pacienteId,
+    queryFn: async () => {
+      const { data: paciente, error: pErr } = await supabase
+        .from("pacientes")
+        .select("*")
+        .eq("id", pacienteId)
+        .maybeSingle();
+      if (pErr) throw pErr;
+      if (!paciente) return null;
+
+      const escopo = `paciente_id.eq.${pacienteId},paciente_id.is.null`;
+
+      const [atd, cns, prp, dta] = await Promise.all([
+        supabase.from("atendimentos").select("*").or(escopo).order("data", { ascending: false }),
+        supabase.from("consultas_previstas").select("*").or(escopo),
+        supabase.from("tratamentos_propostos").select("*").or(escopo),
+        supabase.from("dtm_acompanhamentos").select("*").or(escopo),
+      ]);
+      for (const r of [atd, cns, prp, dta]) if (r.error) throw r.error;
+
+      // Aplica a regra canônica já aqui: sem isso os `.in()` abaixo puxariam
+      // os filhos de todo registro legado do banco, não só os deste paciente.
+      const alvo = { id: paciente.id, nome: paciente.nome };
+      const atendimentos = (atd.data ?? []).filter((r) => pertenceAoPaciente(r, alvo));
+      const consultas = (cns.data ?? []).filter((r) => pertenceAoPaciente(r, alvo));
+      const propostas = (prp.data ?? []).filter((r) => pertenceAoPaciente(r, alvo));
+      const dtmAcomp = (dta.data ?? []).filter((r) => pertenceAoPaciente(r, alvo));
+
+      const atendIds = atendimentos.map((a) => a.id);
+      const propIds = propostas.map((p) => p.id);
+      const acompIds = dtmAcomp.map((a) => a.id);
+      const vazio = { data: [], error: null };
+
+      const [rec, par, ten, dtc] = await Promise.all([
+        atendIds.length
+          ? supabase.from("recebimentos").select("*").in("atendimento_id", atendIds)
+          : vazio,
+        atendIds.length
+          ? supabase.from("parcelas").select("*").in("atendimento_id", atendIds)
+          : vazio,
+        propIds.length
+          ? supabase.from("tentativas_contato").select("*").in("tratamento_proposto_id", propIds)
+          : vazio,
+        acompIds.length
+          ? supabase.from("dtm_consultas").select("*").in("acompanhamento_id", acompIds)
+          : vazio,
+      ]);
+      for (const r of [rec, par, ten, dtc]) if (r.error) throw r.error;
+
+      return {
+        paciente,
+        atendimentos,
+        recebimentos: (rec.data ?? []) as RecebimentoRow[],
+        parcelas: (par.data ?? []) as ParcelaRow[],
+        consultas,
+        propostas,
+        tentativas: ten.data ?? [],
+        dtmAcomp,
+        dtmConsultas: dtc.data ?? [],
+      };
+    },
+  });
+}
+
 // `mensagemSucesso: false` silencia o toast genérico para quem já exibe um
 // aviso próprio, mais específico — evita dois toasts para uma única ação.
 export function useCreate(table: TableName, opts?: { mensagemSucesso?: string | false }) {
@@ -128,6 +215,7 @@ export function useCreate(table: TableName, opts?: { mensagemSucesso?: string | 
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [table] });
       qc.invalidateQueries({ queryKey: ["consultorio"] });
+      qc.invalidateQueries({ queryKey: ["paciente-detalhe"] });
       if (mensagemSucesso !== false) toast.success(mensagemSucesso);
     },
     onError: (e: unknown) => toast.error(mensagemDeErro(e, "Não foi possível salvar.")),
@@ -147,6 +235,7 @@ export function useUpdate(table: TableName) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [table] });
       qc.invalidateQueries({ queryKey: ["consultorio"] });
+      qc.invalidateQueries({ queryKey: ["paciente-detalhe"] });
       // Criar avisava e editar era silencioso: o diálogo simplesmente fechava
       // e não havia como saber se a alteração tinha sido gravada.
       toast.success("Alterações salvas");
@@ -166,6 +255,7 @@ export function useDelete(table: TableName) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [table] });
       qc.invalidateQueries({ queryKey: ["consultorio"] });
+      qc.invalidateQueries({ queryKey: ["paciente-detalhe"] });
       toast.success("Excluído");
     },
     onError: (e: unknown) => toast.error(mensagemDeErro(e, "Não foi possível excluir.")),

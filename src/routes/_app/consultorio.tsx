@@ -820,7 +820,7 @@ function Consultorio() {
                         return null;
                       })()}
 
-                      <VerPacienteButton nome={r.paciente} label="" />
+                      <VerPacienteButton nome={r.paciente} pacienteId={r.paciente_id} label="" />
                       <EditAtendimentoButton row={r} />
                       <ConfirmDelete
                         title="Excluir atendimento?"
