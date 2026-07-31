@@ -1,6 +1,5 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
-import { createElement, type ReactNode } from "react";
 import { afterEach, vi } from "vitest";
 
 // Substitui o cliente Supabase real pelo mock seguro em todos os testes.
@@ -14,13 +13,15 @@ vi.mock("@/integrations/supabase/client", async () => {
 // precisar de um router completo. Não altera comportamento das telas.
 vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-router")>();
+  const mock = await import("./router-mock");
   return {
     ...actual,
-    Link: ({ children, to, ...rest }: { children?: ReactNode; to?: string }) =>
-      createElement("a", { href: typeof to === "string" ? to : "#", ...rest }, children),
+    Link: mock.LinkStub,
     Navigate: () => null,
-    useNavigate: () => vi.fn(),
-    useRouter: () => ({ navigate: vi.fn(), invalidate: vi.fn() }),
+    // Spy compartilhado (não um vi.fn() novo a cada chamada), para que os
+    // testes consigam afirmar que a tela navegou com o search esperado.
+    useNavigate: () => mock.navigateSpy,
+    useRouter: () => ({ navigate: mock.navigateSpy, invalidate: vi.fn() }),
   };
 });
 
@@ -61,6 +62,8 @@ if (!Element.prototype.releasePointerCapture) {
   Element.prototype.releasePointerCapture = () => {};
 }
 
-afterEach(() => {
+afterEach(async () => {
   cleanup();
+  const { resetRouterMock } = await import("./router-mock");
+  resetRouterMock();
 });

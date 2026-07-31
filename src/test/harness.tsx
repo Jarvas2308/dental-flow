@@ -2,6 +2,7 @@
 import { type ReactElement, type ReactNode } from "react";
 import { render, type RenderResult } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { vi } from "vitest";
 import type { Session, User } from "@supabase/supabase-js";
 import { AuthContext, type AuthCtx } from "@/hooks/use-auth-context";
 
@@ -42,4 +43,23 @@ export function getRouteComponent(route: unknown): () => ReactElement {
     throw new Error("Rota sem componente renderizável");
   }
   return comp as () => ReactElement;
+}
+
+// Renderiza o componente de uma rota já com `Route.useSearch()` e
+// `Route.useParams()` respondendo valores controlados. Esses são métodos do
+// objeto de rota, e não do módulo do router — o mock de `@tanstack/react-router`
+// em setup.ts não os alcança, então precisam ser stubados aqui.
+export function renderRoute(
+  route: unknown,
+  opts: { search?: Record<string, unknown>; params?: Record<string, unknown> } = {},
+): RenderResult {
+  const alvo = route as Record<string, unknown>;
+  if (typeof alvo.useSearch === "function") {
+    vi.spyOn(alvo as never, "useSearch" as never).mockReturnValue((opts.search ?? {}) as never);
+  }
+  if (typeof alvo.useParams === "function") {
+    vi.spyOn(alvo as never, "useParams" as never).mockReturnValue((opts.params ?? {}) as never);
+  }
+  const Component = getRouteComponent(route);
+  return renderWithProviders(<Component />);
 }
