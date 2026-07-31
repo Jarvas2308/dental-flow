@@ -1,9 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTable, useCreate, useDelete, useUpdate } from "@/hooks/use-data";
 import { useGerarRecorrentes } from "@/hooks/use-recurring";
-import { brl, currentMonthKey, monthKey, monthLabel, monthOptions, todayISO } from "@/lib/format";
-import { PageHeader, StatCard } from "@/components/ui-kit";
+import { brl, currentMonthKey, monthKey, monthLabel, todayISO } from "@/lib/format";
+import { parseMes } from "@/lib/search-params";
+import { PageHeader, StatCard, MonthSelect } from "@/components/ui-kit";
 import { usePagination } from "@/hooks/use-pagination";
 import { TablePagination } from "@/components/table-pagination";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -40,7 +41,12 @@ import { Plus, Pencil, Search, Loader2, Check, RotateCw } from "lucide-react";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { toast } from "sonner";
 
+// `mes` opcional: obrigatório tornaria `search` obrigatório em todo
+// <Link to="/contas">, inclusive os genéricos da sidebar.
+type ContasSearch = { mes?: string };
+
 export const Route = createFileRoute("/_app/contas")({
+  validateSearch: (s: Record<string, unknown>): ContasSearch => ({ mes: parseMes(s.mes) }),
   component: Contas,
 });
 
@@ -273,7 +279,13 @@ function EditDespesa({ row }: { row: Despesa }) {
 
 function Contas() {
   const { gerar, loading: gerando } = useGerarRecorrentes();
-  const [mes, setMes] = useState(currentMonthKey());
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: "/contas" });
+  const mes = search.mes ?? currentMonthKey();
+  const setMes = useCallback(
+    (novo: string) => navigate({ search: (prev) => ({ ...prev, mes: novo }), replace: true }),
+    [navigate],
+  );
   const [aba, setAba] = useState<"todas" | "pendente" | "aguardando" | "atrasado" | "pago">(
     "todas",
   );
@@ -352,18 +364,7 @@ function Contas() {
       </div>
 
       <div className="flex flex-wrap gap-2 mb-4 items-center">
-        <Select value={mes} onValueChange={setMes}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {monthOptions(12).map((m) => (
-              <SelectItem key={m} value={m} className="capitalize">
-                {monthLabel(m)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <MonthSelect value={mes} onChange={setMes} />
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input

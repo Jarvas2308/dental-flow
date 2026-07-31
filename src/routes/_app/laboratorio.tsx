@@ -1,15 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useCallback, useMemo, useState } from "react";
 import { useTable, useDelete } from "@/hooks/use-data";
-import {
-  brl,
-  currentMonthKey,
-  formatDateBR,
-  monthKey,
-  monthLabel,
-  monthOptions,
-} from "@/lib/format";
-import { PageHeader, StatCard } from "@/components/ui-kit";
+import { brl, currentMonthKey, formatDateBR, monthKey, monthLabel } from "@/lib/format";
+import { parseMes } from "@/lib/search-params";
+import { PageHeader, StatCard, MonthSelect } from "@/components/ui-kit";
 import {
   Table,
   TableBody,
@@ -18,13 +12,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Search, Loader2 } from "lucide-react";
 import { ConfirmDelete } from "@/components/confirm-delete";
@@ -33,12 +20,21 @@ import type { Database } from "@/integrations/supabase/types";
 
 type CustoLabRow = Database["public"]["Tables"]["custos_laboratorio"]["Row"];
 
+type LaboratorioSearch = { mes?: string };
+
 export const Route = createFileRoute("/_app/laboratorio")({
+  validateSearch: (s: Record<string, unknown>): LaboratorioSearch => ({ mes: parseMes(s.mes) }),
   component: Laboratorio,
 });
 
 function Laboratorio() {
-  const [mes, setMes] = useState(currentMonthKey());
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: "/laboratorio" });
+  const mes = search.mes ?? currentMonthKey();
+  const setMes = useCallback(
+    (novo: string) => navigate({ search: (prev) => ({ ...prev, mes: novo }), replace: true }),
+    [navigate],
+  );
   const [q, setQ] = useState("");
   const list = useTable<CustoLabRow>("custos_laboratorio", "data");
   const del = useDelete("custos_laboratorio");
@@ -72,18 +68,7 @@ function Laboratorio() {
       </div>
 
       <div className="flex gap-2 mb-4 flex-wrap">
-        <Select value={mes} onValueChange={setMes}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {monthOptions(12).map((m) => (
-              <SelectItem key={m} value={m} className="capitalize">
-                {monthLabel(m)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <MonthSelect value={mes} onChange={setMes} />
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input

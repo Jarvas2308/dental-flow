@@ -1,19 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useCallback, useMemo } from "react";
 import { useTable } from "@/hooks/use-data";
 import type { Database } from "@/integrations/supabase/types";
 
 type Tables<T extends keyof Database["public"]["Tables"]> = Database["public"]["Tables"][T]["Row"];
-import {
-  brl,
-  currentMonthKey,
-  monthKey,
-  monthLabel,
-  monthOptions,
-  parseLocalDate,
-} from "@/lib/format";
+import { brl, currentMonthKey, monthKey, monthLabel, parseLocalDate } from "@/lib/format";
+import { parseMes, parseOpcao, parseTexto } from "@/lib/search-params";
 import { receitasRecebidas, despesasPagas as despesasPagasFn } from "@/lib/finance";
-import { PageHeader, StatCard } from "@/components/ui-kit";
+import { PageHeader, StatCard, MonthSelect } from "@/components/ui-kit";
 import {
   Select,
   SelectContent,
@@ -47,18 +41,46 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/_app/fluxo-caixa")({
-  component: FluxoCaixa,
-});
-
 type FiltroPag = "todas" | string;
 type Visao = "clinica" | "geral";
 
+const VISOES = ["clinica", "geral"] as const;
+
+// Mês, visão e forma de pagamento são todos contexto de leitura da tela, então
+// vão juntos para a URL — um link compartilhado reabre exatamente o mesmo
+// recorte.
+type FluxoSearch = { mes?: string; visao?: Visao; pag?: string };
+
+export const Route = createFileRoute("/_app/fluxo-caixa")({
+  validateSearch: (s: Record<string, unknown>): FluxoSearch => ({
+    mes: parseMes(s.mes),
+    visao: parseOpcao(s.visao, VISOES),
+    pag: parseTexto(s.pag),
+  }),
+  component: FluxoCaixa,
+});
+
 function FluxoCaixa() {
-  const [mes, setMes] = useState(currentMonthKey());
-  const [pagamento, setPagamento] = useState<FiltroPag>("todas");
-  const [visao, setVisao] = useState<Visao>("geral");
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: "/fluxo-caixa" });
+
+  const mes = search.mes ?? currentMonthKey();
+  const visao: Visao = search.visao ?? "geral";
+  const pagamento: FiltroPag = search.pag ?? "todas";
   const isClinica = visao === "clinica";
+
+  const setSearch = useCallback(
+    (patch: Partial<FluxoSearch>) =>
+      navigate({ search: (prev) => ({ ...prev, ...patch }), replace: true }),
+    [navigate],
+  );
+  const setMes = useCallback((novo: string) => setSearch({ mes: novo }), [setSearch]);
+  const setVisao = useCallback((novo: Visao) => setSearch({ visao: novo }), [setSearch]);
+  // "todas" é o padrão, então some da URL em vez de virar ?pag=todas.
+  const setPagamento = useCallback(
+    (novo: string) => setSearch({ pag: novo === "todas" ? undefined : novo }),
+    [setSearch],
+  );
 
   const atendimentos = useTable<Tables<"atendimentos">>("atendimentos", "data");
   const recebimentos = useTable<Tables<"recebimentos">>("recebimentos", "data", true);
@@ -262,18 +284,7 @@ function FluxoCaixa() {
                 <Layers className="h-3.5 w-3.5" /> Geral
               </button>
             </div>
-            <Select value={mes} onValueChange={setMes}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {monthOptions(12).map((m) => (
-                  <SelectItem key={m} value={m} className="capitalize">
-                    {monthLabel(m)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <MonthSelect value={mes} onChange={setMes} className="w-[180px]" />
             <Select value={pagamento} onValueChange={setPagamento}>
               <SelectTrigger className="w-[170px]">
                 <SelectValue placeholder="Pagamento" />

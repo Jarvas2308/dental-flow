@@ -1,16 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTable, useCreate, useUpdate, useDelete } from "@/hooks/use-data";
-import {
-  brl,
-  currentMonthKey,
-  formatDateBR,
-  monthKey,
-  monthLabel,
-  monthOptions,
-  todayISO,
-} from "@/lib/format";
-import { PageHeader, StatCard } from "@/components/ui-kit";
+import { brl, currentMonthKey, formatDateBR, monthKey, monthLabel, todayISO } from "@/lib/format";
+import { parseMes } from "@/lib/search-params";
+import { PageHeader, StatCard, MonthSelect } from "@/components/ui-kit";
 import {
   Table,
   TableBody,
@@ -46,7 +39,10 @@ import type { Database } from "@/integrations/supabase/types";
 
 type ReceitaRow = Database["public"]["Tables"]["receitas_extras"]["Row"];
 
+type GanhosSearch = { mes?: string };
+
 export const Route = createFileRoute("/_app/ganhos")({
+  validateSearch: (s: Record<string, unknown>): GanhosSearch => ({ mes: parseMes(s.mes) }),
   component: Ganhos,
 });
 
@@ -202,7 +198,13 @@ function EditReceita({ row }: { row: ReceitaRow }) {
 }
 
 function Ganhos() {
-  const [mes, setMes] = useState(currentMonthKey());
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: "/ganhos" });
+  const mes = search.mes ?? currentMonthKey();
+  const setMes = useCallback(
+    (novo: string) => navigate({ search: (prev) => ({ ...prev, mes: novo }), replace: true }),
+    [navigate],
+  );
   const list = useTable<ReceitaRow>("receitas_extras", "data", false);
   const del = useDelete("receitas_extras");
 
@@ -245,18 +247,7 @@ function Ganhos() {
       </div>
 
       <div className="flex flex-wrap gap-2 mb-4">
-        <Select value={mes} onValueChange={setMes}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {monthOptions(12).map((m) => (
-              <SelectItem key={m} value={m} className="capitalize">
-                {monthLabel(m)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <MonthSelect value={mes} onChange={setMes} />
       </div>
 
       <div

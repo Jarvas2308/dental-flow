@@ -61,3 +61,34 @@ describe("Dashboard — mês vindo da URL", () => {
     expect(resultado.mes).not.toBe("2026-05");
   });
 });
+
+// O atrito original: olhar julho no Dashboard, clicar num card de despesa e
+// cair em /contas no mês corrente. Os cards de recorte mensal precisam levar o
+// mês junto; os de recorte "todos os meses" não podem levar.
+describe("Dashboard — drill-down preserva o mês", () => {
+  beforeEach(() => {
+    resetSupabaseMock();
+  });
+
+  const hrefDoCard = (rotulo: string) => {
+    const card = screen.getByText(rotulo).closest("a");
+    return card?.getAttribute("href") ?? "";
+  };
+
+  it("leva o mês para as telas de recorte mensal", () => {
+    renderRoute(DashboardRoute, { search: { mes: "2026-05" } });
+
+    expect(hrefDoCard("Despesas Pagas")).toBe("/contas?mes=2026-05");
+    expect(hrefDoCard("Despesas Pendentes")).toBe("/contas?mes=2026-05");
+    expect(hrefDoCard("Receitas Extras")).toBe("/ganhos?mes=2026-05");
+    expect(hrefDoCard("Laboratório")).toBe("/laboratorio?mes=2026-05");
+  });
+
+  it("não leva o mês para telas que são de todos os meses", () => {
+    renderRoute(DashboardRoute, { search: { mes: "2026-05" } });
+
+    expect(hrefDoCard("Valores em Aberto")).toBe("/contas-receber");
+    expect(hrefDoCard("Consultas hoje")).toBe("/consultas");
+    expect(hrefDoCard("Follow-up hoje")).toBe("/followup");
+  });
+});

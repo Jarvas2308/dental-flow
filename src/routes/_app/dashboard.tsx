@@ -284,7 +284,7 @@ function Dashboard() {
             hint={`Bruto ${brl(totBruto)} · apenas pagos${variacao(totLiquidoAtend, totLiquidoAtendPrev)}`}
           />
         </Link>
-        <Link to="/ganhos" className="block">
+        <Link to="/ganhos" search={{ mes }} className="block">
           <StatCard
             label="Receitas Extras"
             value={brl(totGanhos)}
@@ -316,6 +316,9 @@ function Dashboard() {
           icon={<HandCoins className="h-4 w-4" />}
           hint={`${monthLabel(mes)} · mesmo valor de "Receita de Atendimentos" acima`}
         />
+        {/* Sem `search={{ mes }}`: esta tela é deliberadamente de todos os
+            meses (o próprio hint diz isso). Levar o mês sugeriria um recorte
+            que o destino não tem. Vale o mesmo para /consultas e /followup. */}
         <Link to="/contas-receber" className="block">
           <StatCard
             label="Valores em Aberto"
@@ -356,7 +359,7 @@ function Dashboard() {
           icon={<Wallet className="h-4 w-4" />}
           hint={`Caixa − despesas pendentes${variacao(resultadoPrevisto, resultadoPrevistoPrev)}`}
         />
-        <Link to="/contas" className="block">
+        <Link to="/contas" search={{ mes }} className="block">
           <StatCard
             label="Despesas Pagas"
             value={brl(totDespPagas)}
@@ -365,7 +368,7 @@ function Dashboard() {
             hint={`${monthLabel(mes)} · por data de pagamento`}
           />
         </Link>
-        <Link to="/contas" className="block">
+        <Link to="/contas" search={{ mes }} className="block">
           <StatCard
             label="Despesas Pendentes"
             value={brl(totDespPendentes)}
@@ -374,7 +377,7 @@ function Dashboard() {
             hint="Não reduzem o caixa realizado"
           />
         </Link>
-        <Link to="/laboratorio" className="block">
+        <Link to="/laboratorio" search={{ mes }} className="block">
           <StatCard
             label="Laboratório"
             value={brl(totLab)}
