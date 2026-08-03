@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard,
@@ -15,10 +15,14 @@ import {
   Users,
   Activity,
   Menu,
+  Upload,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth-context";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Slider } from "@/components/ui/slider";
+import { useAppSettings, useUpdateLogo } from "@/hooks/use-logo";
 
 const items = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -47,6 +51,116 @@ const mobilePrimary = mobilePrimaryPaths.map((p) => items.find((i) => i.to === p
 
 const mobileMore = items.filter((i) => !(mobilePrimaryPaths as readonly string[]).includes(i.to));
 
+function LogoBadge() {
+  const { data: settings } = useAppSettings();
+  const updateLogo = useUpdateLogo();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [size, setSize] = useState(settings?.logo_size ?? 36);
+
+  useEffect(() => {
+    if (settings?.logo_size && !pendingFile) setSize(settings.logo_size);
+  }, [settings?.logo_size, pendingFile]);
+
+  const currentUrl = previewUrl ?? settings?.logo_url;
+
+  function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPendingFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  }
+
+  function handleSave() {
+    updateLogo.mutate(
+      { file: pendingFile ?? undefined, size },
+      {
+        onSuccess: () => {
+          setPendingFile(null);
+          setPreviewUrl(null);
+        },
+      },
+    );
+  }
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="shrink-0 rounded-xl grid place-items-center text-primary-foreground font-bold overflow-hidden hover:opacity-90 transition-opacity"
+          style={{
+            width: settings?.logo_size ?? 36,
+            height: settings?.logo_size ?? 36,
+            ...(currentUrl ? {} : { background: "var(--gradient-primary)" }),
+          }}
+          aria-label="Alterar logo"
+        >
+          {currentUrl ? (
+            <img src={currentUrl} alt="Logo" className="h-full w-full object-contain" />
+          ) : (
+            "O"
+          )}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-72 space-y-4">
+        <div className="flex items-center justify-center rounded-lg border bg-muted/30 p-4">
+          <div
+            className="rounded-xl grid place-items-center overflow-hidden bg-background border"
+            style={{ width: size, height: size }}
+          >
+            {currentUrl ? (
+              <img src={currentUrl} alt="Prévia da logo" className="h-full w-full object-contain" />
+            ) : (
+              <span className="text-xs text-muted-foreground">Sem logo</span>
+            )}
+          </div>
+        </div>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed px-3 py-2 text-sm text-muted-foreground hover:bg-muted/50 transition-colors"
+        >
+          <Upload className="h-4 w-4" />
+          {pendingFile ? pendingFile.name : "Escolher arquivo"}
+        </button>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>Tamanho</span>
+            <span>{size}px</span>
+          </div>
+          <Slider
+            min={24}
+            max={64}
+            step={2}
+            value={[size]}
+            onValueChange={([v]) => setSize(v)}
+          />
+        </div>
+
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={updateLogo.isPending}
+          className="w-full rounded-lg bg-primary text-primary-foreground text-sm font-medium py-2 disabled:opacity-50"
+        >
+          {updateLogo.isPending ? "Salvando..." : "Salvar"}
+        </button>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export function AppSidebar() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const { signOut, user } = useAuth();
@@ -55,12 +169,7 @@ export function AppSidebar() {
     <aside className="hidden md:flex w-64 shrink-0 flex-col border-r bg-sidebar text-sidebar-foreground">
       <div className="px-6 py-6">
         <div className="flex items-center gap-2.5">
-          <div
-            className="h-9 w-9 rounded-xl grid place-items-center text-primary-foreground font-bold"
-            style={{ background: "var(--gradient-primary)" }}
-          >
-            O
-          </div>
+          <LogoBadge />
           <div className="leading-tight">
             <div className="font-semibold tracking-tight">Odonto</div>
             <div className="text-xs text-muted-foreground">Financeiro</div>
