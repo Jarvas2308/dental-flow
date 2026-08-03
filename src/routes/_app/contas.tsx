@@ -283,7 +283,7 @@ function Contas() {
   const navigate = useNavigate({ from: "/contas" });
   const mes = search.mes ?? currentMonthKey();
   const setMes = useCallback(
-    (novo: string) => navigate({ search: (prev) => ({ ...prev, mes: novo }), replace: true }),
+    (novo: string) => navigate({ search: (prev: ContasSearch) => ({ ...prev, mes: novo }), replace: true }),
     [navigate],
   );
   const [aba, setAba] = useState<"todas" | "pendente" | "aguardando" | "atrasado" | "pago">(

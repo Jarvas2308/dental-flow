@@ -32,7 +32,7 @@ function Laboratorio() {
   const navigate = useNavigate({ from: "/laboratorio" });
   const mes = search.mes ?? currentMonthKey();
   const setMes = useCallback(
-    (novo: string) => navigate({ search: (prev) => ({ ...prev, mes: novo }), replace: true }),
+    (novo: string) => navigate({ search: (prev: LaboratorioSearch) => ({ ...prev, mes: novo }), replace: true }),
     [navigate],
   );
   const [q, setQ] = useState("");

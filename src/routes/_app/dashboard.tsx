@@ -67,7 +67,7 @@ function Dashboard() {
   // Atualização funcional para preservar quaisquer outros params; `replace`
   // evita empilhar uma entrada de histórico por troca de mês.
   const setMes = useCallback(
-    (novo: string) => navigate({ search: (prev) => ({ ...prev, mes: novo }), replace: true }),
+    (novo: string) => navigate({ search: (prev: DashboardSearch) => ({ ...prev, mes: novo }), replace: true }),
     [navigate],
   );
 
