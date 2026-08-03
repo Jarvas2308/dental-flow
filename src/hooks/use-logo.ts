@@ -29,7 +29,16 @@ export function useUpdateLogo() {
           .from("logos")
           .upload(path, file, { upsert: true });
         if (uploadError) throw uploadError;
-        logo_url = supabase.storage.from("logos").getPublicUrl(path).data.publicUrl;
+
+        // Bucket "logos" é privado (workspace bloqueia buckets públicos),
+        // então getPublicUrl não serve o arquivo. URL assinada de 10 anos
+        // evita depender de sessão do usuário.
+        const TEN_YEARS_IN_SECONDS = 60 * 60 * 24 * 365 * 10;
+        const { data: signed, error: signError } = await supabase.storage
+          .from("logos")
+          .createSignedUrl(path, TEN_YEARS_IN_SECONDS);
+        if (signError) throw signError;
+        logo_url = signed.signedUrl;
       }
 
       const { error } = await supabase
