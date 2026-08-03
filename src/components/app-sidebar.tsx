@@ -171,8 +171,8 @@ export function AppSidebar() {
         <div className="flex items-center gap-2.5">
           <LogoBadge />
           <div className="leading-tight">
-            <div className="font-semibold tracking-tight">Odonto</div>
-            <div className="text-xs text-muted-foreground">Financeiro</div>
+            <div className="font-semibold tracking-tight">Anna Julia</div>
+            <div className="text-xs text-muted-foreground">Odontologia</div>
           </div>
         </div>
       </div>
