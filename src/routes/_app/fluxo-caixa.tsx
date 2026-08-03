@@ -73,7 +73,7 @@ function FluxoCaixa() {
 
   const setSearch = useCallback(
     (patch: Partial<FluxoSearch>) =>
-      navigate({ search: (prev) => ({ ...prev, ...patch }), replace: true }),
+      navigate({ search: (prev: FluxoSearch) => ({ ...prev, ...patch }), replace: true }),
     [navigate],
   );
   const setMes = useCallback((novo: string) => setSearch({ mes: novo }), [setSearch]);

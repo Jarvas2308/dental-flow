@@ -202,7 +202,7 @@ function Ganhos() {
   const navigate = useNavigate({ from: "/ganhos" });
   const mes = search.mes ?? currentMonthKey();
   const setMes = useCallback(
-    (novo: string) => navigate({ search: (prev) => ({ ...prev, mes: novo }), replace: true }),
+    (novo: string) => navigate({ search: (prev: GanhosSearch) => ({ ...prev, mes: novo }), replace: true }),
     [navigate],
   );
   const list = useTable<ReceitaRow>("receitas_extras", "data", false);
