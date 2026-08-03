@@ -154,10 +154,10 @@ function Consultorio() {
   const search = Route.useSearch();
   const navigate = useNavigate({ from: "/consultorio" });
 
-  const mes = search.mes ?? currentMonthKey();
+  const mes: string = search.mes ?? currentMonthKey();
   const sort = search.sort ?? "data_desc";
-  const filter = search.f ?? "todos";
-  const statusPag = search.status ?? "todos";
+  const filter: QuickFilter = search.f ?? "todos";
+  const statusPag: StatusPag = search.status ?? "todos";
   // O sentinela "__all__" é detalhe interno do <Select>; na URL a ausência do
   // param já significa "todos os procedimentos".
   const procFilter = search.proc ?? "__all__";
