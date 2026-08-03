@@ -164,7 +164,7 @@ function Consultorio() {
 
   const setSearch = useCallback(
     (patch: Partial<ConsultorioSearch>) =>
-      navigate({ search: (prev) => ({ ...prev, ...patch }), replace: true }),
+      navigate({ search: (prev: ConsultorioSearch) => ({ ...prev, ...patch }), replace: true }),
     [navigate],
   );
 
