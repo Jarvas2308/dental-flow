@@ -717,14 +717,14 @@ function Consultorio() {
                   // clicar na linha abre a edição do atendimento.
                   className={cn(
                     "cursor-pointer",
-                    pend && "bg-destructive/5 hover:bg-destructive/10",
+                    pend && "border-l-4 border-l-destructive hover:bg-muted/40",
                   )}
                   onClick={() => setEditando(r)}
                 >
                   <TableCell className={cn("text-muted-foreground", pend && "text-destructive/80")}>
                     {formatDateBR(r.data)}
                   </TableCell>
-                  <TableCell className={cn("font-medium", pend && "text-destructive")}>
+                  <TableCell className={cn("font-medium", pend && "text-destructive font-semibold")}>
                     {r.paciente}
                   </TableCell>
                   <TableCell className={cn(pend && "text-destructive/90")}>
@@ -738,7 +738,12 @@ function Consultorio() {
                   <TableCell className={cn("text-right", pend && "text-destructive/80")}>
                     {brl(r.valor_bruto)}
                   </TableCell>
-                  <TableCell className={cn("text-right font-medium", pend && "text-destructive")}>
+                  <TableCell
+                    className={cn(
+                      "text-right font-medium",
+                      pend && "text-destructive font-semibold",
+                    )}
+                  >
                     {brl(r.valor_liquido)}
                   </TableCell>
                   <TableCell>
@@ -772,10 +777,7 @@ function Consultorio() {
                         );
                       }
                       return pend ? (
-                        <Badge
-                          variant="outline"
-                          className="border-destructive/40 bg-destructive/10 text-destructive gap-1"
-                        >
+                        <Badge className="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-1">
                           <Clock className="h-3 w-3" /> Pendente
                         </Badge>
                       ) : (

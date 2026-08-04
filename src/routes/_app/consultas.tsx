@@ -199,7 +199,13 @@ function Consultas() {
             {pag.pageItems.map((c) => {
               const atrasada = !c.realizada && c.data_prevista < todayKey;
               return (
-                <TableRow key={c.id} className={cn(c.realizada && "opacity-60")}>
+                <TableRow
+                  key={c.id}
+                  className={cn(
+                    c.realizada && "opacity-60",
+                    atrasada && "border-l-4 border-l-destructive",
+                  )}
+                >
                   <TableCell
                     className={cn("text-muted-foreground", atrasada && "text-destructive")}
                   >
@@ -218,10 +224,7 @@ function Consultas() {
                         <CheckCircle2 className="h-3 w-3" /> Realizada
                       </Badge>
                     ) : atrasada ? (
-                      <Badge
-                        variant="outline"
-                        className="border-destructive/40 bg-destructive/10 text-destructive gap-1"
-                      >
+                      <Badge className="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-1">
                         <Clock className="h-3 w-3" /> Atrasada
                       </Badge>
                     ) : (

@@ -81,9 +81,20 @@ export function StatCard({
     destructive: "text-destructive",
   }[tone];
 
+  const borderCls = {
+    default: "",
+    primary: "border-l-4 border-l-primary",
+    success: "border-l-4 border-l-success",
+    warning: "border-l-4 border-l-warning",
+    destructive: "border-l-4 border-l-destructive",
+  }[tone];
+
   return (
     <div
-      className="rounded-2xl border bg-card p-5 transition-shadow hover:shadow-[var(--shadow-card)]"
+      className={cn(
+        "rounded-2xl border bg-card p-5 transition-shadow hover:shadow-[var(--shadow-card)]",
+        borderCls,
+      )}
       style={{ boxShadow: "var(--shadow-soft)" }}
     >
       <div className="flex items-start justify-between gap-2">
@@ -114,9 +125,9 @@ export function AlertBanner({
   action?: ReactNode;
 }) {
   const toneCls = {
-    warning: "border-warning/30 bg-warning/10 text-warning",
-    destructive: "border-destructive/30 bg-destructive/10 text-destructive",
-    primary: "border-primary/30 bg-primary/10 text-primary",
+    warning: "border-l-4 border-l-warning bg-card text-warning",
+    destructive: "border-l-4 border-l-destructive bg-card text-destructive",
+    primary: "border-l-4 border-l-primary bg-card text-primary",
   }[tone];
 
   return (
