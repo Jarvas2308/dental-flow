@@ -146,13 +146,7 @@ function LogoBadge() {
             <span>Tamanho</span>
             <span>{size}px</span>
           </div>
-          <Slider
-            min={24}
-            max={160}
-            step={2}
-            value={[size]}
-            onValueChange={([v]) => setSize(v)}
-          />
+          <Slider min={24} max={160} step={2} value={[size]} onValueChange={([v]) => setSize(v)} />
         </div>
 
         <button

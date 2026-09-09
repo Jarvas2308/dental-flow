@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCreate, useTable } from "@/hooks/use-data";
+import { useCreate, useTable, SEM_SESSAO } from "@/hooks/use-data";
 import { supabase } from "@/integrations/supabase/client";
 import { resolvePacienteId } from "@/lib/pacientes";
 import { useAuth } from "@/hooks/use-auth-context";
@@ -494,6 +494,8 @@ export function AtendimentoForm({
     // Normaliza o nome: remove espaços nas pontas e colapsa espaços internos.
     const nome = v.paciente.replace(/\s+/g, " ").trim();
 
+    if (!user) return toast.error(SEM_SESSAO);
+
     submitLock.current = true;
     setSaving(true);
     try {
@@ -502,7 +504,7 @@ export function AtendimentoForm({
       try {
         idResolvido = await resolvePacienteId({
           nome,
-          userId: user!.id,
+          userId: user.id,
           knownId: pacienteId,
           cache: pacientes.data ?? [],
         });

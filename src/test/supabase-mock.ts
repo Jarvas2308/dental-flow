@@ -36,7 +36,14 @@ export function resetSupabaseMock() {
 }
 
 function makeChain(table: string) {
-  const rows = () => store[table] ?? [];
+  // `.range()` é o único filtro de leitura aplicado de verdade. As telas leem
+  // por `fetchAllPages`, que só para quando uma página volta vazia; um mock que
+  // devolvesse a tabela inteira a cada faixa deixaria esse laço sem fim.
+  let faixa: [number, number] | null = null;
+  const rows = () => {
+    const todas = store[table] ?? [];
+    return faixa ? todas.slice(faixa[0], faixa[1] + 1) : todas;
+  };
   const result = () => ({ data: rows(), error: null as null });
 
   const chain: Record<string, unknown> = {
@@ -55,7 +62,10 @@ function makeChain(table: string) {
     gte: () => chain,
     lte: () => chain,
     limit: () => chain,
-    range: () => chain,
+    range: (from: number, to: number) => {
+      faixa = [from, to];
+      return chain;
+    },
     insert: (payload: unknown) => {
       spies.insert(table, payload);
       return chain;

@@ -1,6 +1,6 @@
 import { normalizePacienteNome } from "@/lib/pacientes";
 import {
-  resumoAtendimento,
+  resumosPorAtendimento,
   type AtendimentoRow,
   type RecebimentoRow,
   type ParcelaRow,
@@ -96,8 +96,7 @@ export function dadosDoPaciente(
   // Resumo financeiro por atendimento reaproveita a regra existente.
   let totalRecebido = 0;
   let totalEmAberto = 0;
-  for (const a of atendimentos) {
-    const r = resumoAtendimento(a, recebimentos, parcelas);
+  for (const r of resumosPorAtendimento(atendimentos, recebimentos, parcelas).values()) {
     totalRecebido += r.recebido;
     totalEmAberto += r.saldo;
   }

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
-import { useTable, useCreate, useUpdate } from "@/hooks/use-data";
+import { useTable, useCreate, useUpdate, SEM_SESSAO } from "@/hooks/use-data";
 import { useAuth } from "@/hooks/use-auth-context";
 import { useQueryClient } from "@tanstack/react-query";
 import { resolvePacienteId } from "@/lib/pacientes";
@@ -115,13 +115,14 @@ function PropostaForm({ proposta, onClose }: { proposta?: TratamentoRow; onClose
     if (!v.paciente.trim()) return toast.error("Informe o paciente");
     if (!v.tratamento.trim()) return toast.error("Informe o tratamento");
     if (!v.data_proposta) return toast.error("Informe a data da proposta");
+    if (!user) return toast.error(SEM_SESSAO);
 
     // Resolve/crie o paciente_id preservando o texto do nome para compatibilidade.
     let idResolvido: string | null = pacienteId;
     try {
       idResolvido = await resolvePacienteId({
         nome: v.paciente,
-        userId: user!.id,
+        userId: user.id,
         knownId: pacienteId,
         cache: pacientes.data ?? [],
       });

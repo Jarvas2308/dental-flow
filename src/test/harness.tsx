@@ -16,7 +16,6 @@ const authValue: AuthCtx = {
   user: fakeUser,
   loading: false,
   signIn: async () => ({ error: null }),
-  signUp: async () => ({ error: null }),
   signOut: async () => {},
 };
 

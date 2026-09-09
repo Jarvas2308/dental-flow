@@ -7,6 +7,7 @@ import {
   caixaRealizado,
   resultadoPrevisto,
   contasAReceber,
+  resumoMensal,
 } from "./finance";
 
 // Atendimento parcelado usado como fonte de recebimentos livres.
@@ -291,5 +292,138 @@ describe("despesa vencida em um mês e paga no mês seguinte", () => {
     const caixaJulho = caixaRealizado(0, totalDespesasPagasNoMes(despesaAtravessada, "2026-07"));
     expect(caixaJunho).toBe(0);
     expect(caixaJulho).toBe(-100);
+  });
+});
+
+describe("resumoMensal", () => {
+  // Fixture desenhada para cobrir os cinco eixos em que a ferramenta MCP
+  // `resumo_financeiro` divergia do Dashboard quando refazia a conta em SQL.
+  const mes = "2026-07";
+
+  const aVistaSemRecebimento = {
+    id: "at-vista",
+    paciente: "Bruno",
+    procedimento: "Limpeza",
+    parcelado: false,
+    valor_bruto: 300,
+    valor_liquido: 285,
+    taxa: 15,
+    data: "2026-07-10",
+    status_pagamento: "pago",
+    forma_pagamento: "dinheiro",
+  };
+
+  const atendLegado = {
+    id: "at-legado",
+    paciente: "Carla",
+    procedimento: "Canal",
+    parcelado: true,
+    valor_bruto: 1000,
+    valor_liquido: 1000,
+    taxa: 0,
+    data: "2026-05-02",
+    status_pagamento: "parcial",
+    forma_pagamento: "cartao",
+  };
+
+  // Parcela legada: paga em julho, sem linha correspondente em `recebimentos`.
+  const parcelaLegadaPaga = [
+    {
+      id: "p-legado",
+      atendimento_id: "at-legado",
+      numero: 1,
+      total: 2,
+      valor_bruto: 400,
+      valor_liquido: 400,
+      vencimento: "2026-07-15",
+      data_pagamento: "2026-07-15",
+      status: "pago",
+    },
+  ];
+
+  const despesas = [
+    {
+      id: "d-paga",
+      status: "pago",
+      data_pagamento: "2026-07-03",
+      vencimento: "2026-07-03",
+      valor: 120,
+    },
+    { id: "d-pend", status: "pendente", data_pagamento: null, vencimento: "2026-07-20", valor: 80 },
+    // Marcada como paga sem data de pagamento: `totalDespesasPendentesNoMes`
+    // ainda a trata como pendente, então ela precisa aparecer no resumo.
+    { id: "d-sem-data", status: "pago", data_pagamento: null, vencimento: "2026-07-25", valor: 50 },
+  ];
+
+  const dados = {
+    atendimentos: [aVistaSemRecebimento, atendLegado],
+    recebimentos: [],
+    parcelas: parcelaLegadaPaga,
+    despesas,
+    ganhos: [{ data: "2026-07-11", valor: 200 }],
+    lab: [{ data: "2026-07-12", valor: 90 }],
+  };
+
+  it("conta atendimento à vista sem linha em recebimentos", () => {
+    const r = resumoMensal({ ...dados, parcelas: [] }, mes);
+    expect(r.recebidoBruto).toBe(300);
+    expect(r.recebidoLiquido).toBe(285);
+  });
+
+  it("conta parcela legada paga sem recebimento correspondente", () => {
+    const r = resumoMensal(dados, mes);
+    expect(r.recebidoLiquido).toBe(285 + 400);
+  });
+
+  it("soma ganhos extras na receita total e subtrai custos de laboratório do caixa", () => {
+    const r = resumoMensal(dados, mes);
+    expect(r.ganhos).toBe(200);
+    expect(r.custosLaboratorio).toBe(90);
+    expect(r.receitaTotal).toBe(285 + 400 + 200);
+    expect(r.caixaRealizado).toBe(885 - (120 + 90));
+  });
+
+  it("não perde despesa com status pago e data_pagamento nula", () => {
+    const r = resumoMensal(dados, mes);
+    expect(r.despesasPagas).toBe(120);
+    expect(r.despesasPendentes).toBe(80 + 50);
+    expect(r.resultadoPrevisto).toBe(675 - 130);
+  });
+
+  it("bate exatamente com a composição manual das funções que o Dashboard usa", () => {
+    const r = resumoMensal(dados, mes);
+    const recebidas = recebimentosNoMes(
+      dados.atendimentos,
+      dados.recebimentos,
+      dados.parcelas,
+      mes,
+    );
+    const liquido = recebidas.reduce((s, x) => s + x.valor_liquido, 0);
+    const receita = liquido + 200;
+    const pagas = totalDespesasPagasNoMes(despesas, mes);
+    const pendentes = totalDespesasPendentesNoMes(despesas, mes);
+    const caixa = caixaRealizado(receita, pagas + 90);
+
+    expect(r.recebidoLiquido).toBe(liquido);
+    expect(r.receitaTotal).toBe(receita);
+    expect(r.despesasPagas).toBe(pagas);
+    expect(r.despesasPendentes).toBe(pendentes);
+    expect(r.caixaRealizado).toBe(caixa);
+    expect(r.resultadoPrevisto).toBe(resultadoPrevisto(caixa, pendentes));
+  });
+
+  it("mês sem movimento zera tudo", () => {
+    const r = resumoMensal(dados, "2026-09");
+    expect(r).toEqual({
+      recebidoBruto: 0,
+      recebidoLiquido: 0,
+      ganhos: 0,
+      receitaTotal: 0,
+      despesasPagas: 0,
+      despesasPendentes: 0,
+      custosLaboratorio: 0,
+      caixaRealizado: 0,
+      resultadoPrevisto: 0,
+    });
   });
 });

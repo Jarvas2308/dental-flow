@@ -21,7 +21,14 @@ dist-ssr
 .dev.vars
 
 # Env vars (use .env.example as template)
+#
+# `.env.production` é versionado de propósito: contém apenas a URL e a chave
+# publicável do Supabase, ambas inlinadas no bundle e portanto já públicas.
+# Nunca acrescente um segredo (ex.: SUPABASE_SERVICE_ROLE_KEY) a esse arquivo —
+# use `.env.production.local`, que os padrões abaixo mantêm fora do git.
 .env
+.env.local
+.env.*.local
 
 # Editor directories and files
 .vscode/*

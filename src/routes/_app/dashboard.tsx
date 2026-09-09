@@ -14,14 +14,7 @@ import {
   todayISO,
 } from "@/lib/format";
 import { parseMes } from "@/lib/search-params";
-import {
-  receitasRecebidas,
-  valoresEmAberto,
-  totalDespesasPagasNoMes,
-  totalDespesasPendentesNoMes,
-  caixaRealizado as calcCaixaRealizado,
-  resultadoPrevisto as calcResultadoPrevisto,
-} from "@/lib/finance";
+import { receitasRecebidas, valoresEmAberto, resumoMensal } from "@/lib/finance";
 import { proximaTentativa, estaPendenteHoje } from "@/lib/followup";
 import { PageHeader, StatCard, ErrorState, MonthSelect } from "@/components/ui-kit";
 import {
@@ -67,7 +60,8 @@ function Dashboard() {
   // Atualização funcional para preservar quaisquer outros params; `replace`
   // evita empilhar uma entrada de histórico por troca de mês.
   const setMes = useCallback(
-    (novo: string) => navigate({ search: (prev: DashboardSearch) => ({ ...prev, mes: novo }), replace: true }),
+    (novo: string) =>
+      navigate({ search: (prev: DashboardSearch) => ({ ...prev, mes: novo }), replace: true }),
     [navigate],
   );
 
@@ -149,18 +143,12 @@ function Dashboard() {
     [tratamentosPropostos.data, tentativasContato.data],
   );
 
-  const filt = <T extends { data: string }>(rows: T[] = []) =>
-    rows.filter((r) => monthKey(r.data) === mes);
-
   // Receita recebida (caixa): atendimentos pagos + parcelas pagas, posicionados
   // pela data do recebimento.
   const recebidas = useMemo(
     () => receitasRecebidas(atendimentos.data ?? [], recebimentos.data ?? [], parcelas.data ?? []),
     [atendimentos.data, recebimentos.data, parcelas.data],
   );
-  const recebidasMes = recebidas.filter((r) => monthKey(r.data) === mes);
-  const totBruto = recebidasMes.reduce((s, r) => s + r.valor_bruto, 0);
-  const totLiquidoAtend = recebidasMes.reduce((s, r) => s + r.valor_liquido, 0);
 
   // Valores em aberto / contas a receber (todos os meses, persistem até quitar)
   const aberto = useMemo(
@@ -173,42 +161,43 @@ function Dashboard() {
   const totRecebidoGeral = recebidas.reduce((s, r) => s + r.valor_liquido, 0);
   const totContratado = totRecebidoGeral + totPendente;
 
-  const totGanhos = filt(ganhos.data).reduce((s, r) => s + Number(r.valor || 0), 0);
-  // Receitas recebidas totais do período (atendimentos + ganhos extras).
-  const totReceitaTotal = totLiquidoAtend + totGanhos;
-
-  // Despesas pagas: somente status pago, posicionadas pela data_pagamento efetiva.
-  const totDespPagas = totalDespesasPagasNoMes(despesas.data ?? [], mes);
-  // Despesas pendentes: ainda não pagas, posicionadas pelo vencimento.
-  const totDespPendentes = totalDespesasPendentesNoMes(despesas.data ?? [], mes);
-  const totLab = filt(lab.data).reduce((s, r) => s + Number(r.valor || 0), 0);
-
-  // Caixa realizado = recebimentos efetivos − despesas pagas (inclui custos de
-  // laboratório realizados). Despesas pendentes NÃO reduzem o caixa realizado.
-  const caixaRealizado = calcCaixaRealizado(totReceitaTotal, totDespPagas + totLab);
-  // Resultado previsto = caixa realizado menos as despesas ainda pendentes.
-  const resultadoPrevisto = calcResultadoPrevisto(caixaRealizado, totDespPendentes);
-
   // Mês anterior ao mês selecionado (não ao calendário) para comparação
   const prevMes = useMemo(() => {
     const [y, m] = mes.split("-").map(Number);
     return monthKey(new Date(y, m - 2, 1));
   }, [mes]);
 
-  const totLiquidoAtendPrev = recebidas
-    .filter((r) => monthKey(r.data) === prevMes)
-    .reduce((s, r) => s + r.valor_liquido, 0);
-  const totGanhosPrev = (ganhos.data ?? [])
-    .filter((r) => monthKey(r.data) === prevMes)
-    .reduce((s, r) => s + Number(r.valor || 0), 0);
-  const totReceitaTotalPrev = totLiquidoAtendPrev + totGanhosPrev;
-  const totDespPagasPrev = totalDespesasPagasNoMes(despesas.data ?? [], prevMes);
-  const totDespPendentesPrev = totalDespesasPendentesNoMes(despesas.data ?? [], prevMes);
-  const totLabPrev = (lab.data ?? [])
-    .filter((r) => monthKey(r.data) === prevMes)
-    .reduce((s, r) => s + Number(r.valor || 0), 0);
-  const caixaRealizadoPrev = calcCaixaRealizado(totReceitaTotalPrev, totDespPagasPrev + totLabPrev);
-  const resultadoPrevistoPrev = calcResultadoPrevisto(caixaRealizadoPrev, totDespPendentesPrev);
+  // Fonte única da fórmula do mês (ver `resumoMensal` em lib/finance.ts). A
+  // ferramenta MCP `resumo_financeiro` consome a mesma função, então os dois
+  // não podem divergir.
+  const dados = useMemo(
+    () => ({
+      atendimentos: atendimentos.data ?? [],
+      recebimentos: recebimentos.data ?? [],
+      parcelas: parcelas.data ?? [],
+      despesas: despesas.data ?? [],
+      ganhos: ganhos.data ?? [],
+      lab: lab.data ?? [],
+    }),
+    [atendimentos.data, recebimentos.data, parcelas.data, despesas.data, ganhos.data, lab.data],
+  );
+  const resumo = useMemo(() => resumoMensal(dados, mes), [dados, mes]);
+  const resumoPrev = useMemo(() => resumoMensal(dados, prevMes), [dados, prevMes]);
+
+  const totBruto = resumo.recebidoBruto;
+  const totLiquidoAtend = resumo.recebidoLiquido;
+  const totGanhos = resumo.ganhos;
+  const totReceitaTotal = resumo.receitaTotal;
+  const totDespPagas = resumo.despesasPagas;
+  const totDespPendentes = resumo.despesasPendentes;
+  const totLab = resumo.custosLaboratorio;
+  const caixaRealizado = resumo.caixaRealizado;
+  const resultadoPrevisto = resumo.resultadoPrevisto;
+
+  const totLiquidoAtendPrev = resumoPrev.recebidoLiquido;
+  const totReceitaTotalPrev = resumoPrev.receitaTotal;
+  const caixaRealizadoPrev = resumoPrev.caixaRealizado;
+  const resultadoPrevistoPrev = resumoPrev.resultadoPrevisto;
 
   const variacao = (cur: number, prev: number) => {
     if (prev === 0) return "";
@@ -219,24 +208,14 @@ function Dashboard() {
   const chartData = useMemo(() => {
     const months = monthOptions(6).reverse();
     return months.map((m) => {
-      const recAtend = recebidas
-        .filter((r) => monthKey(r.data) === m)
-        .reduce((s, r) => s + r.valor_liquido, 0);
-      const recExtra = (ganhos.data ?? [])
-        .filter((r) => monthKey(r.data) === m)
-        .reduce((s, r) => s + Number(r.valor || 0), 0);
-      const desp =
-        totalDespesasPagasNoMes(despesas.data ?? [], m) +
-        (lab.data ?? [])
-          .filter((r) => monthKey(r.data) === m)
-          .reduce((s, r) => s + Number(r.valor || 0), 0);
+      const r = resumoMensal(dados, m);
       return {
         mes: monthLabel(m).replace(" de ", "/"),
-        Receita: Number((recAtend + recExtra).toFixed(2)),
-        Despesas: Number(desp.toFixed(2)),
+        Receita: Number(r.receitaTotal.toFixed(2)),
+        Despesas: Number((r.despesasPagas + r.custosLaboratorio).toFixed(2)),
       };
     });
-  }, [recebidas, despesas.data, lab.data, ganhos.data]);
+  }, [dados]);
 
   return (
     <>

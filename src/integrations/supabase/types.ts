@@ -17,24 +17,24 @@ export type Database = {
       app_settings: {
         Row: {
           created_at: string
-          id: number
           logo_size: number
           logo_url: string | null
           updated_at: string
+          user_id: string
         }
         Insert: {
           created_at?: string
-          id?: number
           logo_size?: number
           logo_url?: string | null
           updated_at?: string
+          user_id?: string
         }
         Update: {
           created_at?: string
-          id?: number
           logo_size?: number
           logo_url?: string | null
           updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

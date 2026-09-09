@@ -4,12 +4,20 @@ import { useAuth } from "./use-auth-context";
 import { toast } from "sonner";
 import type { AtendimentoRow, RecebimentoRow, ParcelaRow } from "@/lib/finance";
 import { pertenceAoPaciente } from "@/lib/paciente-detalhe";
+import { fetchAllPages, fetchAllPorIds } from "@/lib/supabase-pagination";
 
 // Traduz o erro do Postgres para uma frase acionável. Sem isso o usuário
 // recebia o texto cru do banco ("duplicate key value violates unique
 // constraint ..."), que não diz o que fazer a respeito.
+// A sessão pode expirar entre abrir o formulário e salvar. Antes esses pontos
+// usavam `user!.id`, que em runtime vira `undefined` e faz o insert falhar na
+// RLS com "new row violates row-level security policy" — mensagem que não diz
+// ao usuário o que aconteceu nem o que fazer.
+export const SEM_SESSAO = "Sessão expirada. Entre novamente para salvar.";
+
 function mensagemDeErro(e: unknown, acaoPadrao: string): string {
   const bruto = e instanceof Error ? e.message : "";
+  if (bruto === SEM_SESSAO) return bruto;
   if (/duplicate key|already exists/i.test(bruto)) return "Já existe um registro com esses dados.";
   if (/violates foreign key/i.test(bruto)) {
     return "Este registro está vinculado a outros e não pode ser removido.";
@@ -48,12 +56,17 @@ export function useTable<T = unknown>(table: TableName, orderBy = "created_at", 
     queryKey: [table, user?.id, orderBy, asc],
     enabled: !!user,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from(table)
-        .select("*")
-        .order(orderBy, { ascending: asc });
-      if (error) throw error;
-      return (data ?? []) as T[];
+      // Paginado: sem isso o PostgREST corta em 1000 linhas sem avisar e os
+      // totais das telas financeiras ficam silenciosamente menores que o real.
+      const linhas = await fetchAllPages((from, to) =>
+        supabase
+          .from(table)
+          .select("*")
+          .order(orderBy, { ascending: asc })
+          .order("id", { ascending: true })
+          .range(from, to),
+      );
+      return linhas as T[];
     },
   });
 }
@@ -78,32 +91,43 @@ export function useConsultorioData(mes: string) {
       const lastDay = new Date(yy, mm, 0).getDate();
       const end = `${yy}-${String(mm).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
 
-      const { data: atendimentos, error: aErr } = await supabase
-        .from("atendimentos")
-        .select("*")
-        .or(`and(data.gte.${start},data.lte.${end}),status_pagamento.eq.pendente,parcelado.eq.true`)
-        .order("data", { ascending: false });
-      if (aErr) throw aErr;
+      const atendimentos = await fetchAllPages((from, to) =>
+        supabase
+          .from("atendimentos")
+          .select("*")
+          .or(
+            `and(data.gte.${start},data.lte.${end}),status_pagamento.eq.pendente,parcelado.eq.true`,
+          )
+          .order("data", { ascending: false })
+          .order("id", { ascending: true })
+          .range(from, to),
+      );
 
-      const ids = (atendimentos ?? []).map((a) => a.id);
+      const ids = atendimentos.map((a) => a.id);
 
-      let recebimentos: RecebimentoRow[] = [];
-      let parcelas: ParcelaRow[] = [];
-      if (ids.length) {
-        const [{ data: recs, error: rErr }, { data: parc, error: pErr }] = await Promise.all([
-          supabase.from("recebimentos").select("*").in("atendimento_id", ids),
-          supabase.from("parcelas").select("*").in("atendimento_id", ids),
-        ]);
-        if (rErr) throw rErr;
-        if (pErr) throw pErr;
-        recebimentos = recs ?? [];
-        parcelas = parc ?? [];
-      }
+      const [recebimentos, parcelas] = await Promise.all([
+        fetchAllPorIds(ids, (bloco, from, to) =>
+          supabase
+            .from("recebimentos")
+            .select("*")
+            .in("atendimento_id", bloco)
+            .order("id", { ascending: true })
+            .range(from, to),
+        ),
+        fetchAllPorIds(ids, (bloco, from, to) =>
+          supabase
+            .from("parcelas")
+            .select("*")
+            .in("atendimento_id", bloco)
+            .order("id", { ascending: true })
+            .range(from, to),
+        ),
+      ]);
 
       return {
-        atendimentos: (atendimentos ?? []) as AtendimentoRow[],
-        recebimentos,
-        parcelas,
+        atendimentos: atendimentos as AtendimentoRow[],
+        recebimentos: recebimentos as RecebimentoRow[],
+        parcelas: parcelas as ParcelaRow[],
       };
     },
   });
@@ -127,6 +151,11 @@ export function useConsultorioData(mes: string) {
 // MAIS todos os registros sem `paciente_id` — e a decisão final continua
 // sendo de `pertenceAoPaciente`, no cliente. O filtro SQL nunca é mais
 // estreito que a regra real, então é correto por construção.
+//
+// Esse argumento só vale sobre o resultado COMPLETO da consulta: um superset
+// cortado pelo teto de linhas do PostgREST pode perder justamente a linha que
+// `pertenceAoPaciente` aceitaria. Por isso toda leitura aqui passa por
+// `fetchAllPages` (ver lib/supabase-pagination.ts).
 export function usePacienteDetalhe(pacienteId: string) {
   const { user } = useAuth();
   return useQuery({
@@ -144,52 +173,98 @@ export function usePacienteDetalhe(pacienteId: string) {
       const escopo = `paciente_id.eq.${pacienteId},paciente_id.is.null`;
 
       const [atd, cns, prp, dta] = await Promise.all([
-        supabase.from("atendimentos").select("*").or(escopo).order("data", { ascending: false }),
-        supabase.from("consultas_previstas").select("*").or(escopo),
-        supabase.from("tratamentos_propostos").select("*").or(escopo),
-        supabase.from("dtm_acompanhamentos").select("*").or(escopo),
+        fetchAllPages((from, to) =>
+          supabase
+            .from("atendimentos")
+            .select("*")
+            .or(escopo)
+            .order("data", { ascending: false })
+            .order("id", { ascending: true })
+            .range(from, to),
+        ),
+        fetchAllPages((from, to) =>
+          supabase
+            .from("consultas_previstas")
+            .select("*")
+            .or(escopo)
+            .order("id", { ascending: true })
+            .range(from, to),
+        ),
+        fetchAllPages((from, to) =>
+          supabase
+            .from("tratamentos_propostos")
+            .select("*")
+            .or(escopo)
+            .order("id", { ascending: true })
+            .range(from, to),
+        ),
+        fetchAllPages((from, to) =>
+          supabase
+            .from("dtm_acompanhamentos")
+            .select("*")
+            .or(escopo)
+            .order("id", { ascending: true })
+            .range(from, to),
+        ),
       ]);
-      for (const r of [atd, cns, prp, dta]) if (r.error) throw r.error;
 
       // Aplica a regra canônica já aqui: sem isso os `.in()` abaixo puxariam
       // os filhos de todo registro legado do banco, não só os deste paciente.
       const alvo = { id: paciente.id, nome: paciente.nome };
-      const atendimentos = (atd.data ?? []).filter((r) => pertenceAoPaciente(r, alvo));
-      const consultas = (cns.data ?? []).filter((r) => pertenceAoPaciente(r, alvo));
-      const propostas = (prp.data ?? []).filter((r) => pertenceAoPaciente(r, alvo));
-      const dtmAcomp = (dta.data ?? []).filter((r) => pertenceAoPaciente(r, alvo));
+      const atendimentos = atd.filter((r) => pertenceAoPaciente(r, alvo));
+      const consultas = cns.filter((r) => pertenceAoPaciente(r, alvo));
+      const propostas = prp.filter((r) => pertenceAoPaciente(r, alvo));
+      const dtmAcomp = dta.filter((r) => pertenceAoPaciente(r, alvo));
 
       const atendIds = atendimentos.map((a) => a.id);
       const propIds = propostas.map((p) => p.id);
       const acompIds = dtmAcomp.map((a) => a.id);
-      const vazio = { data: [], error: null };
 
       const [rec, par, ten, dtc] = await Promise.all([
-        atendIds.length
-          ? supabase.from("recebimentos").select("*").in("atendimento_id", atendIds)
-          : vazio,
-        atendIds.length
-          ? supabase.from("parcelas").select("*").in("atendimento_id", atendIds)
-          : vazio,
-        propIds.length
-          ? supabase.from("tentativas_contato").select("*").in("tratamento_proposto_id", propIds)
-          : vazio,
-        acompIds.length
-          ? supabase.from("dtm_consultas").select("*").in("acompanhamento_id", acompIds)
-          : vazio,
+        fetchAllPorIds(atendIds, (bloco, from, to) =>
+          supabase
+            .from("recebimentos")
+            .select("*")
+            .in("atendimento_id", bloco)
+            .order("id", { ascending: true })
+            .range(from, to),
+        ),
+        fetchAllPorIds(atendIds, (bloco, from, to) =>
+          supabase
+            .from("parcelas")
+            .select("*")
+            .in("atendimento_id", bloco)
+            .order("id", { ascending: true })
+            .range(from, to),
+        ),
+        fetchAllPorIds(propIds, (bloco, from, to) =>
+          supabase
+            .from("tentativas_contato")
+            .select("*")
+            .in("tratamento_proposto_id", bloco)
+            .order("id", { ascending: true })
+            .range(from, to),
+        ),
+        fetchAllPorIds(acompIds, (bloco, from, to) =>
+          supabase
+            .from("dtm_consultas")
+            .select("*")
+            .in("acompanhamento_id", bloco)
+            .order("id", { ascending: true })
+            .range(from, to),
+        ),
       ]);
-      for (const r of [rec, par, ten, dtc]) if (r.error) throw r.error;
 
       return {
         paciente,
         atendimentos,
-        recebimentos: (rec.data ?? []) as RecebimentoRow[],
-        parcelas: (par.data ?? []) as ParcelaRow[],
+        recebimentos: rec as RecebimentoRow[],
+        parcelas: par as ParcelaRow[],
         consultas,
         propostas,
-        tentativas: ten.data ?? [],
+        tentativas: ten,
         dtmAcomp,
-        dtmConsultas: dtc.data ?? [],
+        dtmConsultas: dtc,
       };
     },
   });
@@ -203,7 +278,8 @@ export function useCreate(table: TableName, opts?: { mensagemSucesso?: string | 
   const mensagemSucesso = opts?.mensagemSucesso ?? "Salvo com sucesso";
   return useMutation({
     mutationFn: async (values: Record<string, unknown>) => {
-      const payload = { ...values, user_id: user!.id };
+      if (!user) throw new Error(SEM_SESSAO);
+      const payload = { ...values, user_id: user.id };
       const { data, error } = await supabase
         .from(table)
         .insert(payload as never)

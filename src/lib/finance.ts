@@ -134,17 +134,63 @@ export type ResumoAtend = {
   status: StatusReceb;
 };
 
+// Agrupa linhas-filhas por `atendimento_id`.
+//
+// Construir o índice uma vez e consultá-lo dentro do laço troca O(n·m) por
+// O(n+m). Antes cada função varria a lista inteira de recebimentos (e de
+// parcelas) uma vez por atendimento, então o custo das telas crescia com o
+// QUADRADO do histórico — e histórico financeiro nunca é apagado.
+export function porAtendimento<T extends { atendimento_id: string }>(rows: T[]): Map<string, T[]> {
+  const indice = new Map<string, T[]>();
+  for (const r of rows) {
+    const atual = indice.get(r.atendimento_id);
+    if (atual) atual.push(r);
+    else indice.set(r.atendimento_id, [r]);
+  }
+  return indice;
+}
+
 // Resumo financeiro de um atendimento (à vista ou parcelado).
 export function resumoAtendimento(
   a: AtendimentoRow,
   recebimentos: RecebimentoRow[] = [],
   parcelas: ParcelaRow[] = [],
 ): ResumoAtend {
+  return resumoDeLinhas(
+    a,
+    recebimentos.filter((r) => r.atendimento_id === a.id),
+    parcelas.filter((p) => p.atendimento_id === a.id && p.status === "pago"),
+  );
+}
+
+// Mesma conta de `resumoAtendimento` para vários atendimentos de uma vez.
+// Use esta quando houver um laço: `resumoAtendimento` refiltra as listas
+// completas a cada chamada.
+export function resumosPorAtendimento(
+  atend: AtendimentoRow[] = [],
+  recebimentos: RecebimentoRow[] = [],
+  parcelas: ParcelaRow[] = [],
+): Map<string, ResumoAtend> {
+  const recsPorAtend = porAtendimento(recebimentos);
+  const parcPorAtend = porAtendimento(parcelas);
+  const out = new Map<string, ResumoAtend>();
+  for (const a of atend) {
+    out.set(a.id, resumoDeLinhas(a, recsPorAtend.get(a.id) ?? [], pagasDe(parcPorAtend, a.id)));
+  }
+  return out;
+}
+
+const pagasDe = (indice: Map<string, ParcelaRow[]>, id: string) =>
+  (indice.get(id) ?? []).filter((p) => p.status === "pago");
+
+// Núcleo do cálculo: recebe as linhas do atendimento já separadas.
+function resumoDeLinhas(
+  a: AtendimentoRow,
+  recs: RecebimentoRow[],
+  legacy: ParcelaRow[],
+): ResumoAtend {
   const total = bru(a);
   const f = fatorLiquido(a);
-
-  const recs = recebimentos.filter((r) => r.atendimento_id === a.id);
-  const legacy = parcelas.filter((p) => p.atendimento_id === a.id && p.status === "pago");
 
   // Atendimento sem recebimentos registrados nem parcelas legadas:
   // usa o status de pagamento (regime à vista).
@@ -195,9 +241,10 @@ export function receitasRecebidas(
 ): Entrada[] {
   const out: Entrada[] = [];
   const legacyIds = idsComParcelaLegada(parcelas);
+  const recsPorAtend = porAtendimento(recebimentos);
 
   for (const a of atend) {
-    const recs = recebimentos.filter((x) => x.atendimento_id === a.id);
+    const recs = recsPorAtend.get(a.id) ?? [];
 
     // Se há recebimentos registrados, cada um conta na SUA data (regime de caixa),
     // mesmo que o atendimento também tenha parcelas legadas (ex.: 1ª parcela paga
@@ -258,9 +305,10 @@ export function valoresEmAberto(
 ): AbertoItem[] {
   const out: AbertoItem[] = [];
   const legacyIds = idsComParcelaLegada(parcelas);
+  const recsPorAtend = porAtendimento(recebimentos);
 
   for (const a of atend) {
-    const recs = recebimentos.filter((r) => r.atendimento_id === a.id);
+    const recs = recsPorAtend.get(a.id) ?? [];
 
     // Sem recebimentos novos e com parcelas legadas: tratado no bloco de
     // parcelas legadas abaixo (evita ignorar recebimentos novos de
@@ -350,6 +398,8 @@ export function contasAReceber(
 ): ContaReceber[] {
   const legacyIds = idsComParcelaLegada(parcelas);
   const recIds = idsComRecebimentoNovo(recebimentos);
+  const recsPorAtend = porAtendimento(recebimentos);
+  const parcPorAtend = porAtendimento(parcelas);
   const out: ContaReceber[] = [];
 
   for (const a of atend) {
@@ -362,12 +412,13 @@ export function contasAReceber(
     // À vista, quitado e sem recebimentos parciais: não é conta a receber.
     if (!a.parcelado && a.status_pagamento !== "pendente" && !temRecs) continue;
 
-    const r = resumoAtendimento(a, recebimentos, parcelas);
+    const r = resumoDeLinhas(a, recsPorAtend.get(a.id) ?? [], pagasDe(parcPorAtend, a.id));
     if (r.saldo <= MONETARY_EPSILON) continue; // quitado
 
-    const recs = recebimentos
-      .filter((x) => x.atendimento_id === a.id)
-      .sort((x, y) => (x.data ?? "").localeCompare(y.data ?? ""));
+    // Cópia antes de ordenar: o array vem do índice e é compartilhado.
+    const recs = [...(recsPorAtend.get(a.id) ?? [])].sort((x, y) =>
+      (x.data ?? "").localeCompare(y.data ?? ""),
+    );
 
     out.push({
       atendimento_id: a.id,
@@ -502,4 +553,72 @@ export function caixaRealizado(entradas: number, saidasPagas: number): number {
 // Resultado previsto = caixa realizado − despesas ainda pendentes.
 export function resultadoPrevisto(caixa: number, despesasPendentesTotal: number): number {
   return caixa - despesasPendentesTotal;
+}
+
+// Linha datada genérica (receitas_extras / custos_laboratorio), ambas
+// posicionadas pela própria `data`.
+export type ValorDatadoRow = { data?: string | null; valor?: number | string | null };
+
+export type ResumoMensalInput = {
+  atendimentos?: AtendimentoRow[];
+  recebimentos?: RecebimentoRow[];
+  parcelas?: ParcelaRow[];
+  despesas?: DespesaRow[];
+  ganhos?: ValorDatadoRow[];
+  lab?: ValorDatadoRow[];
+};
+
+export type ResumoMensal = {
+  recebidoBruto: number;
+  recebidoLiquido: number;
+  ganhos: number;
+  receitaTotal: number;
+  despesasPagas: number;
+  despesasPendentes: number;
+  custosLaboratorio: number;
+  caixaRealizado: number;
+  resultadoPrevisto: number;
+};
+
+const somaValor = (rows: ValorDatadoRow[], mes: string) =>
+  rows.filter((r) => noMes(r.data, mes)).reduce((s, r) => s + Number(r.valor || 0), 0);
+
+// Resumo financeiro consolidado de um mês. Ponto único de verdade: o Dashboard
+// e a ferramenta MCP `resumo_financeiro` consomem esta função em vez de repetir
+// a fórmula, porque quando o MCP a reimplementava em SQL ele ignorava
+// atendimentos à vista sem linha em `recebimentos`, parcelas legadas pagas,
+// `receitas_extras` e `custos_laboratorio` — reportando um caixa diferente do
+// que a tela mostrava para o mesmo mês.
+export function resumoMensal(input: ResumoMensalInput, mes: string): ResumoMensal {
+  const recebidasMes = recebimentosNoMes(
+    input.atendimentos ?? [],
+    input.recebimentos ?? [],
+    input.parcelas ?? [],
+    mes,
+  );
+
+  const recebidoBruto = recebidasMes.reduce((s, r) => s + r.valor_bruto, 0);
+  const recebidoLiquido = recebidasMes.reduce((s, r) => s + r.valor_liquido, 0);
+  const ganhos = somaValor(input.ganhos ?? [], mes);
+  const receitaTotal = recebidoLiquido + ganhos;
+
+  const despPagas = totalDespesasPagasNoMes(input.despesas ?? [], mes);
+  const despPendentes = totalDespesasPendentesNoMes(input.despesas ?? [], mes);
+  const custosLaboratorio = somaValor(input.lab ?? [], mes);
+
+  // Custos de laboratório são saídas já realizadas, então entram junto das
+  // despesas pagas no caixa realizado.
+  const caixa = caixaRealizado(receitaTotal, despPagas + custosLaboratorio);
+
+  return {
+    recebidoBruto,
+    recebidoLiquido,
+    ganhos,
+    receitaTotal,
+    despesasPagas: despPagas,
+    despesasPendentes: despPendentes,
+    custosLaboratorio,
+    caixaRealizado: caixa,
+    resultadoPrevisto: resultadoPrevisto(caixa, despPendentes),
+  };
 }

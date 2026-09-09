@@ -130,7 +130,9 @@ Ambas usam `auth.uid()` e `SET search_path = public`.
 
 ## 8. Testes existentes
 
-Arquivo: `src/lib/finance.test.ts` (Vitest). Cenários cobertos:
+Suíte em Vitest, executada com `bun run test`. O estado atualizado da cobertura
+está na seção 15.5; o núcleo financeiro continua sendo `src/lib/finance.test.ts`,
+com os cenários de regime de caixa:
 
 - Recebimento entra no mês pela data do recebimento.
 - Recebimento de mês anterior não entra no mês atual.
@@ -143,7 +145,7 @@ Arquivo: `src/lib/finance.test.ts` (Vitest). Cenários cobertos:
 - Despesa vencida em um mês e paga no mês seguinte só entra no caixa realizado
   no mês do pagamento.
 
-UI ainda não é testada automaticamente.
+A interface é testada desde a Fase 2 (seção 13.2).
 
 ---
 
@@ -151,7 +153,7 @@ UI ainda não é testada automaticamente.
 
 Lint, testes, typecheck e build estão passando. Não há pendências ativas de lint conhecidas:
 
-- **`@typescript-eslint/no-explicit-any`**: zerado em todo o projeto. Todos os arquivos permitidos foram tipados, substituindo `any` por tipos específicos do Supabase, `unknown` onde o tipo é realmente desconhecido ou tipos auxiliares pequenos.
+- **`@typescript-eslint/no-explicit-any`**: zerado no código de produção. Resta uma única supressão, em `src/lib/mcp/tools/resumo-financeiro.test.ts`, onde o fake do PostgREST é injetado no lugar do cliente Supabase: reproduzir o tipo gerado inteiro só para um dublê de teste não agregaria segurança nenhuma.
 - **`react-hooks/exhaustive-deps`**: zerado. Não restam dependências de efeito omitidas intencionalmente em telas.
 
 Nenhuma alteração de banco, layout, regras financeiras ou comportamento funcional foi feita para alcançar esse estado.
@@ -161,14 +163,19 @@ Nenhuma alteração de banco, layout, regras financeiras ou comportamento funcio
 ## 10. Comandos úteis
 
 ```bash
+bun install         # instala dependências (bun 1.4.2, fixado em packageManager)
 bun run test        # roda os testes (vitest run)
 bun run test:watch  # testes em watch
-tsgo --noEmit       # typecheck (TypeScript)
+bun run typecheck   # typecheck (tsc --noEmit)
+bun run lint        # eslint .
+bun run check       # typecheck + lint + test, na mesma ordem do CI
 bun run build       # build de produção (vite build)
 bun run build:dev   # build em modo development
-bun run lint        # eslint .
 bun run format      # prettier --write .
 ```
+
+O CI (`.github/workflows/ci.yml`) roda exatamente `typecheck`, `lint`, `test` e
+`build` sobre `bun install --frozen-lockfile`.
 
 ---
 
@@ -196,12 +203,16 @@ bun run format      # prettier --write .
 Revisão realizada em 2026-07-09. Resultado: **sem problemas encontrados**.
 Nenhuma migration foi necessária.
 
-Escopo verificado em todas as 17 tabelas do schema `public`
+Escopo verificado nas 17 tabelas do schema `public` que existiam naquela data
 (`atendimento_procedimentos`, `atendimentos`, `consultas_previstas`,
 `custos_laboratorio`, `despesas`, `formas_pagamento`, `gastos_fixos`,
 `gastos_variaveis`, `laboratorios`, `pacientes`, `parcelas`, `procedimentos`,
 `recebimentos`, `receitas_extras`, `tentativas_contato`, `tipos_trabalho`,
-`tratamentos_propostos`):
+`tratamentos_propostos`). O schema hoje tem 20 tabelas: `dtm_acompanhamentos` e
+`dtm_consultas` entraram na Fase 3 (seção 14.1) já com RLS por usuário, e
+`app_settings` era a exceção documentada na seção 15.3 — foi criada como linha
+global única, sem `user_id`, e passou a ser por usuário na migração aplicada em
+2026-09-09:
 
 - **RLS ativo:** habilitado em todas as tabelas.
 - **Cobertura de políticas:** todas as tabelas possuem políticas para
@@ -358,3 +369,166 @@ Mock do Supabase estendido com `.ilike/.like/.not/.is` para suportar
 - **Testes:** 30/30 (exit 0).
 - **Typecheck:** exit 0.
 - **Build:** exit 0.
+
+---
+
+## 15. Fase 4 — Revisão geral e correções (2026-09-08)
+
+Revisão completa do sistema, seguida da correção dos defeitos encontrados na
+ordem de prioridade: primeiro o que produz número errado em silêncio, depois o
+que quebra funcionalidade, depois exposição de dados, depois o que degrada com
+o crescimento da base, e por fim manutenção.
+
+### 15.1 Fonte única da verdade do resumo mensal
+
+A ferramenta MCP `resumo_financeiro` refazia a conta do mês com SQL próprio e
+respondia números diferentes dos do Dashboard para o mesmo mês. Ela ignorava
+`receitas_extras` e `custos_laboratorio`, e classificava atendimentos pela data
+do atendimento em casos que a tela classifica pela data do recebimento.
+
+Em vez de corrigir o SQL, a fórmula do Dashboard virou função pura
+`resumoMensal(dados, mes)` em `src/lib/finance.ts`, e os dois consumidores
+passaram a chamá-la. A resposta da ferramenta manteve o formato anterior e
+ganhou `ganhos_extras`, `receita_total` e `custos_laboratorio`.
+
+O recorte de linhas que a ferramenta precisa carregar está em
+`carregarDadosDoMes` (`src/lib/mcp/tools/_supabase.ts`). Buscar só os
+recebimentos do mês não basta: `receitasRecebidas` decide o ramo de cada
+atendimento por `recs.length > 0`, então um atendimento à vista cujo único
+recebimento caiu em outro mês cairia no ramo "sem recebimentos" e seria contado
+pela data do atendimento. Por isso os atendimentos relevantes são descobertos
+primeiro (pelos recebimentos e parcelas do mês) e só então **todos** os
+recebimentos e parcelas deles são carregados.
+
+### 15.2 Paginação das leituras do Supabase
+
+O PostgREST aplica um teto de linhas por resposta (`max-rows`, 1000 por padrão)
+e **não sinaliza erro quando corta**: a consulta volta com sucesso e menos
+linhas do que existem. Num app financeiro é a pior falha possível, porque o
+total exibido fica menor que o real sem nenhum aviso.
+
+`src/lib/supabase-pagination.ts` concentra a solução:
+
+- `fetchAllPages(page)` percorre a consulta com `.range()` até receber um bloco
+  **vazio**. O avanço é pelo tamanho do bloco recebido, não por `PAGE_SIZE`.
+  Parar no primeiro bloco menor que `PAGE_SIZE` pareceria mais direto, mas
+  assume que o servidor nunca devolve menos do que foi pedido — e o `max-rows`
+  é configurável: se for menor que `PAGE_SIZE`, toda página vem curta e a
+  paginação encerraria já na primeira, reintroduzindo o corte silencioso.
+- `fetchAllPorIds(ids, page)` divide listas de ids em blocos de 200 antes do
+  `.in(...)`. O filtro vai na query string; uma lista grande estoura o limite de
+  tamanho da URL e o servidor responde 414 antes de a consulta rodar.
+
+**Requisito de uso:** toda consulta paginada precisa de ordenação total. Um
+`.order()` com empates permite que o banco devolva a mesma linha em duas páginas
+(ou em nenhuma), então todas as consultas paginadas ganharam `.order("id")` como
+desempate estável. Isso vale para `useTable`, `useConsultorioData` e
+`usePacienteDetalhe` em `src/hooks/use-data.ts`.
+
+O mock de `src/test/supabase-mock.ts` passou a aplicar `.range()` de verdade
+(continua ignorando os demais filtros). Sem isso ele devolveria a tabela inteira
+a cada faixa e o laço de `fetchAllPages` nunca terminaria.
+
+### 15.3 Configuração por usuário e escopo do storage
+
+Dois pontos tratavam o sistema como instalação de usuário único:
+
+- `app_settings` era uma linha global (`single_row`), então a configuração de um
+  usuário sobrescreveria a de outro.
+- As políticas do bucket `logos` permitiam que qualquer usuário autenticado
+  lesse, sobrescrevesse ou apagasse o logo de outro.
+
+A migração `20260908120000_app_settings_e_logos_por_usuario.sql` corrige os
+dois: adiciona `user_id` a `app_settings`, troca a chave primária para
+`user_id`, cria políticas próprias por operação, e substitui as políticas de
+storage por versões restritas a `authenticated` e escopadas por
+`(storage.foldername(name))[1] = auth.uid()::text`. O upload de
+`src/hooks/use-logo.ts` grava em `${user.id}/logo-...` e remove o objeto
+anterior depois que o novo é salvo.
+
+A linha global foi atribuída ao usuário com mais atendimentos, e não ao mais
+antigo: o banco tem duas contas, e a mais antiga é de teste (2 dos 132
+atendimentos). Os 6 objetos do bucket `logos` pertencem à mesma conta que
+recebeu a configuração, o que confirma a atribuição.
+
+Logos antigas, gravadas na raiz do bucket, deixaram de ser alcançáveis pela API
+direta. Isso não quebra a exibição: `logo_url` guarda uma URL assinada de dez
+anos, cuja autorização é o próprio token. A remoção do objeto anterior na
+próxima troca de logo vai falhar em silêncio para esses arquivos de raiz — o
+código trata a remoção como não crítica.
+
+### 15.4 Demais correções
+
+- **Issuer do MCP** (`src/lib/mcp/index.ts`): derivado de `VITE_SUPABASE_URL`
+  ou `VITE_SUPABASE_PROJECT_ID`, com erro explícito se nenhum existir.
+- **Variáveis de ambiente do servidor** (`_supabase.ts`,
+  `auth-middleware.ts`): as `SUPABASE_*` só existem no runtime do servidor e
+  dependem do que a plataforma injeta no publish; as `VITE_SUPABASE_*`, que são
+  as mesmas credenciais publicáveis, servem de fallback. Sem isso, o `!`
+  produzia um cliente com URL `undefined` e as ferramentas MCP falhavam em
+  produção com erro de rede sem relação aparente com configuração. Falta de
+  configuração agora gera `Configuração ausente: ...`.
+- **Sessão expirada** (`src/hooks/use-data.ts` e formulários): gravar sem
+  sessão gerava erro genérico. `useCreate` e os formulários de atendimento,
+  consulta, follow-up e DTM agora falham com a mensagem `SEM_SESSAO`
+  ("Sessão expirada. Entre novamente para salvar.") em vez de `user!.id`.
+- **Índices de leitura**: `20260908120100_indices_de_leitura.sql` cria 9 índices
+  compostos para as consultas por período e por atendimento.
+- **`signUp` removido** de `use-auth.tsx`, `use-auth-context.ts` e do harness de
+  teste: não havia nenhuma tela de cadastro chamando. Sistema de usuário único,
+  contas criadas pelo painel do Supabase. É uma decisão de produto, não técnica —
+  se o cadastro na aplicação voltar a ser desejado, o código precisa voltar.
+- **Índices por atendimento em `finance.ts`**: `resumosPorAtendimento` e
+  `porAtendimento` substituem varreduras repetidas das listas de recebimentos e
+  parcelas dentro de laços. `resumoAtendimento` manteve a assinatura pública.
+- **`nextMonth`** movido para `src/lib/format.ts`, junto de `currentMonthKey`.
+- **CI, `.env.example` e `.gitignore`**: pipeline em `.github/workflows/ci.yml`,
+  `packageManager: bun@1.4.2` fixado no `package.json`, e as variáveis de
+  ambiente documentadas.
+
+### 15.5 Testes adicionados
+
+- `src/lib/finance.test.ts` — 6 testes de `resumoMensal`, cobrindo os cinco
+  eixos em que a versão SQL divergia da tela, a equivalência de composição exata
+  e o mês vazio.
+- `src/lib/supabase-pagination.test.ts` — 6 testes: total acima de uma página,
+  total que cabe na primeira, múltiplo exato do tamanho da página, teto do
+  servidor menor que `PAGE_SIZE`, propagação de erro em vez de resultado
+  parcial, e divisão por blocos de ids.
+- `src/lib/mcp/tools/resumo-financeiro.test.ts` — 9 testes comparando
+  `carregarDadosDoMes` + `resumoMensal` contra o cálculo que o Dashboard faria
+  com todas as linhas em memória.
+- `src/lib/mcp/tools/fake-postgrest.ts` — dublê do PostgREST que **aplica** os
+  filtros (select/gte/lt/lte/eq/in/or/order/range) e simula o teto de linhas por
+  resposta. O mock de `src/test/supabase-mock.ts` devolve a tabela inteira e
+  ignora filtros: serve para testes de interface, mas não prova nada sobre quais
+  linhas uma consulta traz — e era exatamente o recorte das consultas que fazia
+  a ferramenta MCP divergir do Dashboard.
+
+### 15.6 Verificação (2026-09-08)
+
+- **Total de testes:** 96 passando (15 arquivos).
+- **Typecheck:** exit 0.
+- **Lint:** exit 0.
+
+### 15.7 Migrações aplicadas (2026-09-09)
+
+As duas migrações da Fase 4 foram aplicadas no banco de produção e registradas
+em `supabase_migrations.schema_migrations`. Estado conferido depois de aplicar:
+
+- `app_settings` sem a coluna `id`, com PK `user_id`, `DEFAULT auth.uid()` e as
+  quatro políticas `own select/insert/update/delete`.
+- `storage.objects` com as quatro políticas `own logos ...`, todas restritas ao
+  papel `authenticated`; a política `Public can read logos`, que valia para
+  `anon`, não existe mais.
+- Os 9 índices compostos criados.
+
+Duas correções foram necessárias no arquivo da primeira migração, descobertas
+ao conferi-la contra o banco real:
+
+- O nome da política de UPDATE era `Authenticated users can update app settings
+  row`, e não `Authenticated users can update app_settings`.
+- A ordem estava errada: essa política filtra por `id = 1`, então o
+  `DROP COLUMN id` falhava com `cannot drop column id ... because other objects
+  depend on it` enquanto ela existisse. Os `DROP POLICY` passaram para antes das
+  alterações de coluna.

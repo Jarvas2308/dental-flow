@@ -1,6 +1,7 @@
 import { defineTool, type ToolContext } from "@lovable.dev/mcp-js";
 import { z } from "zod";
-import { supabaseForUser, unauthenticated, formatBRL, nextMonth } from "./_supabase";
+import { supabaseForUser, unauthenticated, formatBRL } from "./_supabase";
+import { nextMonth } from "@/lib/format";
 
 export default defineTool({
   name: "list_atendimentos",

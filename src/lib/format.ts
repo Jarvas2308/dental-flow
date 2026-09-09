@@ -38,6 +38,15 @@ export const monthLabel = (key: string) => {
 
 export const currentMonthKey = () => monthKey(new Date());
 
+// Primeiro dia (AAAA-MM-DD) do mês seguinte ao informado (AAAA-MM). Serve de
+// limite superior exclusivo em filtros por período. Vive aqui, junto do resto
+// da aritmética de datas, e não em lib/mcp, que só a consumia.
+export const nextMonth = (key: string) => {
+  const [y, m] = key.split("-").map(Number);
+  const d = new Date(y, m, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+};
+
 // Início (domingo, 00:00) e fim (sábado, 23:59:59.999) da semana local que
 // contém a data informada.
 export const startOfWeek = (d: Date) => {

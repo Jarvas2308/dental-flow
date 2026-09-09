@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { useTable, useCreate, useDelete, useUpdate } from "@/hooks/use-data";
+import { useTable, useCreate, useDelete, useUpdate, SEM_SESSAO } from "@/hooks/use-data";
 import { useAuth } from "@/hooks/use-auth-context";
 import { PacienteCombobox } from "@/components/atendimento-form";
 import { resolvePacienteId } from "@/lib/pacientes";
@@ -109,11 +109,13 @@ function AcompanhamentoForm({
       return toast.error(`Total não pode ser menor que ${minTotal} (já realizadas)`);
     }
 
+    if (!user) return toast.error(SEM_SESSAO);
+
     let pid = pacienteId;
     try {
       pid = await resolvePacienteId({
         nome,
-        userId: user!.id,
+        userId: user.id,
         knownId: pacienteId ?? undefined,
         cache: pacientes.data ?? [],
       });

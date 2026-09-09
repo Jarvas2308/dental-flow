@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { proximaTentativa, estaPendenteHoje } from "./followup";
+import { todayISO, toISODate } from "./format";
 
 describe("proximaTentativa — próxima data de contato", () => {
   it("retorna fase e data da próxima tentativa", () => {
@@ -12,7 +13,7 @@ describe("proximaTentativa — próxima data de contato", () => {
       fase2_intervalo_dias: 14,
       fase3_intervalo_dias: 30,
     };
-    const tentativas: any[] = [];
+    const tentativas: { data?: string | null }[] = [];
 
     const prox = proximaTentativa(proposta, tentativas);
     expect(prox.fase).toBe(1);
@@ -53,15 +54,11 @@ describe("proximaTentativa — próxima data de contato", () => {
 
 describe("estaPendenteHoje — status do follow-up", () => {
   it("retorna true quando data prevista é hoje ou anterior", () => {
-    // Nota: a função usa todayISO() que retorna a data de hoje em ISO.
-    // Testando com datas ISO para ter certeza.
-    const hoje = "2026-07-31";
-    const ontem = "2026-07-30";
+    // Datas derivadas de todayISO() para o teste não depender do dia em que roda.
+    const hoje = todayISO();
+    const ontem = toISODate(new Date(Date.now() - 24 * 60 * 60 * 1000));
 
-    // Para passar nesses testes, estaPendenteHoje(hoje) <= todayISO()
-    // Se todayISO() retorna "2026-07-31", então:
-    // "2026-07-31" <= "2026-07-31" => true
-    // "2026-07-30" <= "2026-07-31" => true
+    expect(estaPendenteHoje(hoje)).toBe(true);
     expect(estaPendenteHoje(ontem)).toBe(true);
   });
 

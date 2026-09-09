@@ -11,7 +11,7 @@ import {
   type EventoTipo,
 } from "@/lib/paciente-detalhe";
 import {
-  resumoAtendimento,
+  resumosPorAtendimento,
   MONETARY_EPSILON,
   type RecebimentoRow,
   type ParcelaRow,
@@ -84,15 +84,13 @@ function PacienteDetalhePage() {
   // receber, porque RegistrarRecebimento é por atendimento, não por paciente.
   const emAberto = useMemo(() => {
     if (!dados) return [];
+    const resumos = resumosPorAtendimento(
+      dados.atendimentos,
+      dados.recebimentos as RecebimentoRow[],
+      dados.parcelas as ParcelaRow[],
+    );
     return dados.atendimentos
-      .map((a) => ({
-        atendimento: a,
-        resumo: resumoAtendimento(
-          a,
-          dados.recebimentos as RecebimentoRow[],
-          dados.parcelas as ParcelaRow[],
-        ),
-      }))
+      .map((a) => ({ atendimento: a, resumo: resumos.get(a.id)! }))
       .filter((x) => x.resumo.saldo > MONETARY_EPSILON)
       .sort((a, b) => (b.atendimento.data ?? "").localeCompare(a.atendimento.data ?? ""));
   }, [dados]);

@@ -6,7 +6,6 @@ import {
   contasAReceber,
   valoresEmAberto,
   STATUS_LABEL,
-  MONETARY_EPSILON,
   type RecebimentoRow,
   type ParcelaRow,
 } from "@/lib/finance";

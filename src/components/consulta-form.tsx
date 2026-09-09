@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useCreate, useUpdate, useTable } from "@/hooks/use-data";
+import { useCreate, useUpdate, useTable, SEM_SESSAO } from "@/hooks/use-data";
 import { useAuth } from "@/hooks/use-auth-context";
 import { useQueryClient } from "@tanstack/react-query";
 import { todayISO } from "@/lib/format";
@@ -81,13 +81,14 @@ export function ConsultaForm({
     e.preventDefault();
     if (!v.paciente.trim()) return toast.error("Informe o paciente");
     if (!v.data_prevista) return toast.error("Informe a data prevista");
+    if (!user) return toast.error(SEM_SESSAO);
 
     // Resolve/crie o paciente_id preservando o texto do nome para compatibilidade.
     let idResolvido: string | null = pacienteId;
     try {
       idResolvido = await resolvePacienteId({
         nome: v.paciente,
-        userId: user!.id,
+        userId: user.id,
         knownId: pacienteId,
         cache: pacientes.data ?? [],
       });

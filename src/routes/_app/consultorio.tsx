@@ -55,7 +55,7 @@ import { ConfirmDelete } from "@/components/confirm-delete";
 import { AtendimentoForm, EditAtendimentoButton } from "@/components/atendimento-form";
 import { RegistrarRecebimento } from "@/components/recebimento-form";
 import {
-  resumoAtendimento,
+  resumosPorAtendimento,
   receitasRecebidas,
   noMes,
   STATUS_LABEL,
@@ -219,11 +219,10 @@ function Consultorio() {
     [consultorio.data?.parcelas],
   );
 
-  const resumoMap = useMemo(() => {
-    const m = new Map<string, ReturnType<typeof resumoAtendimento>>();
-    allData.forEach((a) => m.set(a.id, resumoAtendimento(a, recebimentosData, parcelasData)));
-    return m;
-  }, [allData, recebimentosData, parcelasData]);
+  const resumoMap = useMemo(
+    () => resumosPorAtendimento(allData, recebimentosData, parcelasData),
+    [allData, recebimentosData, parcelasData],
+  );
 
   const isPendente = useCallback(
     (r: AtendimentoView) =>
@@ -724,7 +723,9 @@ function Consultorio() {
                   <TableCell className={cn("text-muted-foreground", pend && "text-destructive/80")}>
                     {formatDateBR(r.data)}
                   </TableCell>
-                  <TableCell className={cn("font-medium", pend && "text-destructive font-semibold")}>
+                  <TableCell
+                    className={cn("font-medium", pend && "text-destructive font-semibold")}
+                  >
                     {r.paciente}
                   </TableCell>
                   <TableCell className={cn(pend && "text-destructive/90")}>
