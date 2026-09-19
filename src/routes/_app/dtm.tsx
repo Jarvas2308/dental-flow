@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/use-auth-context";
 import { PacienteCombobox } from "@/components/atendimento-form";
 import { resolvePacienteId } from "@/lib/pacientes";
 import { formatDateBR, todayISO } from "@/lib/format";
-import { sortDtmAcompanhamentos } from "@/lib/dtm";
+import { consultasPorAcompanhamento, sortDtmAcompanhamentos } from "@/lib/dtm";
 import { PageHeader, EmptyState, ErrorState, AlertBanner } from "@/components/ui-kit";
 import { ConfirmDelete } from "@/components/confirm-delete";
 import { usePagination } from "@/hooks/use-pagination";
@@ -52,21 +52,6 @@ type PacienteRow = Tables<"pacientes">;
 export const Route = createFileRoute("/_app/dtm")({
   component: DtmPage,
 });
-
-// Contagem de consultas realizadas por acompanhamento.
-function contarPorAcomp(consultas: DtmConsultaRow[]): Map<string, DtmConsultaRow[]> {
-  const m = new Map<string, DtmConsultaRow[]>();
-  for (const c of consultas) {
-    const list = m.get(c.acompanhamento_id) ?? [];
-    list.push(c);
-    m.set(c.acompanhamento_id, list);
-  }
-  for (const [k, list] of m) {
-    list.sort((a, b) => a.numero - b.numero);
-    m.set(k, list);
-  }
-  return m;
-}
 
 function AcompanhamentoForm({
   editing,
@@ -332,7 +317,7 @@ function AcompDetalhe({
           description="Registre a primeira consulta realizada para iniciar o progresso."
         />
       ) : (
-        <div className="rounded-2xl border bg-card overflow-hidden">
+        <div className="rounded-xl border bg-card overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow>
@@ -371,7 +356,10 @@ function DtmPage() {
   const [editingMin, setEditingMin] = useState(0);
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  const porAcomp = useMemo(() => contarPorAcomp(consultas.data ?? []), [consultas.data]);
+  const porAcomp = useMemo(
+    () => consultasPorAcompanhamento(consultas.data ?? []),
+    [consultas.data],
+  );
   // Ordenação canônica por data_inicio ASC (nulos ao final), independente do
   // que o backend devolveu, garantindo consistência entre telas.
   const rows = useMemo(() => sortDtmAcompanhamentos(list.data ?? []), [list.data]);
@@ -386,7 +374,7 @@ function DtmPage() {
       />
 
       <div
-        className="rounded-2xl border bg-card overflow-hidden"
+        className="rounded-xl border bg-card overflow-hidden"
         style={{ boxShadow: "var(--shadow-soft)" }}
       >
         <Table>

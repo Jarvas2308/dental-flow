@@ -11,7 +11,7 @@
 // - Compatibilidade: atendimentos antigos que possuírem registros na tabela
 //   `parcelas` continuam sendo tratados pelas parcelas pagas.
 
-import { monthKey } from "./format";
+import { monthKey, todayISO } from "./format";
 
 // Tipos-linha flexíveis para registros vindos do banco. Campos são opcionais
 // porque cada fluxo (à vista, parcelado, legado) preenche um subconjunto deles.
@@ -60,6 +60,10 @@ export type DespesaRow = {
   vencimento?: string | null;
   data_pagamento?: string | null;
   data?: string | null;
+  // Só as recorrentes de valor variável nascem sem valor, esperando o boleto
+  // do mês. Elas precisam ser distinguidas de uma pendência comum.
+  recorrente?: boolean | null;
+  tipo_recorrencia?: string | null;
 };
 
 export type Entrada = {
@@ -511,11 +515,84 @@ export function recebimentosNoMes(
   return receitasRecebidas(atend, recebimentos, parcelas).filter((e) => noMes(e.data, mes));
 }
 
+// ---------------------------------------------------------------------------
+// Status de despesa
+//
+// Ponto único de verdade, pelo mesmo motivo de idsComRecebimentoNovo acima: a
+// tela de Despesas mantinha a própria `computeStatus`, que considerava paga
+// qualquer linha com `status = 'pago'`, enquanto despesasPagas/despesasPendentes
+// (Dashboard, Fluxo de Caixa e ferramenta MCP) exigem `data_pagamento` para
+// posicionar a saída no caixa. Uma despesa marcada como paga sem data aparecia
+// PAGA numa tela e PENDENTE na outra, para o mesmo mês.
+// ---------------------------------------------------------------------------
+
+export type StatusDespesa = "pago" | "aguardando" | "atrasado" | "pendente";
+
+// `aguardando`: recorrente de valor variável ainda sem valor preenchido.
+// `atrasado`: vencida e não paga. A comparação é entre strings YYYY-MM-DD, que
+// ordenam lexicograficamente igual à ordem cronológica.
+export function statusDespesa(d: DespesaRow, hojeISO: string = todayISO()): StatusDespesa {
+  if (d.status === "pago" && d.data_pagamento) return "pago";
+  if (
+    d.recorrente &&
+    d.tipo_recorrencia === "variavel" &&
+    (d.valor == null || Number(d.valor) === 0)
+  ) {
+    return "aguardando";
+  }
+  if (!d.vencimento) return "pendente";
+  return d.vencimento < hojeISO ? "atrasado" : "pendente";
+}
+
+export type ComStatusDespesa<T> = Omit<T, "status"> & { status: StatusDespesa };
+
+// Aplica o status canônico a uma lista, preservando os demais campos.
+export function comStatusDespesa<T extends DespesaRow>(
+  rows: T[] = [],
+  hojeISO: string = todayISO(),
+): ComStatusDespesa<T>[] {
+  return (rows ?? []).map((r) => ({ ...r, status: statusDespesa(r, hojeISO) }));
+}
+
+export type TotaisDespesas = {
+  pago: number;
+  pendente: number;
+  atrasado: number;
+  geral: number;
+  // Contagem, não soma: uma despesa "aguardando" é justamente a que ainda não
+  // tem valor, então somá-la produziria sempre zero.
+  aguardando: number;
+};
+
+export function totaisPorStatusDespesa(rows: ComStatusDespesa<DespesaRow>[] = []): TotaisDespesas {
+  const soma = (st: StatusDespesa) =>
+    rows.filter((r) => r.status === st).reduce((s, r) => s + Number(r.valor || 0), 0);
+  const pago = soma("pago");
+  const pendente = soma("pendente");
+  const atrasado = soma("atrasado");
+  return {
+    pago,
+    pendente,
+    atrasado,
+    geral: pago + pendente + atrasado,
+    aguardando: rows.filter((r) => r.status === "aguardando").length,
+  };
+}
+
+// Despesas cujo VENCIMENTO cai no mês (regime de competência). É o recorte da
+// tela de Despesas e é diferente de despesasPagasNoMes, que posiciona a saída
+// pela data_pagamento (regime de caixa) para o Dashboard e o Fluxo de Caixa. As
+// duas visões divergem de propósito quando uma conta vence num mês e é paga em
+// outro.
+export function despesasDoMesPorVencimento<T extends DespesaRow>(rows: T[] = [], mes: string): T[] {
+  return (rows ?? []).filter((r) => noMes(r.vencimento, mes));
+}
+
 // Despesas pagas normalizadas: posicionadas pela data_pagamento (data da saída
 // real). Cada item recebe `data = data_pagamento` para uso em fluxo de caixa.
 export function despesasPagas(despesas: DespesaRow[] = []): DespesaRow[] {
   return (despesas ?? [])
-    .filter((r) => r.status === "pago" && r.data_pagamento)
+    .filter((r) => statusDespesa(r) === "pago")
     .map((r) => ({ ...r, data: r.data_pagamento }));
 }
 
@@ -532,7 +609,7 @@ export function totalDespesasPagasNoMes(despesas: DespesaRow[] = [], mes: string
 // (não podem ser posicionadas em despesasPagas, então continuam pendentes pelo
 // vencimento até que a data de pagamento seja preenchida).
 export function despesasPendentes(despesas: DespesaRow[] = []): DespesaRow[] {
-  return (despesas ?? []).filter((r) => r.status !== "pago" || !r.data_pagamento);
+  return (despesas ?? []).filter((r) => statusDespesa(r) !== "pago");
 }
 
 // Despesas pendentes do mês (pelo vencimento).

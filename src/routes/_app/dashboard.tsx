@@ -226,10 +226,7 @@ function Dashboard() {
       />
 
       {isError && (
-        <div
-          className="rounded-2xl border bg-card mb-6"
-          style={{ boxShadow: "var(--shadow-soft)" }}
-        >
+        <div className="rounded-xl border bg-card mb-6" style={{ boxShadow: "var(--shadow-soft)" }}>
           <ErrorState
             title="Não foi possível carregar o dashboard"
             description="Os totais abaixo podem estar incompletos. Recarregue para ver os números corretos."
@@ -397,7 +394,7 @@ function Dashboard() {
       </div>
 
       <div
-        className="mt-6 rounded-2xl border bg-card p-5"
+        className="mt-6 rounded-xl border bg-card p-5"
         style={{ boxShadow: "var(--shadow-soft)" }}
       >
         <div className="flex items-center justify-between mb-4">

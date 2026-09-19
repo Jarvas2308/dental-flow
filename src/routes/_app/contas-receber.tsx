@@ -144,7 +144,7 @@ function ContasReceber() {
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : erro ? (
-        <div className="rounded-2xl border bg-card" style={{ boxShadow: "var(--shadow-soft)" }}>
+        <div className="rounded-xl border bg-card" style={{ boxShadow: "var(--shadow-soft)" }}>
           <ErrorState
             title="Não foi possível carregar os valores em aberto"
             description="Os totais acima podem estar incompletos. Recarregue para ver os números corretos."
@@ -152,7 +152,7 @@ function ContasReceber() {
           />
         </div>
       ) : rows.length === 0 ? (
-        <div className="rounded-2xl border bg-card" style={{ boxShadow: "var(--shadow-soft)" }}>
+        <div className="rounded-xl border bg-card" style={{ boxShadow: "var(--shadow-soft)" }}>
           <EmptyState
             icon={<CheckCircle2 className="h-8 w-8 text-success" />}
             title={q ? "Nenhum resultado para a busca" : "Nenhuma conta a receber em aberto"}
@@ -171,7 +171,7 @@ function ContasReceber() {
             return (
               <div
                 key={c.atendimento_id}
-                className="rounded-2xl border bg-card p-4 sm:p-5 cursor-pointer hover:border-primary/50 hover:bg-card/50 transition-colors"
+                className="rounded-xl border bg-card p-4 sm:p-5 cursor-pointer hover:border-primary/50 hover:bg-card/50 transition-colors"
                 onClick={() => atend && setEditing(atend)}
                 style={{ boxShadow: "var(--shadow-soft)" }}
               >

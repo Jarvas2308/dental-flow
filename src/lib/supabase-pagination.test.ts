@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { fetchAllPages, fetchAllPorIds, PAGE_SIZE, ID_CHUNK_SIZE } from "./supabase-pagination";
+import {
+  fetchAllPages,
+  fetchAllPorIds,
+  PAGE_SIZE,
+  ID_CHUNK_SIZE,
+  MAX_PAGES,
+} from "./supabase-pagination";
 
 // Simula uma tabela do PostgREST: responde no máximo PAGE_SIZE linhas por vez,
 // sem sinalizar que houve corte — o comportamento que a paginação existe para
@@ -78,5 +84,21 @@ describe("fetchAllPorIds", () => {
     });
     expect(chamou).toBe(false);
     expect(out).toEqual([]);
+  });
+});
+
+describe("teto de iterações", () => {
+  it("falha com erro explícito quando o servidor ignora o Range", async () => {
+    // Backend defeituoso: devolve sempre a mesma página cheia. Sem o teto, o
+    // laço nunca terminaria e a aba congelaria sem nenhum erro.
+    const pagina = Array.from({ length: PAGE_SIZE }, (_, i) => ({ id: `id-${i}` }));
+    let chamadas = 0;
+    const page = async () => {
+      chamadas++;
+      return { data: pagina, error: null };
+    };
+
+    await expect(fetchAllPages(page)).rejects.toThrow(/Range/);
+    expect(chamadas).toBe(MAX_PAGES);
   });
 });

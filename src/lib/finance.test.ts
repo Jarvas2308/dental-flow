@@ -8,6 +8,11 @@ import {
   resultadoPrevisto,
   contasAReceber,
   resumoMensal,
+  statusDespesa,
+  comStatusDespesa,
+  totaisPorStatusDespesa,
+  despesasDoMesPorVencimento,
+  despesasPagasNoMes,
 } from "./finance";
 
 // Atendimento parcelado usado como fonte de recebimentos livres.
@@ -425,5 +430,89 @@ describe("resumoMensal", () => {
       caixaRealizado: 0,
       resultadoPrevisto: 0,
     });
+  });
+});
+
+describe("statusDespesa", () => {
+  const hoje = "2026-07-15";
+
+  it("só considera paga a despesa que tem data_pagamento", () => {
+    // O status sozinho não basta: enquanto a tela de Despesas aceitava
+    // `status = "pago"` sem data, ela mostrava PAGA e o Dashboard, que precisa
+    // da data para posicionar a saída no caixa, mostrava PENDENTE.
+    expect(statusDespesa({ status: "pago", data_pagamento: "2026-07-10" }, hoje)).toBe("pago");
+    expect(
+      statusDespesa({ status: "pago", data_pagamento: null, vencimento: "2026-07-20" }, hoje),
+    ).toBe("pendente");
+  });
+
+  it("marca como atrasada a pendente com vencimento anterior a hoje", () => {
+    expect(statusDespesa({ status: "pendente", vencimento: "2026-07-14" }, hoje)).toBe("atrasado");
+    expect(statusDespesa({ status: "pendente", vencimento: hoje }, hoje)).toBe("pendente");
+    expect(statusDespesa({ status: "pendente", vencimento: "2026-07-16" }, hoje)).toBe("pendente");
+  });
+
+  it("recorrente de valor variável ainda sem valor fica aguardando", () => {
+    const aguardando = {
+      status: "pendente",
+      recorrente: true,
+      tipo_recorrencia: "variavel",
+      valor: 0,
+      vencimento: "2026-07-01",
+    };
+    // Vencida, mas o que falta é o boleto do mês, não o pagamento.
+    expect(statusDespesa(aguardando, hoje)).toBe("aguardando");
+    expect(statusDespesa({ ...aguardando, valor: 120 }, hoje)).toBe("atrasado");
+  });
+
+  it("pendente sem vencimento não vira atrasada", () => {
+    expect(statusDespesa({ status: "pendente", vencimento: null }, hoje)).toBe("pendente");
+  });
+});
+
+describe("totaisPorStatusDespesa", () => {
+  const hoje = "2026-07-15";
+  const linhas = [
+    { status: "pago", data_pagamento: "2026-07-02", valor: 100, vencimento: "2026-07-05" },
+    { status: "pendente", valor: 50, vencimento: "2026-07-20" },
+    { status: "pendente", valor: 30, vencimento: "2026-07-01" },
+    {
+      status: "pendente",
+      valor: 0,
+      vencimento: "2026-07-01",
+      recorrente: true,
+      tipo_recorrencia: "variavel",
+    },
+  ];
+
+  it("soma por status e conta (não soma) as aguardando", () => {
+    const t = totaisPorStatusDespesa(comStatusDespesa(linhas, hoje));
+
+    expect(t).toEqual({ pago: 100, pendente: 50, atrasado: 30, geral: 180, aguardando: 1 });
+  });
+
+  it("totais de lista vazia são zero", () => {
+    expect(totaisPorStatusDespesa([])).toEqual({
+      pago: 0,
+      pendente: 0,
+      atrasado: 0,
+      geral: 0,
+      aguardando: 0,
+    });
+  });
+});
+
+describe("despesasDoMesPorVencimento", () => {
+  it("recorta pelo vencimento, não pela data de pagamento", () => {
+    // Conta que vence em julho e é paga em agosto aparece no julho da tela de
+    // Despesas (competência) e no agosto do Fluxo de Caixa (regime de caixa).
+    const rows = [
+      { vencimento: "2026-07-30", data_pagamento: "2026-08-02", status: "pago", valor: 200 },
+      { vencimento: "2026-08-05", status: "pendente", valor: 90 },
+    ];
+
+    expect(despesasDoMesPorVencimento(rows, "2026-07")).toHaveLength(1);
+    expect(despesasPagasNoMes(rows, "2026-07")).toHaveLength(0);
+    expect(despesasPagasNoMes(rows, "2026-08")).toHaveLength(1);
   });
 });

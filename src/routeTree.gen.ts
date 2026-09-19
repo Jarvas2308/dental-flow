@@ -14,6 +14,7 @@ import { Route as McpRouteImport } from './routes/mcp'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppNotaFiscalRouteImport } from './routes/_app/nota-fiscal'
 import { Route as AppLaboratorioRouteImport } from './routes/_app/laboratorio'
 import { Route as AppGanhosRouteImport } from './routes/_app/ganhos'
 import { Route as AppFollowupRouteImport } from './routes/_app/followup'
@@ -55,6 +56,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppNotaFiscalRoute = AppNotaFiscalRouteImport.update({
+  id: '/nota-fiscal',
+  path: '/nota-fiscal',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppLaboratorioRoute = AppLaboratorioRouteImport.update({
   id: '/laboratorio',
@@ -163,6 +169,7 @@ export interface FileRoutesByFullPath {
   '/followup': typeof AppFollowupRoute
   '/ganhos': typeof AppGanhosRoute
   '/laboratorio': typeof AppLaboratorioRoute
+  '/nota-fiscal': typeof AppNotaFiscalRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/pacientes/$id': typeof AppPacientesIdRoute
@@ -186,6 +193,7 @@ export interface FileRoutesByTo {
   '/followup': typeof AppFollowupRoute
   '/ganhos': typeof AppGanhosRoute
   '/laboratorio': typeof AppLaboratorioRoute
+  '/nota-fiscal': typeof AppNotaFiscalRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/pacientes/$id': typeof AppPacientesIdRoute
@@ -211,6 +219,7 @@ export interface FileRoutesById {
   '/_app/followup': typeof AppFollowupRoute
   '/_app/ganhos': typeof AppGanhosRoute
   '/_app/laboratorio': typeof AppLaboratorioRoute
+  '/_app/nota-fiscal': typeof AppNotaFiscalRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_app/pacientes/$id': typeof AppPacientesIdRoute
@@ -236,6 +245,7 @@ export interface FileRouteTypes {
     | '/followup'
     | '/ganhos'
     | '/laboratorio'
+    | '/nota-fiscal'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/pacientes/$id'
@@ -259,6 +269,7 @@ export interface FileRouteTypes {
     | '/followup'
     | '/ganhos'
     | '/laboratorio'
+    | '/nota-fiscal'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/pacientes/$id'
@@ -283,6 +294,7 @@ export interface FileRouteTypes {
     | '/_app/followup'
     | '/_app/ganhos'
     | '/_app/laboratorio'
+    | '/_app/nota-fiscal'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
     | '/_app/pacientes/$id'
@@ -337,6 +349,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/nota-fiscal': {
+      id: '/_app/nota-fiscal'
+      path: '/nota-fiscal'
+      fullPath: '/nota-fiscal'
+      preLoaderRoute: typeof AppNotaFiscalRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/laboratorio': {
       id: '/_app/laboratorio'
@@ -472,6 +491,7 @@ interface AppRouteChildren {
   AppFollowupRoute: typeof AppFollowupRoute
   AppGanhosRoute: typeof AppGanhosRoute
   AppLaboratorioRoute: typeof AppLaboratorioRoute
+  AppNotaFiscalRoute: typeof AppNotaFiscalRoute
   AppPacientesIdRoute: typeof AppPacientesIdRoute
   AppPacientesIndexRoute: typeof AppPacientesIndexRoute
 }
@@ -488,6 +508,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppFollowupRoute: AppFollowupRoute,
   AppGanhosRoute: AppGanhosRoute,
   AppLaboratorioRoute: AppLaboratorioRoute,
+  AppNotaFiscalRoute: AppNotaFiscalRoute,
   AppPacientesIdRoute: AppPacientesIdRoute,
   AppPacientesIndexRoute: AppPacientesIndexRoute,
 }

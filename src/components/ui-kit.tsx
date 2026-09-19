@@ -73,38 +73,41 @@ export function StatCard({
   tone?: "default" | "success" | "warning" | "destructive" | "primary";
   icon?: ReactNode;
 }) {
-  const toneCls = {
+  // O tom colore o número e a pastilha do ícone. A faixa colorida na borda
+  // esquerda saiu: com quatro cartões lado a lado ela virava uma cerca.
+  const valueCls = {
     default: "text-foreground",
-    primary: "text-primary",
+    primary: "text-foreground",
     success: "text-success",
     warning: "text-warning",
     destructive: "text-destructive",
   }[tone];
 
-  const borderCls = {
-    default: "",
-    primary: "border-l-4 border-l-primary",
-    success: "border-l-4 border-l-success",
-    warning: "border-l-4 border-l-warning",
-    destructive: "border-l-4 border-l-destructive",
+  const iconCls = {
+    default: "bg-muted text-muted-foreground",
+    primary: "bg-primary-soft text-primary",
+    success: "bg-success-soft text-success",
+    warning: "bg-warning-soft text-warning",
+    destructive: "bg-destructive-soft text-destructive",
   }[tone];
 
   return (
     <div
-      className={cn(
-        "rounded-2xl border bg-card p-5 transition-shadow hover:shadow-[var(--shadow-card)]",
-        borderCls,
-      )}
+      className="rounded-xl border bg-card p-4 transition-[box-shadow,border-color,translate] hover:-translate-y-px hover:border-primary-border hover:shadow-[var(--shadow-card)]"
       style={{ boxShadow: "var(--shadow-soft)" }}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          {label}
-        </div>
-        {icon && <div className={cn("opacity-70", toneCls)}>{icon}</div>}
+      <div className="flex items-center gap-2">
+        {icon && (
+          <div className={cn("grid size-[26px] shrink-0 place-items-center rounded-md", iconCls)}>
+            {icon}
+          </div>
+        )}
+        <div className="text-xs font-medium text-muted-foreground">{label}</div>
       </div>
-      <div className={cn("mt-3 text-2xl font-semibold tracking-tight", toneCls)}>{value}</div>
-      {hint && <div className="text-xs text-muted-foreground mt-1">{hint}</div>}
+      <div className={cn("mt-2.5 text-[25px] font-semibold tracking-tight tabular-nums", valueCls)}>
+        {value}
+      </div>
+      {hint && <div className="mt-1.5 text-[11.5px] text-muted-foreground">{hint}</div>}
     </div>
   );
 }
@@ -125,14 +128,14 @@ export function AlertBanner({
   action?: ReactNode;
 }) {
   const toneCls = {
-    warning: "border-l-4 border-l-warning bg-card text-warning",
-    destructive: "border-l-4 border-l-destructive bg-card text-destructive",
-    primary: "border-l-4 border-l-primary bg-card text-primary",
+    warning: "border-warning/30 bg-warning-soft text-warning",
+    destructive: "border-destructive/30 bg-destructive-soft text-destructive",
+    primary: "border-primary-border bg-primary-soft text-primary",
   }[tone];
 
   return (
     <div
-      className={cn("mb-4 flex flex-wrap items-center gap-3 rounded-2xl border px-4 py-3", toneCls)}
+      className={cn("mb-4 flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3", toneCls)}
       role="status"
     >
       {icon && <div className="shrink-0">{icon}</div>}

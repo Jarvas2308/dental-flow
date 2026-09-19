@@ -5,9 +5,7 @@
   "auth": {
     "type": "oauth",
     "issuer": "https://tsvgweufuczlzskeoqma.supabase.co/auth/v1",
-    "accepted_audiences": [
-      "authenticated"
-    ]
+    "accepted_audiences": ["authenticated"]
   },
   "mcp": {
     "server": {
@@ -92,9 +90,7 @@
               "description": "Mês no formato AAAA-MM, por exemplo 2026-07."
             }
           },
-          "required": [
-            "month"
-          ]
+          "required": ["month"]
         },
         "outputSchema": null
       }

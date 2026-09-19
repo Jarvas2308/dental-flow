@@ -75,7 +75,6 @@ type SortKey =
   | "bruto_desc"
   | "liquido_desc"
   | "nf"
-  | "lucrativos"
   | "frequentes";
 
 type QuickFilter =
@@ -109,7 +108,6 @@ const SORT_LABELS: Record<SortKey, string> = {
   bruto_desc: "Maior valor bruto",
   liquido_desc: "Maior valor líquido",
   nf: "Nota fiscal (emitidos primeiro)",
-  lucrativos: "Mais lucrativos",
   frequentes: "Procedimentos mais frequentes",
 };
 
@@ -127,11 +125,71 @@ const FILTER_LABELS: Record<QuickFilter, string> = {
   dinheiro: "Dinheiro",
 };
 
+// Status de NF alvo de cada quick-filter. A ausência de `nota_fiscal_status`
+// conta como "pendente", que é o padrão do banco para linha antiga.
+const NF_DO_FILTRO: Partial<Record<QuickFilter, string>> = {
+  emitidos: "emitida",
+  pendentes: "pendente",
+  nao_emitidos: "nao_emitida",
+  nao_se_aplica: "nao_se_aplica",
+};
+
+// Forma de pagamento é texto livre vindo do cadastro, então o casamento é por
+// padrão de escrita e não por igualdade. Em um lugar só: as mesmas expressões
+// estavam copiadas nos dois blocos de filtro da tela.
+const FORMA_DO_FILTRO: Partial<Record<QuickFilter, RegExp>> = {
+  cartao: /cart[ãa]o|cr[eé]dito|d[eé]bito/i,
+  pix: /pix/i,
+  dinheiro: /dinheiro|esp[eé]cie/i,
+};
+
 // As listas de opções saem dos mapas de rótulos acima, então não há um segundo
 // lugar para manter em sincronia quando surgir um filtro novo.
 const SORT_KEYS = Object.keys(SORT_LABELS) as SortKey[];
 const FILTER_KEYS = Object.keys(FILTER_LABELS) as QuickFilter[];
 const STATUS_KEYS = Object.keys(STATUS_LABELS) as StatusPag[];
+
+// Filtros de ATRIBUTO: NF, forma de pagamento, status de pagamento,
+// procedimento e busca. Ficam separados do recorte por DATA porque as duas
+// listas da tela precisam exatamente deles: a tabela aplica atributo + data do
+// atendimento, e o card "Recebido no período" aplica só atributo, já que um
+// recebimento pode cair em mês diferente do atendimento que o originou.
+// Enquanto eram dois blocos copiados, um filtro novo entrava em um e faltava
+// no outro, e a tabela deixava de bater com o card.
+function filtrarPorAtributos(
+  rows: readonly AtendimentoView[],
+  opts: {
+    filter: QuickFilter;
+    statusPag: StatusPag;
+    procFilter: string;
+    q: string;
+    isPendente: (x: AtendimentoView) => boolean;
+  },
+): AtendimentoView[] {
+  const { filter, statusPag, procFilter, q, isPendente } = opts;
+  let r = [...rows];
+
+  const nf = NF_DO_FILTRO[filter];
+  const forma = FORMA_DO_FILTRO[filter];
+  if (nf) r = r.filter((x) => (x.nota_fiscal_status ?? "pendente") === nf);
+  else if (forma) r = r.filter((x) => forma.test(x.forma_pagamento ?? ""));
+
+  if (statusPag === "pagos") r = r.filter((x) => !isPendente(x));
+  else if (statusPag === "abertos") r = r.filter((x) => isPendente(x));
+
+  if (procFilter !== "__all__") r = r.filter((x) => x.procedimento === procFilter);
+
+  if (q) {
+    const s = q.toLowerCase();
+    r = r.filter(
+      (x) =>
+        (x.paciente ?? "").toLowerCase().includes(s) ||
+        (x.procedimento ?? "").toLowerCase().includes(s),
+    );
+  }
+
+  return r;
+}
 
 // `proc` é texto livre porque a lista de procedimentos é dinâmica; um valor
 // desconhecido apenas filtra para zero linhas, que é um resultado correto.
@@ -302,6 +360,9 @@ function Consultorio() {
       return isPendente(x) && !!d && d <= monthEnd;
     };
 
+    // Recorte por data. Só "hoje" e "semana" trocam a janela; os demais
+    // quick-filters (inclusive os de NF e forma) continuam dentro do mês e o
+    // atributo em si é aplicado logo abaixo, por filtrarPorAtributos.
     if (filter === "hoje") {
       r = r.filter((x) => {
         const d = parseLocalDate(x.data);
@@ -316,41 +377,11 @@ function Consultorio() {
         const d = parseLocalDate(x.data);
         return (!!d && d >= weekStart) || isPendente(x) || idsComRecebimentoNoPeriodo.has(x.id);
       });
-    } else if (filter === "mes" || filter === "todos") {
+    } else {
       r = r.filter(inMonth);
-    } else if (filter === "emitidos") {
-      r = r.filter((x) => inMonth(x) && x.nota_fiscal_status === "emitida");
-    } else if (filter === "pendentes") {
-      r = r.filter((x) => inMonth(x) && (x.nota_fiscal_status ?? "pendente") === "pendente");
-    } else if (filter === "nao_emitidos") {
-      r = r.filter((x) => inMonth(x) && x.nota_fiscal_status === "nao_emitida");
-    } else if (filter === "nao_se_aplica") {
-      r = r.filter((x) => inMonth(x) && x.nota_fiscal_status === "nao_se_aplica");
-    } else if (filter === "cartao") {
-      r = r.filter(
-        (x) => inMonth(x) && /cart[ãa]o|cr[eé]dito|d[eé]bito/i.test(x.forma_pagamento ?? ""),
-      );
-    } else if (filter === "pix") {
-      r = r.filter((x) => inMonth(x) && /pix/i.test(x.forma_pagamento ?? ""));
-    } else if (filter === "dinheiro") {
-      r = r.filter((x) => inMonth(x) && /dinheiro|esp[eé]cie/i.test(x.forma_pagamento ?? ""));
     }
 
-    if (statusPag === "pagos") r = r.filter((x) => !isPendente(x));
-    else if (statusPag === "abertos") r = r.filter((x) => isPendente(x));
-
-    if (procFilter !== "__all__") {
-      r = r.filter((x) => x.procedimento === procFilter);
-    }
-
-    if (q) {
-      const s = q.toLowerCase();
-      r = r.filter(
-        (x) =>
-          (x.paciente ?? "").toLowerCase().includes(s) ||
-          (x.procedimento ?? "").toLowerCase().includes(s),
-      );
-    }
+    r = filtrarPorAtributos(r, { filter, statusPag, procFilter, q, isPendente });
 
     const cmp = (a: AtendimentoView, b: AtendimentoView) => {
       switch (sort) {
@@ -369,8 +400,6 @@ function Consultorio() {
         case "bruto_desc":
           return Number(b.valor_bruto || 0) - Number(a.valor_bruto || 0);
         case "liquido_desc":
-          return Number(b.valor_liquido || 0) - Number(a.valor_liquido || 0);
-        case "lucrativos":
           return Number(b.valor_liquido || 0) - Number(a.valor_liquido || 0);
         case "nf":
           return (
@@ -410,37 +439,10 @@ function Consultorio() {
   // precisa considerar recebimentos cuja própria data caia no período,
   // mesmo quando o atendimento em si é de outro mês (ex.: atendimento
   // parcelado feito em junho, 2ª parcela paga em julho).
-  const atendimentosFiltradosSemData = useMemo(() => {
-    let r = [...allData];
-
-    if (filter === "emitidos") r = r.filter((x) => x.nota_fiscal_status === "emitida");
-    else if (filter === "pendentes")
-      r = r.filter((x) => (x.nota_fiscal_status ?? "pendente") === "pendente");
-    else if (filter === "nao_emitidos") r = r.filter((x) => x.nota_fiscal_status === "nao_emitida");
-    else if (filter === "nao_se_aplica")
-      r = r.filter((x) => x.nota_fiscal_status === "nao_se_aplica");
-    else if (filter === "cartao")
-      r = r.filter((x) => /cart[ãa]o|cr[eé]dito|d[eé]bito/i.test(x.forma_pagamento ?? ""));
-    else if (filter === "pix") r = r.filter((x) => /pix/i.test(x.forma_pagamento ?? ""));
-    else if (filter === "dinheiro")
-      r = r.filter((x) => /dinheiro|esp[eé]cie/i.test(x.forma_pagamento ?? ""));
-
-    if (statusPag === "pagos") r = r.filter((x) => !isPendente(x));
-    else if (statusPag === "abertos") r = r.filter((x) => isPendente(x));
-
-    if (procFilter !== "__all__") r = r.filter((x) => x.procedimento === procFilter);
-
-    if (q) {
-      const s = q.toLowerCase();
-      r = r.filter(
-        (x) =>
-          (x.paciente ?? "").toLowerCase().includes(s) ||
-          (x.procedimento ?? "").toLowerCase().includes(s),
-      );
-    }
-
-    return r;
-  }, [allData, filter, statusPag, procFilter, q, isPendente]);
+  const atendimentosFiltradosSemData = useMemo(
+    () => filtrarPorAtributos(allData, { filter, statusPag, procFilter, q, isPendente }),
+    [allData, filter, statusPag, procFilter, q, isPendente],
+  );
 
   // "Recebido no período": soma somente recebimentos cuja DATA pertence ao período,
   // usando os próprios campos (bruto/líquido) de cada recebimento. Não usa o
@@ -652,7 +654,7 @@ function Consultorio() {
       )}
 
       <div
-        className="rounded-2xl border bg-card overflow-hidden"
+        className="rounded-xl border bg-card overflow-hidden"
         style={{ boxShadow: "var(--shadow-soft)" }}
       >
         <Table>

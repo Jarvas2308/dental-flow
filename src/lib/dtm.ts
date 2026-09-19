@@ -25,3 +25,27 @@ export function sortDtmAcompanhamentos<T extends DtmSortable>(rows: readonly T[]
     return 0;
   });
 }
+
+// Consultas agrupadas por acompanhamento, cada grupo ordenado por `numero`.
+// A tela de DTM e a linha do tempo do paciente mantinham cópias idênticas
+// disso; o genérico aceita tanto a linha completa de `dtm_consultas` quanto a
+// projeção reduzida que a tela do paciente carrega.
+type DtmConsultaAgrupavel = {
+  acompanhamento_id: string;
+  numero: number;
+};
+
+export function consultasPorAcompanhamento<T extends DtmConsultaAgrupavel>(
+  consultas: readonly T[] = [],
+): Map<string, T[]> {
+  const m = new Map<string, T[]>();
+  for (const c of consultas ?? []) {
+    const list = m.get(c.acompanhamento_id) ?? [];
+    list.push(c);
+    m.set(c.acompanhamento_id, list);
+  }
+  for (const list of m.values()) {
+    list.sort((a, b) => a.numero - b.numero);
+  }
+  return m;
+}

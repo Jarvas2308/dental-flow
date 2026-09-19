@@ -18,19 +18,31 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-border: var(--primary-border);
+  --color-brand: var(--brand);
+  --color-brand-wash: var(--brand-wash);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+  --color-subtle: var(--subtle);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-soft: var(--destructive-soft);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
+  --color-success-soft: var(--success-soft);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
+  --color-warning-soft: var(--warning-soft);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-soft: var(--info-soft);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-ring-offset-background: var(--background);
@@ -48,98 +60,157 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-brand: "Cormorant Garamond", ui-serif, Georgia, serif;
 }
 
+/* Paleta derivada da logo (LOGO/ANNA JULIA LEDUC LOGO5.pdf): salmão da tinta
+   #D28F71, fundo blush #E8E0DD, cinza do anel #9A9792. Todos os neutros ficam
+   no mesmo matiz (h≈48). O salmão puro só alcança 2.66:1 contra texto branco,
+   então `--primary` é a versão escurecida (#A65C38, 4.99:1) e o salmão original
+   vive em `--brand`, para gráficos e realces. */
 :root {
-  --radius: 0.875rem;
+  --radius: 0.625rem;
 
-  --background: oklch(0.97 0.008 55);
-  --foreground: oklch(0.312 0.021 52);
+  --background: oklch(0.981 0.004 56);
+  --foreground: oklch(0.279 0.013 52);
 
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.312 0.021 52);
+  --card-foreground: oklch(0.279 0.013 52);
 
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.312 0.021 52);
+  --popover-foreground: oklch(0.279 0.013 52);
 
-  --primary: oklch(0.644 0.101 43);
-  --primary-foreground: oklch(0.99 0.005 55);
+  --primary: oklch(0.554 0.109 46);
+  --primary-foreground: oklch(0.99 0.004 56);
+  --primary-soft: oklch(0.947 0.02 48);
+  --primary-border: oklch(0.88 0.035 47);
 
-  --secondary: oklch(0.928 0.014 53);
-  --secondary-foreground: oklch(0.35 0.03 48);
+  --brand: oklch(0.71 0.092 45);
+  --brand-wash: oklch(0.912 0.01 42);
 
-  --muted: oklch(0.928 0.014 53);
-  --muted-foreground: oklch(0.55 0.02 48);
+  --secondary: oklch(0.957 0.011 54);
+  --secondary-foreground: oklch(0.34 0.015 50);
 
-  --accent: oklch(0.89 0.03 45);
-  --accent-foreground: oklch(0.35 0.04 45);
+  --muted: oklch(0.957 0.011 54);
+  --muted-foreground: oklch(0.508 0.011 52);
+  --subtle: oklch(0.97 0.008 54);
 
-  --destructive: oklch(0.6 0.22 25);
-  --destructive-foreground: oklch(0.99 0.005 55);
+  --accent: oklch(0.93 0.022 46);
+  --accent-foreground: oklch(0.34 0.025 46);
 
-  --success: oklch(0.65 0.14 160);
+  --destructive: oklch(0.536 0.14 30);
+  --destructive-foreground: oklch(0.99 0.004 56);
+  --destructive-soft: oklch(0.958 0.028 30);
+
+  --success: oklch(0.541 0.06 160);
   --success-foreground: oklch(0.99 0 0);
+  --success-soft: oklch(0.955 0.02 160);
 
-  --warning: oklch(0.78 0.15 75);
-  --warning-foreground: oklch(0.2 0.04 60);
+  --warning: oklch(0.643 0.099 75);
+  --warning-foreground: oklch(0.99 0 0);
+  --warning-soft: oklch(0.96 0.035 80);
 
-  --border: oklch(0.89 0.019 57);
-  --input: oklch(0.91 0.016 55);
-  --ring: oklch(0.644 0.101 43);
+  --info: oklch(0.549 0.056 255);
+  --info-foreground: oklch(0.99 0 0);
+  --info-soft: oklch(0.955 0.018 255);
 
-  --chart-1: oklch(0.644 0.101 43);
-  --chart-2: oklch(0.65 0.14 160);
-  --chart-3: oklch(0.78 0.15 75);
-  --chart-4: oklch(0.6 0.22 25);
-  --chart-5: oklch(0.5 0.06 80);
+  --border: oklch(0.927 0.01 49);
+  --border-strong: oklch(0.87 0.013 49);
+  --input: oklch(0.918 0.012 49);
+  --ring: oklch(0.554 0.109 46);
 
-  --sidebar: oklch(0.948 0.011 55);
-  --sidebar-foreground: oklch(0.35 0.02 48);
-  --sidebar-primary: oklch(0.644 0.101 43);
+  --chart-1: oklch(0.554 0.109 46);
+  --chart-2: oklch(0.71 0.092 45);
+  --chart-3: oklch(0.643 0.099 75);
+  --chart-4: oklch(0.541 0.06 160);
+  --chart-5: oklch(0.602 0.012 54);
+
+  --sidebar: oklch(0.966 0.01 50);
+  --sidebar-foreground: oklch(0.34 0.015 50);
+  --sidebar-primary: oklch(0.554 0.109 46);
   --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.89 0.03 45);
-  --sidebar-accent-foreground: oklch(0.35 0.05 45);
-  --sidebar-border: oklch(0.89 0.019 57);
-  --sidebar-ring: oklch(0.644 0.101 43);
+  --sidebar-accent: oklch(0.93 0.022 46);
+  --sidebar-accent-foreground: oklch(0.34 0.03 46);
+  --sidebar-border: oklch(0.927 0.01 49);
+  --sidebar-ring: oklch(0.554 0.109 46);
 
-  --gradient-primary: linear-gradient(135deg, oklch(0.644 0.101 43), oklch(0.72 0.09 55));
-  --gradient-subtle: linear-gradient(180deg, oklch(0.99 0.005 55), oklch(0.95 0.014 53));
-  --shadow-soft: 0 1px 2px oklch(0.3 0.02 50 / 0.04), 0 4px 16px oklch(0.3 0.02 50 / 0.04);
-  --shadow-card: 0 1px 3px oklch(0.3 0.02 50 / 0.05), 0 8px 24px -8px oklch(0.3 0.02 50 / 0.08);
+  --gradient-primary: linear-gradient(135deg, oklch(0.71 0.092 45), oklch(0.78 0.07 52));
+  --gradient-subtle: linear-gradient(180deg, oklch(0.99 0.004 56), oklch(0.95 0.012 50));
+  --shadow-soft: 0 1px 2px oklch(0.3 0.02 50 / 0.05);
+  --shadow-card: 0 1px 2px oklch(0.3 0.02 50 / 0.05), 0 10px 26px -14px oklch(0.3 0.03 50 / 0.3);
+
+  /* Monograma da logo é salmão sobre claro; no escuro ganha um leve ganho. */
+  --mark-filter: none;
 }
 
 .dark {
-  --background: oklch(0.225 0.013 51);
-  --foreground: oklch(0.95 0.01 55);
-  --card: oklch(0.27 0.015 51);
-  --card-foreground: oklch(0.95 0.01 55);
-  --popover: oklch(0.27 0.015 51);
-  --popover-foreground: oklch(0.95 0.01 55);
-  --primary: oklch(0.718 0.101 44);
-  --primary-foreground: oklch(0.225 0.013 51);
-  --secondary: oklch(0.32 0.018 50);
-  --secondary-foreground: oklch(0.95 0.01 55);
-  --muted: oklch(0.32 0.018 50);
-  --muted-foreground: oklch(0.72 0.015 50);
-  --accent: oklch(0.36 0.03 48);
-  --accent-foreground: oklch(0.95 0.01 55);
-  --destructive: oklch(0.65 0.2 25);
-  --destructive-foreground: oklch(0.99 0 0);
-  --success: oklch(0.7 0.14 160);
-  --success-foreground: oklch(0.16 0.02 230);
-  --warning: oklch(0.8 0.15 75);
-  --warning-foreground: oklch(0.16 0.02 230);
-  --border: oklch(1 0 0 / 8%);
-  --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.718 0.101 44);
-  --sidebar: oklch(0.2 0.014 51);
-  --sidebar-foreground: oklch(0.95 0.01 55);
-  --sidebar-primary: oklch(0.718 0.101 44);
-  --sidebar-primary-foreground: oklch(0.225 0.013 51);
-  --sidebar-accent: oklch(0.32 0.018 50);
-  --sidebar-accent-foreground: oklch(0.95 0.01 55);
-  --sidebar-border: oklch(1 0 0 / 8%);
-  --sidebar-ring: oklch(0.718 0.101 44);
+  --background: oklch(0.219 0.009 43);
+  --foreground: oklch(0.941 0.008 56);
+  --card: oklch(0.258 0.01 45);
+  --card-foreground: oklch(0.941 0.008 56);
+  --popover: oklch(0.258 0.01 45);
+  --popover-foreground: oklch(0.941 0.008 56);
+
+  --primary: oklch(0.745 0.09 45);
+  --primary-foreground: oklch(0.219 0.009 43);
+  --primary-soft: oklch(0.32 0.035 45);
+  --primary-border: oklch(0.4 0.05 45);
+
+  --brand: oklch(0.76 0.085 45);
+  --brand-wash: oklch(0.33 0.03 45);
+
+  --secondary: oklch(0.3 0.012 47);
+  --secondary-foreground: oklch(0.941 0.008 56);
+
+  --muted: oklch(0.3 0.012 47);
+  --muted-foreground: oklch(0.715 0.012 54);
+  --subtle: oklch(0.278 0.01 45);
+
+  --accent: oklch(0.34 0.025 46);
+  --accent-foreground: oklch(0.941 0.008 56);
+
+  --destructive: oklch(0.68 0.14 30);
+  --destructive-foreground: oklch(0.219 0.009 43);
+  --destructive-soft: oklch(0.33 0.055 30);
+
+  --success: oklch(0.7 0.075 160);
+  --success-foreground: oklch(0.219 0.009 43);
+  --success-soft: oklch(0.31 0.035 160);
+
+  --warning: oklch(0.78 0.1 78);
+  --warning-foreground: oklch(0.219 0.009 43);
+  --warning-soft: oklch(0.33 0.045 78);
+
+  --info: oklch(0.7 0.06 255);
+  --info-foreground: oklch(0.219 0.009 43);
+  --info-soft: oklch(0.315 0.03 255);
+
+  --border: oklch(1 0 0 / 10%);
+  --border-strong: oklch(1 0 0 / 18%);
+  --input: oklch(1 0 0 / 13%);
+  --ring: oklch(0.745 0.09 45);
+
+  --chart-1: oklch(0.745 0.09 45);
+  --chart-2: oklch(0.83 0.06 45);
+  --chart-3: oklch(0.78 0.1 78);
+  --chart-4: oklch(0.7 0.075 160);
+  --chart-5: oklch(0.64 0.015 54);
+
+  --sidebar: oklch(0.196 0.008 43);
+  --sidebar-foreground: oklch(0.941 0.008 56);
+  --sidebar-primary: oklch(0.745 0.09 45);
+  --sidebar-primary-foreground: oklch(0.219 0.009 43);
+  --sidebar-accent: oklch(0.31 0.035 45);
+  --sidebar-accent-foreground: oklch(0.941 0.008 56);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.745 0.09 45);
+
+  --gradient-primary: linear-gradient(135deg, oklch(0.62 0.085 45), oklch(0.5 0.07 40));
+  --gradient-subtle: linear-gradient(180deg, oklch(0.26 0.01 45), oklch(0.22 0.009 43));
+  --shadow-soft: 0 1px 2px oklch(0 0 0 / 0.4);
+  --shadow-card: 0 1px 2px oklch(0 0 0 / 0.4), 0 10px 26px -14px oklch(0 0 0 / 0.7);
+
+  --mark-filter: brightness(1.12) saturate(0.95);
 }
 
 @layer base {
@@ -147,7 +218,8 @@
     border-color: var(--color-border);
   }
 
-  html, body {
+  html,
+  body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-display);
@@ -155,7 +227,15 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4 {
     letter-spacing: -0.02em;
+  }
+
+  /* Valores monetários e datas alinham coluna a coluna. */
+  table {
+    font-variant-numeric: tabular-nums;
   }
 }

@@ -22,11 +22,19 @@
 
 export const PAGE_SIZE = 1000;
 
+// Teto defensivo de iterações. O laço para quando um bloco volta vazio, mas
+// isso depende de o servidor respeitar `Range`. Um backend que ignore o
+// cabeçalho devolve sempre a mesma página cheia e o laço nunca termina — a aba
+// congela sem erro. Com o teto, a mesma falha vira exceção visível. 500 páginas
+// de PAGE_SIZE são 500 mil linhas, muito acima de qualquer volume real aqui.
+export const MAX_PAGES = 500;
+
 export async function fetchAllPages<T>(
   page: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>,
 ): Promise<T[]> {
   const todas: T[] = [];
-  for (let from = 0; ; ) {
+  let from = 0;
+  for (let i = 0; i < MAX_PAGES; i++) {
     const { data, error } = await page(from, from + PAGE_SIZE - 1);
     if (error) throw error;
     const lote = data ?? [];
@@ -34,6 +42,10 @@ export async function fetchAllPages<T>(
     todas.push(...lote);
     from += lote.length;
   }
+  throw new Error(
+    `Paginação excedeu ${MAX_PAGES} requisições (${todas.length} linhas lidas). ` +
+      "Provável falha do servidor em respeitar o cabeçalho Range.",
+  );
 }
 
 // Busca por lista de ids (`.in(...)`). O filtro vai na query string, então uma

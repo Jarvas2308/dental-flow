@@ -160,52 +160,43 @@ function FluxoCaixa() {
   const totalSaidas = sai.reduce((s, r) => s + Number(r.valor || 0), 0);
   const lucroLiquido = totalEntradas - totalSaidas;
 
-  // Saldo acumulado de TODOS os meses até o final do mês selecionado
-  const saldoAcumulado = useMemo(() => {
-    const limite = new Date(year, monthNum - 1, diasNoMes);
-    const ents =
-      recebidas
-        .filter((r) => (parseLocalDate(r.data) ?? new Date(0)) <= limite)
-        .reduce((s, r) => s + r.valor_liquido, 0) +
-      (isClinica
-        ? 0
-        : (ganhos.data ?? [])
-            .filter((r) => (parseLocalDate(r.data) ?? new Date(0)) <= limite)
-            .reduce((s, r) => s + Number(r.valor || 0), 0));
-    const sds =
-      (isClinica
-        ? 0
-        : despesasPagas
-            .filter((r) => (parseLocalDate(r.data) ?? new Date(0)) <= limite)
-            .reduce((s, r) => s + Number(r.valor || 0), 0)) +
-      (lab.data ?? [])
-        .filter((r) => (parseLocalDate(r.data) ?? new Date(0)) <= limite)
-        .reduce((s, r) => s + Number(r.valor || 0), 0);
-    return ents - sds;
-  }, [recebidas, despesasPagas, lab.data, ganhos.data, year, monthNum, diasNoMes, isClinica]);
+  // Saldo acumulado desde sempre até um corte de data, em regime de caixa:
+  // tudo que entrou menos tudo que saiu. `saldoAcumulado` (fim do mês
+  // selecionado) e `saldoAtual` (hoje) são a MESMA conta com cortes
+  // diferentes, então a regra fica num lugar só — enquanto eram dois blocos
+  // copiados, mexer em um e esquecer o outro fazia os dois cards divergirem.
+  //
+  // Na visão clínica ganhos extras e despesas gerais ficam de fora: sobram
+  // atendimento (entrada) e laboratório (saída).
+  const saldoAte = useCallback(
+    (limite: Date) => {
+      const somaAte = <T extends { data?: string | null }>(
+        rows: readonly T[],
+        valor: (r: T) => number,
+      ) =>
+        rows
+          .filter((r) => (parseLocalDate(r.data) ?? new Date(0)) <= limite)
+          .reduce((s, r) => s + valor(r), 0);
 
-  // Saldo atual (até hoje, considerando todos os meses)
-  const saldoAtual = useMemo(() => {
-    const ents =
-      recebidas
-        .filter((r) => (parseLocalDate(r.data) ?? new Date(0)) <= hoje)
-        .reduce((s, r) => s + r.valor_liquido, 0) +
-      (isClinica
-        ? 0
-        : (ganhos.data ?? [])
-            .filter((r) => (parseLocalDate(r.data) ?? new Date(0)) <= hoje)
-            .reduce((s, r) => s + Number(r.valor || 0), 0));
-    const sds =
-      (isClinica
-        ? 0
-        : despesasPagas
-            .filter((r) => (parseLocalDate(r.data) ?? new Date(0)) <= hoje)
-            .reduce((s, r) => s + Number(r.valor || 0), 0)) +
-      (lab.data ?? [])
-        .filter((r) => (parseLocalDate(r.data) ?? new Date(0)) <= hoje)
-        .reduce((s, r) => s + Number(r.valor || 0), 0);
-    return ents - sds;
-  }, [recebidas, despesasPagas, lab.data, ganhos.data, isClinica, hoje]);
+      const entradas =
+        somaAte(recebidas, (r) => r.valor_liquido) +
+        (isClinica ? 0 : somaAte(ganhos.data ?? [], (r) => Number(r.valor || 0)));
+      const saidas =
+        (isClinica ? 0 : somaAte(despesasPagas, (r) => Number(r.valor || 0))) +
+        somaAte(lab.data ?? [], (r) => Number(r.valor || 0));
+      return entradas - saidas;
+    },
+    [recebidas, despesasPagas, lab.data, ganhos.data, isClinica],
+  );
+
+  // Até o último dia do mês selecionado.
+  const saldoAcumulado = useMemo(
+    () => saldoAte(new Date(year, monthNum - 1, diasNoMes)),
+    [saldoAte, year, monthNum, diasNoMes],
+  );
+
+  // Até hoje, considerando todos os meses.
+  const saldoAtual = useMemo(() => saldoAte(hoje), [saldoAte, hoje]);
 
   // Dias do mês com agregados
   const diario = useMemo(() => {
@@ -316,11 +307,11 @@ function FluxoCaixa() {
       {isLoading ? (
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="rounded-2xl border bg-card p-5 animate-pulse h-32" />
+            <div key={i} className="rounded-xl border bg-card p-5 animate-pulse h-32" />
           ))}
         </div>
       ) : isError ? (
-        <div className="rounded-2xl border bg-card" style={{ boxShadow: "var(--shadow-soft)" }}>
+        <div className="rounded-xl border bg-card" style={{ boxShadow: "var(--shadow-soft)" }}>
           <ErrorState
             title="Não foi possível carregar o fluxo de caixa"
             description="Os totais acima podem estar incompletos. Recarregue para ver os números corretos."
@@ -488,7 +479,7 @@ function FluxoCaixa() {
 
           {/* Calendário financeiro */}
           <div
-            className="mt-6 rounded-2xl border bg-card p-5"
+            className="mt-6 rounded-xl border bg-card p-5"
             style={{ boxShadow: "var(--shadow-soft)" }}
           >
             <div className="flex items-end justify-between mb-4 flex-wrap gap-2">
@@ -520,7 +511,7 @@ function ChartCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border bg-card p-5" style={{ boxShadow: "var(--shadow-soft)" }}>
+    <div className="rounded-xl border bg-card p-5" style={{ boxShadow: "var(--shadow-soft)" }}>
       <div className="mb-4">
         <h3 className="font-semibold">{title}</h3>
         {subtitle && <p className="text-xs text-muted-foreground capitalize">{subtitle}</p>}

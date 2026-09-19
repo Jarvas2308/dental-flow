@@ -1,0 +1,2055 @@
+<!doctype html>
+<html lang="pt-BR" class="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Proposta de design — Anna Julia Odontologia</title>
+    <style>
+      /* ============================================================
+   TOKENS — estes valores substituem os de src/styles.css
+   ============================================================ */
+      :root {
+        --bg: oklch(0.985 0.003 60);
+        --surface: oklch(1 0 0);
+        --surface-2: oklch(0.972 0.005 60);
+        --fg: oklch(0.24 0.015 55);
+        --fg-muted: oklch(0.52 0.012 55);
+        --fg-subtle: oklch(0.64 0.01 55);
+        --border: oklch(0.915 0.006 60);
+        --border-strong: oklch(0.86 0.008 60);
+
+        --primary: oklch(0.565 0.118 38);
+        --primary-fg: oklch(0.99 0.004 60);
+        --primary-soft: oklch(0.955 0.024 42);
+        --primary-ring: oklch(0.565 0.118 38 / 0.35);
+        --primary-lift: oklch(0.655 0.105 52);
+        --bg-blur: oklch(0.985 0.003 60 / 0.82);
+
+        --success: oklch(0.56 0.115 155);
+        --success-soft: oklch(0.95 0.035 155);
+        --warning: oklch(0.66 0.13 68);
+        --warning-soft: oklch(0.96 0.045 75);
+        --danger: oklch(0.55 0.185 25);
+        --danger-soft: oklch(0.96 0.03 25);
+
+        --chart-1: oklch(0.565 0.118 38);
+        --chart-2: oklch(0.6 0.1 155);
+        --chart-3: oklch(0.7 0.12 70);
+        --chart-4: oklch(0.55 0.13 260);
+
+        --r-xs: 6px;
+        --r-sm: 8px;
+        --r: 12px;
+        --r-lg: 16px;
+        --r-full: 999px;
+
+        --sh-1: 0 1px 2px oklch(0.25 0.02 50 / 0.04), 0 1px 3px -1px oklch(0.25 0.02 50 / 0.06);
+        --sh-2: 0 2px 4px oklch(0.25 0.02 50 / 0.04), 0 8px 16px -6px oklch(0.25 0.02 50 / 0.1);
+        --sh-3: 0 12px 32px -8px oklch(0.25 0.02 50 / 0.18);
+
+        --sidebar-w: 248px;
+        --topbar-h: 60px;
+        --font: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+        --font-num: "Inter", ui-sans-serif, system-ui, sans-serif;
+      }
+      html.dark {
+        --bg: oklch(0.185 0.008 55);
+        --surface: oklch(0.228 0.01 55);
+        --surface-2: oklch(0.262 0.011 55);
+        --fg: oklch(0.965 0.004 60);
+        --fg-muted: oklch(0.71 0.01 55);
+        --fg-subtle: oklch(0.58 0.01 55);
+        --border: oklch(1 0 0 / 0.09);
+        --border-strong: oklch(1 0 0 / 0.16);
+
+        --primary: oklch(0.735 0.105 42);
+        --primary-fg: oklch(0.2 0.012 55);
+        --primary-soft: oklch(0.735 0.105 42 / 0.16);
+        --primary-ring: oklch(0.735 0.105 42 / 0.4);
+        --primary-lift: oklch(0.8 0.09 56);
+        --bg-blur: oklch(0.185 0.008 55 / 0.82);
+
+        --success: oklch(0.72 0.13 158);
+        --success-soft: oklch(0.72 0.13 158 / 0.16);
+        --warning: oklch(0.8 0.14 72);
+        --warning-soft: oklch(0.8 0.14 72 / 0.16);
+        --danger: oklch(0.66 0.18 25);
+        --danger-soft: oklch(0.66 0.18 25 / 0.16);
+
+        --chart-1: oklch(0.735 0.105 42);
+        --chart-2: oklch(0.72 0.12 158);
+        --chart-3: oklch(0.8 0.14 72);
+        --chart-4: oklch(0.7 0.12 265);
+
+        --sh-1: 0 1px 2px oklch(0 0 0 / 0.3);
+        --sh-2: 0 2px 4px oklch(0 0 0 / 0.24), 0 8px 18px -6px oklch(0 0 0 / 0.4);
+        --sh-3: 0 14px 36px -10px oklch(0 0 0 / 0.55);
+      }
+
+      /* ============================================================ base */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        border-color: var(--border);
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+      body {
+        background: var(--bg);
+        color: var(--fg);
+        font-family: var(--font);
+        font-size: 14px;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+      h1,
+      h2,
+      h3,
+      h4 {
+        margin: 0;
+        letter-spacing: -0.02em;
+        font-weight: 600;
+      }
+      button {
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      .num {
+        font-variant-numeric: tabular-nums;
+        font-feature-settings: "tnum" 1;
+      }
+      .mono-ish {
+        letter-spacing: -0.01em;
+      }
+      svg {
+        display: block;
+      }
+
+      /* ============================================================ shell */
+      .shell {
+        display: flex;
+        min-height: 100vh;
+      }
+
+      /* ---------- sidebar ---------- */
+      .sidebar {
+        width: var(--sidebar-w);
+        flex: 0 0 auto;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background: var(--surface);
+        border-right: 1px solid var(--border);
+        transition: width 0.18s ease;
+      }
+      .sidebar.rail {
+        width: 68px;
+      }
+      .sidebar.rail .lbl,
+      .sidebar.rail .group-lbl,
+      .sidebar.rail .brand-text,
+      .sidebar.rail .user-mail {
+        display: none;
+      }
+      .sidebar.rail .nav-item {
+        justify-content: center;
+        padding-inline: 0;
+      }
+      .sidebar.rail .brand {
+        justify-content: center;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 16px 16px 14px;
+      }
+      .logo {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        flex: 0 0 auto;
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+        font-size: 15px;
+        color: var(--primary-fg);
+        background: linear-gradient(140deg, var(--primary), var(--primary-lift));
+        box-shadow: var(--sh-1);
+      }
+      .brand-text .n {
+        font-weight: 650;
+        letter-spacing: -0.015em;
+      }
+      .brand-text .s {
+        font-size: 11px;
+        color: var(--fg-muted);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .nav {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        padding: 6px 10px 10px;
+      }
+      .group-lbl {
+        padding: 14px 10px 6px;
+        font-size: 10.5px;
+        font-weight: 600;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        color: var(--fg-subtle);
+      }
+      .nav-item {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 10px;
+        border-radius: var(--r-sm);
+        margin-bottom: 2px;
+        font-size: 13.5px;
+        color: var(--fg-muted);
+        transition:
+          background 0.12s,
+          color 0.12s;
+      }
+      .nav-item:hover {
+        background: var(--surface-2);
+        color: var(--fg);
+      }
+      .nav-item.active {
+        background: var(--primary-soft);
+        color: var(--primary);
+        font-weight: 550;
+      }
+      .nav-item.active::before {
+        content: "";
+        position: absolute;
+        left: -10px;
+        top: 50%;
+        translate: 0 -50%;
+        width: 3px;
+        height: 18px;
+        border-radius: 0 3px 3px 0;
+        background: var(--primary);
+      }
+      .nav-item .badge-count {
+        margin-left: auto;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 1px 6px;
+        border-radius: var(--r-full);
+        background: var(--warning-soft);
+        color: var(--warning);
+      }
+      .sidebar-foot {
+        padding: 10px;
+        border-top: 1px solid var(--border);
+      }
+      .user-row {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 7px 8px;
+        border-radius: var(--r-sm);
+      }
+      .user-row:hover {
+        background: var(--surface-2);
+      }
+      .avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: var(--r-full);
+        flex: 0 0 auto;
+        display: grid;
+        place-items: center;
+        font-size: 11px;
+        font-weight: 650;
+        background: var(--surface-2);
+        color: var(--fg-muted);
+        border: 1px solid var(--border);
+      }
+      .user-mail {
+        min-width: 0;
+        font-size: 12px;
+        color: var(--fg-muted);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      /* ---------- main ---------- */
+      .main {
+        flex: 1 1 auto;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        height: var(--topbar-h);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 20px;
+        background: var(--bg-blur);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--border);
+      }
+      .icon-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: var(--r-sm);
+        border: 1px solid transparent;
+        background: transparent;
+        display: grid;
+        place-items: center;
+        color: var(--fg-muted);
+      }
+      .icon-btn:hover {
+        background: var(--surface-2);
+        color: var(--fg);
+      }
+      .crumbs {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 13px;
+        color: var(--fg-muted);
+      }
+      .crumbs b {
+        color: var(--fg);
+        font-weight: 600;
+      }
+      .spacer {
+        flex: 1 1 auto;
+      }
+      .search {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 260px;
+        padding: 6px 10px;
+        border-radius: var(--r-sm);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        color: var(--fg-subtle);
+        font-size: 13px;
+      }
+      .search:hover {
+        border-color: var(--border-strong);
+      }
+      .kbd {
+        margin-left: auto;
+        font-size: 10.5px;
+        padding: 1px 5px;
+        border-radius: var(--r-xs);
+        border: 1px solid var(--border);
+        background: var(--surface-2);
+        color: var(--fg-subtle);
+      }
+      .content {
+        padding: 22px 20px 56px;
+        max-width: 1360px;
+        width: 100%;
+        margin: 0 auto;
+      }
+
+      /* ---------- primitives ---------- */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        height: 34px;
+        padding: 0 13px;
+        border-radius: var(--r-sm);
+        border: 1px solid var(--border);
+        background: var(--surface);
+        font-size: 13px;
+        font-weight: 550;
+        color: var(--fg);
+        box-shadow: var(--sh-1);
+        transition:
+          background 0.12s,
+          border-color 0.12s,
+          transform 0.08s;
+      }
+      .btn:hover {
+        background: var(--surface-2);
+        border-color: var(--border-strong);
+      }
+      .btn:active {
+        transform: translateY(1px);
+      }
+      .btn.primary {
+        background: var(--primary);
+        color: var(--primary-fg);
+        border-color: transparent;
+      }
+      .btn.primary:hover {
+        filter: brightness(1.06);
+      }
+      .btn.ghost {
+        background: transparent;
+        box-shadow: none;
+        border-color: transparent;
+        color: var(--fg-muted);
+      }
+      .btn.ghost:hover {
+        background: var(--surface-2);
+        color: var(--fg);
+      }
+      .btn:focus-visible {
+        outline: 2px solid var(--primary-ring);
+        outline-offset: 2px;
+      }
+
+      .select {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        height: 34px;
+        padding: 0 11px;
+        border-radius: var(--r-sm);
+        border: 1px solid var(--border);
+        background: var(--surface);
+        font-size: 13px;
+        box-shadow: var(--sh-1);
+      }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--r);
+        box-shadow: var(--sh-1);
+      }
+      .card-pad {
+        padding: 16px;
+      }
+      .card-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--border);
+      }
+      .card-head h3 {
+        font-size: 14.5px;
+      }
+      .card-head p {
+        margin: 3px 0 0;
+        font-size: 12px;
+        color: var(--fg-muted);
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        height: 22px;
+        padding: 0 8px;
+        border-radius: var(--r-full);
+        font-size: 11.5px;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+      }
+      .chip.ok {
+        background: var(--success-soft);
+        color: var(--success);
+      }
+      .chip.warn {
+        background: var(--warning-soft);
+        color: var(--warning);
+      }
+      .chip.bad {
+        background: var(--danger-soft);
+        color: var(--danger);
+      }
+      .chip.pri {
+        background: var(--primary-soft);
+        color: var(--primary);
+      }
+      .chip.mute {
+        background: var(--surface-2);
+        color: var(--fg-muted);
+      }
+      .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+
+      /* ---------- page header ---------- */
+      .page-head {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 14px;
+        flex-wrap: wrap;
+        margin-bottom: 18px;
+      }
+      .page-head h1 {
+        font-size: 22px;
+      }
+      .page-head p {
+        margin: 4px 0 0;
+        font-size: 13px;
+        color: var(--fg-muted);
+      }
+      .head-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      /* ---------- section label ---------- */
+      .section {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 24px 0 10px;
+      }
+      .section h2 {
+        font-size: 11px;
+        font-weight: 650;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--fg-subtle);
+      }
+      .section .rule {
+        flex: 1 1 auto;
+        height: 1px;
+        background: var(--border);
+      }
+
+      /* ---------- stat card ---------- */
+      .grid {
+        display: grid;
+        gap: 12px;
+      }
+      .g2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .g3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .g4 {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+      @media (max-width: 1100px) {
+        .g4,
+        .g3 {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+      @media (max-width: 680px) {
+        .grid {
+          grid-template-columns: 1fr !important;
+        }
+      }
+
+      .stat {
+        position: relative;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--r);
+        padding: 14px 15px;
+        box-shadow: var(--sh-1);
+        transition:
+          box-shadow 0.15s,
+          border-color 0.15s,
+          transform 0.15s;
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        overflow: hidden;
+      }
+      a.stat:hover {
+        box-shadow: var(--sh-2);
+        border-color: var(--border-strong);
+        transform: translateY(-1px);
+      }
+      .stat .top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .stat .lbl2 {
+        font-size: 11.5px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--fg-muted);
+      }
+      .stat .ico {
+        width: 28px;
+        height: 28px;
+        border-radius: var(--r-xs);
+        display: grid;
+        place-items: center;
+        background: var(--surface-2);
+        color: var(--fg-muted);
+      }
+      .stat.t-pri .ico {
+        background: var(--primary-soft);
+        color: var(--primary);
+      }
+      .stat.t-ok .ico {
+        background: var(--success-soft);
+        color: var(--success);
+      }
+      .stat.t-warn .ico {
+        background: var(--warning-soft);
+        color: var(--warning);
+      }
+      .stat.t-bad .ico {
+        background: var(--danger-soft);
+        color: var(--danger);
+      }
+      .stat .val {
+        font-size: 25px;
+        font-weight: 640;
+        letter-spacing: -0.025em;
+        line-height: 1.1;
+      }
+      .stat.t-ok .val {
+        color: var(--success);
+      }
+      .stat.t-bad .val {
+        color: var(--danger);
+      }
+      .stat .foot {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        flex-wrap: wrap;
+        font-size: 11.5px;
+        color: var(--fg-muted);
+      }
+      .spark {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        opacity: 0.25;
+        pointer-events: none;
+      }
+
+      /* ---------- alert ---------- */
+      .alert {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 11px 14px;
+        margin-bottom: 14px;
+        border: 1px solid var(--border);
+        border-radius: var(--r);
+        background: var(--surface);
+        box-shadow: var(--sh-1);
+      }
+      .alert .ic {
+        width: 30px;
+        height: 30px;
+        border-radius: var(--r-xs);
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+      }
+      .alert.warn .ic {
+        background: var(--warning-soft);
+        color: var(--warning);
+      }
+      .alert .t {
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .alert .d {
+        font-size: 12px;
+        color: var(--fg-muted);
+      }
+
+      /* ---------- table ---------- */
+      .tbl-wrap {
+        overflow: auto;
+        border-radius: var(--r);
+      }
+      table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 13px;
+      }
+      thead th {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        text-align: left;
+        white-space: nowrap;
+        padding: 9px 14px;
+        font-size: 11px;
+        font-weight: 650;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        color: var(--fg-subtle);
+        background: var(--surface-2);
+        border-bottom: 1px solid var(--border);
+      }
+      tbody td {
+        padding: 11px 14px;
+        border-bottom: 1px solid var(--border);
+      }
+      tbody tr:last-child td {
+        border-bottom: 0;
+      }
+      tbody tr {
+        transition: background 0.1s;
+      }
+      tbody tr:hover {
+        background: var(--surface-2);
+      }
+      .ta-r {
+        text-align: right;
+      }
+      .row-actions {
+        display: flex;
+        gap: 2px;
+        justify-content: flex-end;
+        opacity: 0;
+        transition: opacity 0.12s;
+      }
+      tbody tr:hover .row-actions {
+        opacity: 1;
+      }
+      .pt-name {
+        font-weight: 550;
+      }
+      .pt-sub {
+        font-size: 11.5px;
+        color: var(--fg-muted);
+      }
+
+      .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+      }
+      .field {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 34px;
+        padding: 0 11px;
+        min-width: 220px;
+        flex: 1 1 220px;
+        border-radius: var(--r-sm);
+        border: 1px solid var(--border);
+        background: var(--surface);
+        box-shadow: var(--sh-1);
+        color: var(--fg-subtle);
+        font-size: 13px;
+      }
+      .tabs {
+        display: inline-flex;
+        padding: 3px;
+        gap: 2px;
+        background: var(--surface-2);
+        border-radius: var(--r-sm);
+        border: 1px solid var(--border);
+      }
+      .tab {
+        height: 27px;
+        padding: 0 11px;
+        border-radius: var(--r-xs);
+        border: 0;
+        background: transparent;
+        font-size: 12.5px;
+        font-weight: 550;
+        color: var(--fg-muted);
+      }
+      .tab.on {
+        background: var(--surface);
+        color: var(--fg);
+        box-shadow: var(--sh-1);
+      }
+
+      .pager {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 14px;
+        border-top: 1px solid var(--border);
+        font-size: 12px;
+        color: var(--fg-muted);
+      }
+
+      /* ---------- chart ---------- */
+      .legend {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        font-size: 12px;
+        color: var(--fg-muted);
+      }
+      .legend i {
+        width: 9px;
+        height: 9px;
+        border-radius: 3px;
+        display: inline-block;
+        margin-right: 6px;
+      }
+      .bars {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 18px;
+        align-items: end;
+        height: 190px;
+        padding: 6px 4px 0;
+      }
+      .bargroup {
+        display: flex;
+        gap: 5px;
+        align-items: flex-end;
+        justify-content: center;
+        height: 100%;
+      }
+      .bar {
+        width: 16px;
+        border-radius: 5px 5px 2px 2px;
+      }
+      .xaxis {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 18px;
+        margin-top: 8px;
+        font-size: 11px;
+        color: var(--fg-subtle);
+        text-align: center;
+      }
+      .gridline {
+        border-top: 1px dashed var(--border);
+      }
+
+      /* ---------- mockup chrome (não faz parte do app) ---------- */
+      .note {
+        max-width: 1360px;
+        margin: 0 auto;
+        padding: 14px 20px;
+        font-size: 12.5px;
+        color: var(--fg-muted);
+      }
+      .viewtabs {
+        position: fixed;
+        bottom: 16px;
+        left: 50%;
+        translate: -50% 0;
+        z-index: 60;
+        display: flex;
+        gap: 3px;
+        padding: 4px;
+        border-radius: var(--r-full);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        box-shadow: var(--sh-3);
+      }
+      .viewtabs button {
+        border: 0;
+        background: transparent;
+        padding: 6px 14px;
+        border-radius: var(--r-full);
+        font-size: 12.5px;
+        font-weight: 550;
+        color: var(--fg-muted);
+      }
+      .viewtabs button.on {
+        background: var(--primary);
+        color: var(--primary-fg);
+      }
+      .swatches {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 10px;
+      }
+      .sw {
+        border: 1px solid var(--border);
+        border-radius: var(--r-sm);
+        overflow: hidden;
+      }
+      .sw .box {
+        height: 46px;
+      }
+      .sw .cap {
+        padding: 6px 8px;
+        font-size: 11px;
+        color: var(--fg-muted);
+        background: var(--surface);
+      }
+      [hidden] {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <!-- ============ SIDEBAR ============ -->
+      <aside class="sidebar" id="sb">
+        <div class="brand">
+          <div class="logo">A</div>
+          <div class="brand-text">
+            <div class="n">Anna Julia</div>
+            <div class="s">Odontologia</div>
+          </div>
+        </div>
+
+        <nav class="nav">
+          <a class="nav-item active" href="#"
+            ><svg
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+            >
+              <rect x="3" y="3" width="7" height="9" rx="1.5" />
+              <rect x="14" y="3" width="7" height="5" rx="1.5" />
+              <rect x="14" y="12" width="7" height="9" rx="1.5" />
+              <rect x="3" y="16" width="7" height="5" rx="1.5" /></svg
+            ><span class="lbl">Dashboard</span></a
+          >
+
+          <div class="group-lbl">Clínico</div>
+          <a class="nav-item" href="#"
+            ><svg
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+            >
+              <path
+                d="M4.8 3.5c1.7-1 3.2 0 4.2.6.6.4 1.4.4 2 0 1-.6 2.5-1.6 4.2-.6 2 1.2 2.3 4 1.6 6.4-.5 1.6-.6 2.3-.8 4-.2 1.9-.7 4.6-2.3 4.6-1.4 0-1.6-1.8-1.8-3.4-.2-1.4-.5-2.6-1.9-2.6s-1.7 1.2-1.9 2.6C8 16.7 7.8 18.5 6.4 18.5c-1.6 0-2.1-2.7-2.3-4.6-.2-1.7-.3-2.4-.8-4C2.5 7.5 2.8 4.7 4.8 3.5Z"
+              /></svg
+            ><span class="lbl">Consultório</span></a
+          >
+          <a class="nav-item" href="#"
+            ><svg
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+            >
+              <circle cx="9" cy="8" r="3.2" />
+              <path d="M2.8 20c.4-3.3 3-5.2 6.2-5.2s5.8 1.9 6.2 5.2" />
+              <path d="M16.5 11.2a3 3 0 1 0 0-6" />
+              <path d="M18 14.9c2 .6 3.3 2.3 3.5 5.1" /></svg
+            ><span class="lbl">Pacientes</span></a
+          >
+          <a class="nav-item" href="#"
+            ><svg
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+            >
+              <rect x="3" y="5" width="18" height="16" rx="2.5" />
+              <path d="M3 10h18M8 3v4M16 3v4" /></svg
+            ><span class="lbl">Consultas</span><span class="badge-count">3</span></a
+          >
+          <a class="nav-item" href="#"
+            ><svg
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+            >
+              <path
+                d="M6.5 3.5h3l1.5 4-2 1.5a11 11 0 0 0 6 6l1.5-2 4 1.5v3c0 1.1-.9 2-2 2A16.5 16.5 0 0 1 4.5 5.5c0-1.1.9-2 2-2Z"
+              /></svg
+            ><span class="lbl">Follow-up</span><span class="badge-count">5</span></a
+          >
+          <a class="nav-item" href="#"
+            ><svg
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+            >
+              <path d="M3 12h3l2.5-6 3.5 12 3-9 2 3h4" /></svg
+            ><span class="lbl">DTM</span></a
+          >
+
+          <div class="group-lbl">Financeiro</div>
+          <a class="nav-item" href="#"
+            ><svg
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+            >
+              <path d="M3 17l5.5-6 4 3.5L21 6" />
+              <path d="M15 6h6v6" /></svg
+            ><span class="lbl">Fluxo de caixa</span></a
+          >
+          <a class="nav-item" href="#"
+            ><svg
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+            >
+              <rect x="2.5" y="6" width="19" height="13" rx="2.5" />
+              <path d="M17 12.5h1.5" />
+              <path d="M2.5 10h19" /></svg
+            ><span class="lbl">Contas</span></a
+          >
+          <a class="nav-item" href="#"
+            ><svg
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+            >
+              <path d="M4 15.5 9 11l3 2 4.5-4.5" />
+              <circle cx="18" cy="17" r="3" />
+              <path d="M3 20h9" /></svg
+            ><span class="lbl">A receber</span></a
+          >
+          <a class="nav-item" href="#"
+            ><svg
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+            >
+              <path
+                d="M3 11c0-3.3 3.6-6 8-6h2.5l3.5-2v3.2c1.3 1.2 2 2.7 2 4.8 0 4-3.6 7-8 7H8l-3 2v-3.3C3.8 15.3 3 13.3 3 11Z"
+              />
+              <circle cx="8.5" cy="11" r="1" /></svg
+            ><span class="lbl">Ganhos</span></a
+          >
+          <a class="nav-item" href="#"
+            ><svg
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+            >
+              <path d="M6 2.5h8l4 4v15H6z" />
+              <path d="M14 2.5v4h4M9 12h6M9 16h4" /></svg
+            ><span class="lbl">Nota fiscal</span></a
+          >
+
+          <div class="group-lbl">Gestão</div>
+          <a class="nav-item" href="#"
+            ><svg
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+            >
+              <path
+                d="M9 3h6M10.5 3v6.5L5.5 18a2.5 2.5 0 0 0 2.2 3.5h8.6A2.5 2.5 0 0 0 18.5 18l-5-8.5V3"
+              />
+              <path d="M7.5 15h9" /></svg
+            ><span class="lbl">Laboratório</span></a
+          >
+          <a class="nav-item" href="#"
+            ><svg
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+            >
+              <circle cx="12" cy="12" r="3" />
+              <path
+                d="M12 2.5v2.5M12 19v2.5M4.2 7l2.2 1.3M17.6 15.7l2.2 1.3M4.2 17l2.2-1.3M17.6 8.3l2.2-1.3"
+              /></svg
+            ><span class="lbl">Cadastros</span></a
+          >
+        </nav>
+
+        <div class="sidebar-foot">
+          <div class="user-row">
+            <div class="avatar">AJ</div>
+            <div class="user-mail">anna@consultorio.com</div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- ============ MAIN ============ -->
+      <div class="main">
+        <header class="topbar">
+          <button class="icon-btn" id="railBtn" title="Recolher menu">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+            >
+              <path d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <div class="crumbs">
+            <span id="crumbRoot">Financeiro</span><span>/</span><b id="crumbLeaf">Dashboard</b>
+          </div>
+          <div class="spacer"></div>
+          <div class="search">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-3.5-3.5" />
+            </svg>
+            Buscar paciente, conta…
+            <span class="kbd">⌘K</span>
+          </div>
+          <button class="icon-btn" id="themeBtn" title="Tema claro/escuro">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+            >
+              <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5Z" />
+            </svg>
+          </button>
+          <button class="icon-btn" title="Notificações">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+            >
+              <path d="M6.5 10a5.5 5.5 0 0 1 11 0c0 4 1.5 5.5 1.5 5.5H5S6.5 14 6.5 10Z" />
+              <path d="M10 19a2.2 2.2 0 0 0 4 0" />
+            </svg>
+          </button>
+          <div class="avatar">AJ</div>
+        </header>
+
+        <!-- ================= VIEW: DASHBOARD ================= -->
+        <div class="content" id="view-dash">
+          <div class="page-head">
+            <div>
+              <h1>Dashboard</h1>
+              <p>Visão geral financeira do consultório · setembro de 2026</p>
+            </div>
+            <div class="head-actions">
+              <button class="select">
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                >
+                  <rect x="3" y="5" width="18" height="16" rx="2.5" />
+                  <path d="M3 10h18M8 3v4M16 3v4" />
+                </svg>
+                setembro de 2026
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </button>
+              <button class="btn">
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                >
+                  <path d="M12 3v12M7 10.5l5 5 5-5M4 20h16" /></svg
+                >Exportar
+              </button>
+            </div>
+          </div>
+
+          <div class="alert warn">
+            <div class="ic">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.9"
+              >
+                <path d="M12 4 2.8 20h18.4Z" />
+                <path d="M12 10v4M12 17h.01" />
+              </svg>
+            </div>
+            <div style="min-width: 0; flex: 1">
+              <div class="t">5 follow-ups pendentes hoje</div>
+              <div class="d">
+                Tratamentos propostos aguardando contato · 2 atrasados há mais de 7 dias
+              </div>
+            </div>
+            <button class="btn">Ver lista</button>
+          </div>
+
+          <div class="section">
+            <h2>Próximas consultas</h2>
+            <div class="rule"></div>
+          </div>
+          <div class="grid g4">
+            <a class="stat t-warn" href="#">
+              <div class="top">
+                <span class="lbl2">Follow-up hoje</span
+                ><span class="ico"
+                  ><svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                  >
+                    <path
+                      d="M6.5 3.5h3l1.5 4-2 1.5a11 11 0 0 0 6 6l1.5-2 4 1.5v3c0 1.1-.9 2-2 2A16.5 16.5 0 0 1 4.5 5.5c0-1.1.9-2 2-2Z"
+                    /></svg
+                ></span>
+              </div>
+              <div class="val num">5</div>
+              <div class="foot">
+                <span class="chip warn"><span class="dot"></span>Aguardando contato</span>
+              </div>
+            </a>
+            <a class="stat t-pri" href="#">
+              <div class="top">
+                <span class="lbl2">Consultas hoje</span
+                ><span class="ico"
+                  ><svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                  >
+                    <rect x="3" y="5" width="18" height="16" rx="2.5" />
+                    <path d="M3 10h18" /></svg
+                ></span>
+              </div>
+              <div class="val num">3</div>
+              <div class="foot">Próxima às 14:30 · Marina L.</div>
+            </a>
+            <a class="stat" href="#">
+              <div class="top">
+                <span class="lbl2">Consultas na semana</span
+                ><span class="ico"
+                  ><svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                  >
+                    <circle cx="12" cy="12" r="8.5" />
+                    <path d="M12 7.5V12l3 2" /></svg
+                ></span>
+              </div>
+              <div class="val num">11</div>
+              <div class="foot">2 sem confirmação</div>
+            </a>
+            <div class="stat t-ok">
+              <div class="top">
+                <span class="lbl2">Previsto na semana</span
+                ><span class="ico"
+                  ><svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                  >
+                    <circle cx="12" cy="12" r="8.5" />
+                    <path d="M12 7v10M9.5 9.5h5M9.5 14.5h5" /></svg
+                ></span>
+              </div>
+              <div class="val num">R$ 8.420,00</div>
+              <div class="foot"><span class="chip mute">Estimado</span></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2>Receitas</h2>
+            <div class="rule"></div>
+          </div>
+          <div class="grid g3">
+            <a class="stat t-pri" href="#">
+              <div class="top">
+                <span class="lbl2">Receita de atendimentos</span
+                ><span class="ico"
+                  ><svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.9"
+                  >
+                    <path d="M3 17l5.5-6 4 3.5L21 6" />
+                    <path d="M15 6h6v6" /></svg
+                ></span>
+              </div>
+              <div class="val num">R$ 32.180,00</div>
+              <div class="foot">
+                <span class="chip ok">+12% vs mês anterior</span>
+                <span>Bruto R$ 34.900,00</span>
+              </div>
+              <svg class="spark" width="110" height="38" viewBox="0 0 110 38" fill="none">
+                <path
+                  d="M0 30 L18 26 L36 28 L54 18 L72 20 L90 10 L110 6"
+                  stroke="var(--primary)"
+                  stroke-width="2"
+                />
+              </svg>
+            </a>
+            <a class="stat" href="#">
+              <div class="top">
+                <span class="lbl2">Receitas extras</span
+                ><span class="ico"
+                  ><svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                  >
+                    <circle cx="12" cy="12" r="8.5" />
+                    <path d="M12 7v10" /></svg
+                ></span>
+              </div>
+              <div class="val num">R$ 2.400,00</div>
+              <div class="foot">Aluguel, rendimentos</div>
+            </a>
+            <div class="stat t-ok">
+              <div class="top">
+                <span class="lbl2">Receita total</span
+                ><span class="ico"
+                  ><svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                  >
+                    <path d="M4 19V9M10 19V4M16 19v-7M22 19H2" /></svg
+                ></span>
+              </div>
+              <div class="val num">R$ 34.580,00</div>
+              <div class="foot"><span class="chip ok">+9% vs mês anterior</span></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2>Resultado</h2>
+            <div class="rule"></div>
+          </div>
+          <div class="grid g4">
+            <div class="stat t-ok">
+              <div class="top">
+                <span class="lbl2">Caixa realizado</span
+                ><span class="ico"
+                  ><svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                  >
+                    <rect x="2.5" y="6" width="19" height="13" rx="2.5" />
+                    <path d="M17 12.5h1.5" /></svg
+                ></span>
+              </div>
+              <div class="val num">R$ 18.940,00</div>
+              <div class="foot">
+                <span class="chip ok">+6%</span><span>Recebido − despesas pagas</span>
+              </div>
+            </div>
+            <div class="stat">
+              <div class="top">
+                <span class="lbl2">Resultado previsto</span
+                ><span class="ico"
+                  ><svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                  >
+                    <path d="M12 3.5v17M6 9h12" /></svg
+                ></span>
+              </div>
+              <div class="val num">R$ 15.210,00</div>
+              <div class="foot">Caixa − despesas pendentes</div>
+            </div>
+            <a class="stat t-warn" href="#">
+              <div class="top">
+                <span class="lbl2">Despesas pendentes</span
+                ><span class="ico"
+                  ><svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                  >
+                    <path d="M3 7l5.5 6 4-3.5L21 18" />
+                    <path d="M15 18h6v-6" /></svg
+                ></span>
+              </div>
+              <div class="val num">R$ 3.730,00</div>
+              <div class="foot">4 contas · não reduzem o caixa</div>
+            </a>
+            <a class="stat" href="#">
+              <div class="top">
+                <span class="lbl2">Laboratório</span
+                ><span class="ico"
+                  ><svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                  >
+                    <path
+                      d="M9 3h6M10.5 3v6.5L5.5 18a2.5 2.5 0 0 0 2.2 3.5h8.6A2.5 2.5 0 0 0 18.5 18l-5-8.5V3"
+                    /></svg
+                ></span>
+              </div>
+              <div class="val num">R$ 2.150,00</div>
+              <div class="foot">7 trabalhos</div>
+            </a>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 1.6fr 1fr; margin-top: 20px">
+            <div class="card">
+              <div class="card-head">
+                <div>
+                  <h3>Evolução financeira</h3>
+                  <p>Receita vs despesas · últimos 6 meses</p>
+                </div>
+                <div class="legend">
+                  <span><i style="background: var(--chart-1)"></i>Receita</span>
+                  <span><i style="background: var(--chart-3)"></i>Despesas</span>
+                </div>
+              </div>
+              <div class="card-pad">
+                <div style="position: relative">
+                  <div
+                    style="
+                      position: absolute;
+                      inset: 0;
+                      display: flex;
+                      flex-direction: column;
+                      justify-content: space-between;
+                    "
+                  >
+                    <div class="gridline"></div>
+                    <div class="gridline"></div>
+                    <div class="gridline"></div>
+                    <div class="gridline"></div>
+                  </div>
+                  <div class="bars">
+                    <div class="bargroup">
+                      <div class="bar" style="height: 52%; background: var(--chart-1)"></div>
+                      <div class="bar" style="height: 34%; background: var(--chart-3)"></div>
+                    </div>
+                    <div class="bargroup">
+                      <div class="bar" style="height: 61%; background: var(--chart-1)"></div>
+                      <div class="bar" style="height: 40%; background: var(--chart-3)"></div>
+                    </div>
+                    <div class="bargroup">
+                      <div class="bar" style="height: 48%; background: var(--chart-1)"></div>
+                      <div class="bar" style="height: 38%; background: var(--chart-3)"></div>
+                    </div>
+                    <div class="bargroup">
+                      <div class="bar" style="height: 74%; background: var(--chart-1)"></div>
+                      <div class="bar" style="height: 42%; background: var(--chart-3)"></div>
+                    </div>
+                    <div class="bargroup">
+                      <div class="bar" style="height: 68%; background: var(--chart-1)"></div>
+                      <div class="bar" style="height: 46%; background: var(--chart-3)"></div>
+                    </div>
+                    <div class="bargroup">
+                      <div class="bar" style="height: 88%; background: var(--chart-1)"></div>
+                      <div class="bar" style="height: 44%; background: var(--chart-3)"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="xaxis">
+                  <span>abr</span><span>mai</span><span>jun</span><span>jul</span><span>ago</span
+                  ><span>set</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-head">
+                <div>
+                  <h3>Agenda de hoje</h3>
+                  <p>19 de setembro</p>
+                </div>
+              </div>
+              <div>
+                <div
+                  style="
+                    display: flex;
+                    gap: 12px;
+                    padding: 13px 16px;
+                    border-bottom: 1px solid var(--border);
+                  "
+                >
+                  <div class="num" style="color: var(--fg-muted); font-size: 12.5px; width: 44px">
+                    09:00
+                  </div>
+                  <div style="flex: 1; min-width: 0">
+                    <div class="pt-name">Marina Lopes</div>
+                    <div class="pt-sub">Restauração · 2 dentes</div>
+                  </div>
+                  <span class="chip ok"><span class="dot"></span>Confirmada</span>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    gap: 12px;
+                    padding: 13px 16px;
+                    border-bottom: 1px solid var(--border);
+                  "
+                >
+                  <div class="num" style="color: var(--fg-muted); font-size: 12.5px; width: 44px">
+                    11:30
+                  </div>
+                  <div style="flex: 1; min-width: 0">
+                    <div class="pt-name">Rafael Costa</div>
+                    <div class="pt-sub">Avaliação DTM</div>
+                  </div>
+                  <span class="chip warn"><span class="dot"></span>A confirmar</span>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    gap: 12px;
+                    padding: 13px 16px;
+                    border-bottom: 1px solid var(--border);
+                  "
+                >
+                  <div class="num" style="color: var(--fg-muted); font-size: 12.5px; width: 44px">
+                    14:30
+                  </div>
+                  <div style="flex: 1; min-width: 0">
+                    <div class="pt-name">Helena Duarte</div>
+                    <div class="pt-sub">Clareamento · sessão 2/3</div>
+                  </div>
+                  <span class="chip ok"><span class="dot"></span>Confirmada</span>
+                </div>
+                <div style="padding: 13px 16px">
+                  <button class="btn ghost">Ver agenda completa →</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= VIEW: TABELA (CONTAS) ================= -->
+        <div class="content" id="view-table" hidden>
+          <div class="page-head">
+            <div>
+              <h1>Contas a pagar</h1>
+              <p>Despesas por vencimento · setembro de 2026</p>
+            </div>
+            <div class="head-actions">
+              <button class="select">
+                setembro de 2026
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </button>
+              <button class="btn">
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.9"
+                >
+                  <path d="M20 11.5A8 8 0 1 0 12 20" />
+                  <path d="M20 5v6h-6" /></svg
+                >Gerar recorrentes
+              </button>
+              <button class="btn primary">
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M12 5v14M5 12h14" /></svg
+                >Nova despesa
+              </button>
+            </div>
+          </div>
+
+          <div class="grid g4" style="margin-bottom: 16px">
+            <div class="stat">
+              <div class="top"><span class="lbl2">Total do mês</span></div>
+              <div class="val num">R$ 12.480,00</div>
+              <div class="foot">18 lançamentos</div>
+            </div>
+            <div class="stat t-ok">
+              <div class="top"><span class="lbl2">Pagas</span></div>
+              <div class="val num">R$ 8.750,00</div>
+              <div class="foot">14 contas</div>
+            </div>
+            <div class="stat t-warn">
+              <div class="top"><span class="lbl2">Pendentes</span></div>
+              <div class="val num">R$ 2.980,00</div>
+              <div class="foot">3 contas</div>
+            </div>
+            <div class="stat t-bad">
+              <div class="top"><span class="lbl2">Vencidas</span></div>
+              <div class="val num">R$ 750,00</div>
+              <div class="foot">1 conta · há 4 dias</div>
+            </div>
+          </div>
+
+          <div class="toolbar">
+            <div class="tabs">
+              <button class="tab on">Todas <span class="num">18</span></button>
+              <button class="tab">Pendentes <span class="num">3</span></button>
+              <button class="tab">Pagas <span class="num">14</span></button>
+              <button class="tab">Vencidas <span class="num">1</span></button>
+            </div>
+            <div class="field">
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-3.5-3.5" />
+              </svg>
+              Filtrar por descrição ou categoria…
+            </div>
+            <button class="btn ghost">
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.9"
+              >
+                <path d="M3 5h18l-7 8v6l-4 2v-8Z" /></svg
+              >Filtros
+            </button>
+          </div>
+
+          <div class="card">
+            <div class="tbl-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width: 110px">Vencimento</th>
+                    <th>Despesa</th>
+                    <th style="width: 150px">Categoria</th>
+                    <th style="width: 130px">Status</th>
+                    <th class="ta-r" style="width: 130px">Valor</th>
+                    <th class="ta-r" style="width: 90px">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="num">15/09</td>
+                    <td>
+                      <div class="pt-name">Aluguel do consultório</div>
+                      <div class="pt-sub">Recorrente · mensal</div>
+                    </td>
+                    <td><span class="chip mute">Estrutura</span></td>
+                    <td>
+                      <span class="chip bad"><span class="dot"></span>Vencida</span>
+                    </td>
+                    <td class="ta-r num" style="font-weight: 600">R$ 750,00</td>
+                    <td>
+                      <div class="row-actions">
+                        <button class="icon-btn" title="Editar">
+                          <svg
+                            width="15"
+                            height="15"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                          >
+                            <path d="M4 20h4l11-11-4-4L4 16Z" />
+                          </svg>
+                        </button>
+                        <button class="icon-btn" title="Excluir">
+                          <svg
+                            width="15"
+                            height="15"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                          >
+                            <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" />
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="num">20/09</td>
+                    <td>
+                      <div class="pt-name">Material de consumo</div>
+                      <div class="pt-sub">Dental Cremer</div>
+                    </td>
+                    <td><span class="chip mute">Insumos</span></td>
+                    <td>
+                      <span class="chip warn"><span class="dot"></span>Pendente</span>
+                    </td>
+                    <td class="ta-r num" style="font-weight: 600">R$ 1.430,00</td>
+                    <td>
+                      <div class="row-actions">
+                        <button class="icon-btn">
+                          <svg
+                            width="15"
+                            height="15"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                          >
+                            <path d="M4 20h4l11-11-4-4L4 16Z" />
+                          </svg>
+                        </button>
+                        <button class="icon-btn">
+                          <svg
+                            width="15"
+                            height="15"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                          >
+                            <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" />
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="num">05/09</td>
+                    <td>
+                      <div class="pt-name">Energia elétrica</div>
+                      <div class="pt-sub">Pago em 04/09</div>
+                    </td>
+                    <td><span class="chip mute">Estrutura</span></td>
+                    <td>
+                      <span class="chip ok"><span class="dot"></span>Paga</span>
+                    </td>
+                    <td class="ta-r num" style="font-weight: 600">R$ 612,40</td>
+                    <td>
+                      <div class="row-actions">
+                        <button class="icon-btn">
+                          <svg
+                            width="15"
+                            height="15"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                          >
+                            <path d="M4 20h4l11-11-4-4L4 16Z" />
+                          </svg>
+                        </button>
+                        <button class="icon-btn">
+                          <svg
+                            width="15"
+                            height="15"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                          >
+                            <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" />
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="num">08/09</td>
+                    <td>
+                      <div class="pt-name">Prótese — Sr. Antônio</div>
+                      <div class="pt-sub">Lab. Precisão</div>
+                    </td>
+                    <td><span class="chip mute">Laboratório</span></td>
+                    <td>
+                      <span class="chip ok"><span class="dot"></span>Paga</span>
+                    </td>
+                    <td class="ta-r num" style="font-weight: 600">R$ 980,00</td>
+                    <td>
+                      <div class="row-actions">
+                        <button class="icon-btn">
+                          <svg
+                            width="15"
+                            height="15"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                          >
+                            <path d="M4 20h4l11-11-4-4L4 16Z" />
+                          </svg>
+                        </button>
+                        <button class="icon-btn">
+                          <svg
+                            width="15"
+                            height="15"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                          >
+                            <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" />
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="num">28/09</td>
+                    <td>
+                      <div class="pt-name">Software de gestão</div>
+                      <div class="pt-sub">Recorrente · mensal</div>
+                    </td>
+                    <td><span class="chip mute">Administrativo</span></td>
+                    <td>
+                      <span class="chip warn"><span class="dot"></span>Pendente</span>
+                    </td>
+                    <td class="ta-r num" style="font-weight: 600">R$ 189,00</td>
+                    <td>
+                      <div class="row-actions">
+                        <button class="icon-btn">
+                          <svg
+                            width="15"
+                            height="15"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                          >
+                            <path d="M4 20h4l11-11-4-4L4 16Z" />
+                          </svg>
+                        </button>
+                        <button class="icon-btn">
+                          <svg
+                            width="15"
+                            height="15"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                          >
+                            <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" />
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="pager">
+              <span>Mostrando 1–5 de 18</span>
+              <div style="display: flex; gap: 6px; align-items: center">
+                <button class="btn ghost">Anterior</button>
+                <button class="btn" style="min-width: 32px; padding: 0 10px">1</button>
+                <button class="btn ghost" style="min-width: 32px; padding: 0 10px">2</button>
+                <button class="btn ghost">Próxima</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2>Componentes · referência</h2>
+            <div class="rule"></div>
+          </div>
+          <div class="card card-pad" style="display: flex; flex-direction: column; gap: 16px">
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center">
+              <button class="btn primary">Ação primária</button>
+              <button class="btn">Secundária</button>
+              <button class="btn ghost">Fantasma</button>
+              <span class="chip ok"><span class="dot"></span>Sucesso</span>
+              <span class="chip warn"><span class="dot"></span>Atenção</span>
+              <span class="chip bad"><span class="dot"></span>Erro</span>
+              <span class="chip pri">Info</span>
+              <span class="chip mute">Neutro</span>
+            </div>
+            <div class="swatches">
+              <div class="sw">
+                <div class="box" style="background: var(--bg)"></div>
+                <div class="cap">bg</div>
+              </div>
+              <div class="sw">
+                <div class="box" style="background: var(--surface)"></div>
+                <div class="cap">surface</div>
+              </div>
+              <div class="sw">
+                <div class="box" style="background: var(--surface-2)"></div>
+                <div class="cap">surface-2</div>
+              </div>
+              <div class="sw">
+                <div class="box" style="background: var(--primary)"></div>
+                <div class="cap">primary</div>
+              </div>
+              <div class="sw">
+                <div class="box" style="background: var(--primary-soft)"></div>
+                <div class="cap">primary-soft</div>
+              </div>
+              <div class="sw">
+                <div class="box" style="background: var(--success)"></div>
+                <div class="cap">success</div>
+              </div>
+              <div class="sw">
+                <div class="box" style="background: var(--warning)"></div>
+                <div class="cap">warning</div>
+              </div>
+              <div class="sw">
+                <div class="box" style="background: var(--danger)"></div>
+                <div class="cap">danger</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="note">
+          Mockup estático para aprovação. Mudanças propostas: paleta com contraste AA, raios menores
+          (12px), sombras em 2 camadas, sidebar recolhível com grupos, topbar fixa com busca ⌘K,
+          StatCard com delta e ícone em chip (sem barra lateral), tabelas com cabeçalho fixo,
+          números tabulares e ações no hover, status como chip com ponto.
+        </div>
+      </div>
+    </div>
+
+    <div class="viewtabs">
+      <button class="on" data-view="dash">Dashboard</button>
+      <button data-view="table">Tabela / Contas</button>
+    </div>
+
+    <script>
+      document.getElementById("railBtn").onclick = () =>
+        document.getElementById("sb").classList.toggle("rail");
+      document.getElementById("themeBtn").onclick = () => {
+        const h = document.documentElement;
+        h.classList.toggle("dark");
+        h.classList.toggle("light");
+      };
+      document.querySelectorAll(".viewtabs button").forEach((b) => {
+        b.onclick = () => {
+          document.querySelectorAll(".viewtabs button").forEach((x) => x.classList.remove("on"));
+          b.classList.add("on");
+          const dash = b.dataset.view === "dash";
+          document.getElementById("view-dash").hidden = !dash;
+          document.getElementById("view-table").hidden = dash;
+          document.getElementById("crumbRoot").textContent = dash ? "Financeiro" : "Financeiro";
+          document.getElementById("crumbLeaf").textContent = dash ? "Dashboard" : "Contas a pagar";
+        };
+      });
+      document.querySelectorAll(".tab").forEach((t) => {
+        t.onclick = () => {
+          document.querySelectorAll(".tab").forEach((x) => x.classList.remove("on"));
+          t.classList.add("on");
+        };
+      });
+    </script>
+  </body>
+</html>

@@ -12,26 +12,13 @@ import {
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { Activity, CalendarDays, Trophy, Sparkles, Crown, Percent } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-type Atendimento = {
-  procedimento: string;
-  valor_bruto: number | string;
-  valor_liquido: number | string;
-  data: string;
-};
-
-type CustoLab = {
-  atendimento_id?: string | null;
-  procedimento?: string | null;
-  valor: number | string;
-  data: string;
-};
-
-type ItemProcedimento = {
-  atendimento_id: string;
-  procedimento?: string | null;
-  valor: number | string | null;
-};
+import {
+  agruparPorProcedimento,
+  linhasDeProcedimento,
+  type AtendimentoAnalise,
+  type CustoLab,
+  type ItemProcedimento,
+} from "@/lib/procedures-analytics";
 
 type Periodo = "mes" | "3m" | "6m" | "12m";
 
@@ -40,7 +27,7 @@ export function ProceduresAnalytics({ mes }: { mes: string }) {
   const [procFiltro, setProcFiltro] = useState<string>("todos");
   const [mesLocal, setMesLocal] = useState<string>(mes);
 
-  const atendimentos = useTable<Atendimento & { id: string }>("atendimentos", "data");
+  const atendimentos = useTable<AtendimentoAnalise>("atendimentos", "data");
   const itens = useTable<ItemProcedimento>("atendimento_procedimentos", "created_at", true);
   const lab = useTable<CustoLab>("custos_laboratorio", "data");
 
@@ -50,56 +37,11 @@ export function ProceduresAnalytics({ mes }: { mes: string }) {
     return monthOptions(n);
   }, [periodo, mesLocal]);
 
-  // Linhas de procedimento: usa itens detalhados quando existirem,
-  // com fallback para o campo de texto dos atendimentos antigos.
-  const lineItems = useMemo(() => {
-    const itensPorAtend = new Map<string, ItemProcedimento[]>();
-    (itens.data ?? []).forEach((it) => {
-      const arr = itensPorAtend.get(it.atendimento_id) ?? [];
-      arr.push(it);
-      itensPorAtend.set(it.atendimento_id, arr);
-    });
-
-    const out: {
-      procedimento: string;
-      bruto: number;
-      liquido: number;
-      data: string;
-      atendimentoId: string;
-      ratio: number;
-    }[] = [];
-    (atendimentos.data ?? []).forEach((a) => {
-      if (!mesesPeriodo.includes(monthKey(a.data))) return;
-      const its = itensPorAtend.get(a.id);
-      const liqTotal = Number(a.valor_liquido || 0);
-      const bruTotal = Number(a.valor_bruto || 0);
-      if (its && its.length > 0) {
-        const somaItens = its.reduce((s, it) => s + Number(it.valor || 0), 0) || bruTotal || 1;
-        its.forEach((it) => {
-          const bruto = Number(it.valor || 0);
-          const ratio = somaItens > 0 ? bruto / somaItens : 0;
-          out.push({
-            procedimento: it.procedimento || "—",
-            bruto,
-            liquido: liqTotal * ratio,
-            data: a.data,
-            atendimentoId: a.id,
-            ratio,
-          });
-        });
-      } else {
-        out.push({
-          procedimento: a.procedimento || "—",
-          bruto: bruTotal,
-          liquido: liqTotal,
-          data: a.data,
-          atendimentoId: a.id,
-          ratio: 1,
-        });
-      }
-    });
-    return out;
-  }, [atendimentos.data, itens.data, mesesPeriodo]);
+  // Rateio e agregação vivem em lib/procedures-analytics.ts, com testes.
+  const lineItems = useMemo(
+    () => linhasDeProcedimento(atendimentos.data ?? [], itens.data ?? [], mesesPeriodo),
+    [atendimentos.data, itens.data, mesesPeriodo],
+  );
 
   const filtrados = useMemo(
     () => lineItems.filter((r) => procFiltro === "todos" || r.procedimento === procFiltro),
@@ -122,39 +64,11 @@ export function ProceduresAnalytics({ mes }: { mes: string }) {
   const diasUnicos = new Set(filtrados.map((r) => r.data)).size || 1;
   const mediaDia = totalProc / diasUnicos;
 
-  // Agrupar por procedimento
-  const agrupado = useMemo(() => {
-    // Soma os custos de laboratório por atendimento_id
-    const labPorAtend = new Map<string, number>();
-    labFiltrado.forEach((r) => {
-      if (!r.atendimento_id) return;
-      labPorAtend.set(
-        r.atendimento_id,
-        (labPorAtend.get(r.atendimento_id) ?? 0) + Number(r.valor || 0),
-      );
-    });
-
-    const map = new Map<
-      string,
-      { nome: string; qtd: number; bruto: number; liquido: number; lab: number }
-    >();
-    filtrados.forEach((r) => {
-      const k = r.procedimento || "—";
-      const cur = map.get(k) ?? { nome: k, qtd: 0, bruto: 0, liquido: 0, lab: 0 };
-      cur.qtd += 1;
-      cur.bruto += Number(r.bruto || 0);
-      cur.liquido += Number(r.liquido || 0);
-      // Custo de lab apenas do mesmo atendimento, rateado pelo peso do item
-      const labAtend = labPorAtend.get(r.atendimentoId) ?? 0;
-      cur.lab += labAtend * Number(r.ratio || 0);
-      map.set(k, cur);
-    });
-    return Array.from(map.values()).map((r) => ({
-      ...r,
-      lucro: r.liquido - r.lab,
-      margem: r.bruto > 0 ? ((r.liquido - r.lab) / r.bruto) * 100 : 0,
-    }));
-  }, [filtrados, labFiltrado]);
+  // Agrupar por procedimento, descontando o laboratório rateado.
+  const agrupado = useMemo(
+    () => agruparPorProcedimento(filtrados, labFiltrado),
+    [filtrados, labFiltrado],
+  );
 
   const maisRealizado = [...agrupado].sort((a, b) => b.qtd - a.qtd)[0];
   const maisLucrativo = [...agrupado].sort((a, b) => b.lucro - a.lucro)[0];
@@ -251,7 +165,7 @@ export function ProceduresAnalytics({ mes }: { mes: string }) {
         />
       </div>
 
-      <div className="rounded-2xl border bg-card p-5" style={{ boxShadow: "var(--shadow-soft)" }}>
+      <div className="rounded-xl border bg-card p-5" style={{ boxShadow: "var(--shadow-soft)" }}>
         <div className="mb-4">
           <h3 className="font-semibold">Quantidade e faturamento por procedimento</h3>
           <p className="text-xs text-muted-foreground">Top 8 por volume</p>
@@ -349,7 +263,7 @@ export function ProceduresAnalytics({ mes }: { mes: string }) {
       </div>
 
       <div
-        className="rounded-2xl border bg-card overflow-hidden"
+        className="rounded-xl border bg-card overflow-hidden"
         style={{ boxShadow: "var(--shadow-soft)" }}
       >
         <div className="p-5 border-b">
@@ -416,7 +330,7 @@ function InsightCard({
   }[tone];
   return (
     <div
-      className="rounded-2xl border bg-card p-5 transition-shadow hover:shadow-[var(--shadow-card)]"
+      className="rounded-xl border bg-card p-5 transition-shadow hover:shadow-[var(--shadow-card)]"
       style={{ boxShadow: "var(--shadow-soft)" }}
     >
       <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">

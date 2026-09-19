@@ -1,58 +1,14 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import {
-  LayoutDashboard,
-  Wallet,
-  Stethoscope,
-  FlaskConical,
-  Settings,
-  LogOut,
-  TrendingUp,
-  PiggyBank,
-  HandCoins,
-  CalendarClock,
-  PhoneCall,
-  Users,
-  Activity,
-  Menu,
-  Upload,
-} from "lucide-react";
+import { LogOut, Menu, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth-context";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";
 import { useAppSettings, useUpdateLogo } from "@/hooks/use-logo";
-
-const items = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/fluxo-caixa", label: "Fluxo", icon: TrendingUp },
-  { to: "/contas", label: "Contas", icon: Wallet },
-  { to: "/contas-receber", label: "A Receber", icon: HandCoins },
-  { to: "/ganhos", label: "Ganhos", icon: PiggyBank },
-  { to: "/consultorio", label: "Consultório", icon: Stethoscope },
-  { to: "/pacientes", label: "Pacientes", icon: Users },
-  { to: "/consultas", label: "Consultas", icon: CalendarClock },
-  { to: "/followup", label: "Follow-up", icon: PhoneCall },
-  { to: "/dtm", label: "DTM", icon: Activity },
-  { to: "/laboratorio", label: "Laboratório", icon: FlaskConical },
-  { to: "/cadastros", label: "Cadastros", icon: Settings },
-] as const;
-
-const navGroups = [
-  { label: null, paths: ["/dashboard"] },
-  { label: "Clínico", paths: ["/consultorio", "/pacientes", "/consultas", "/followup", "/dtm"] },
-  { label: "Financeiro", paths: ["/fluxo-caixa", "/contas", "/contas-receber", "/ganhos"] },
-  { label: "Gestão", paths: ["/laboratorio", "/cadastros"] },
-] as const;
-
-const mobilePrimaryPaths = [
-  "/dashboard",
-  "/consultorio",
-  "/fluxo-caixa",
-  "/contas",
-  "/contas-receber",
-] as const;
+import { BrandSignature, MARK_SRC } from "@/components/brand";
+import { items, mobilePrimaryPaths, navGroups } from "@/lib/nav";
 
 const mobilePrimary = mobilePrimaryPaths.map((p) => items.find((i) => i.to === p)!);
 
@@ -70,7 +26,9 @@ function LogoBadge() {
     if (settings?.logo_size && !pendingFile) setSize(settings.logo_size);
   }, [settings?.logo_size, pendingFile]);
 
-  const currentUrl = previewUrl ?? settings?.logo_url;
+  // Sem logo enviada, o monograma da marca é o padrão — antes caía numa
+  // letra "O" solta, herdada do template.
+  const currentUrl = previewUrl ?? settings?.logo_url ?? MARK_SRC;
 
   function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -96,19 +54,16 @@ function LogoBadge() {
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="shrink-0 rounded-xl grid place-items-center text-primary-foreground font-bold overflow-hidden hover:opacity-90 transition-opacity"
-          style={{
-            width: settings?.logo_size ?? 36,
-            height: settings?.logo_size ?? 36,
-            ...(currentUrl ? {} : { background: "var(--gradient-primary)" }),
-          }}
+          className="shrink-0 grid place-items-center overflow-hidden rounded-lg transition-opacity hover:opacity-90"
+          style={{ width: settings?.logo_size ?? 38, height: settings?.logo_size ?? 38 }}
           aria-label="Alterar logo"
         >
-          {currentUrl ? (
-            <img src={currentUrl} alt="Logo" className="h-full w-full object-contain" />
-          ) : (
-            "O"
-          )}
+          <img
+            src={currentUrl}
+            alt="Logo"
+            className="h-full w-full object-contain"
+            style={{ filter: "var(--mark-filter)" }}
+          />
         </button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-72 space-y-4">
@@ -117,11 +72,12 @@ function LogoBadge() {
             className="rounded-xl grid place-items-center overflow-hidden bg-background border"
             style={{ width: size, height: size }}
           >
-            {currentUrl ? (
-              <img src={currentUrl} alt="Prévia da logo" className="h-full w-full object-contain" />
-            ) : (
-              <span className="text-xs text-muted-foreground">Sem logo</span>
-            )}
+            <img
+              src={currentUrl}
+              alt="Prévia da logo"
+              className="h-full w-full object-contain"
+              style={{ filter: "var(--mark-filter)" }}
+            />
           </div>
         </div>
 
@@ -168,13 +124,10 @@ export function AppSidebar() {
 
   return (
     <aside className="hidden md:flex w-64 shrink-0 flex-col border-r bg-sidebar text-sidebar-foreground">
-      <div className="px-6 py-6">
-        <div className="flex items-center gap-2.5">
+      <div className="px-4 pt-[18px] pb-4">
+        <div className="flex items-center gap-[11px]">
           <LogoBadge />
-          <div className="leading-tight">
-            <div className="font-bold tracking-tight">Anna Julia</div>
-            <div className="text-xs font-bold text-muted-foreground">Odontologia</div>
-          </div>
+          <BrandSignature />
         </div>
       </div>
 
@@ -195,10 +148,12 @@ export function AppSidebar() {
                   key={to}
                   to={to}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors",
+                    "relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors",
+                    // Barra à esquerda marca a rota ativa mesmo quando o fundo
+                    // tingido some no tema escuro.
                     active
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
+                      ? "bg-sidebar-accent font-semibold text-primary before:absolute before:-left-2.5 before:top-1/2 before:h-[18px] before:w-[3px] before:-translate-y-1/2 before:rounded-r-[3px] before:bg-primary before:content-['']"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
                   )}
                 >
                   <Icon className="h-4 w-4" />

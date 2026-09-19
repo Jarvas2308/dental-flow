@@ -58,6 +58,7 @@ Cada `CREATE TABLE` virá com GRANTs (authenticated + service_role) e políticas
 ## 5. Dashboard
 
 Nova seção "Próximas consultas" com três cards:
+
 - **Consultas hoje** — contagem de consultas previstas com data = hoje.
 - **Consultas na semana** — contagem dentro da semana corrente.
 - **Valor previsto da semana** — soma de `valor_estimado` das consultas da semana (em BRL).

@@ -2,7 +2,13 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTable, useCreate, useDelete, useUpdate } from "@/hooks/use-data";
 import { useGerarRecorrentes } from "@/hooks/use-recurring";
-import { brl, currentMonthKey, monthKey, monthLabel, todayISO } from "@/lib/format";
+import { brl, currentMonthKey, monthLabel, todayISO } from "@/lib/format";
+import {
+  comStatusDespesa,
+  despesasDoMesPorVencimento,
+  totaisPorStatusDespesa,
+  type StatusDespesa,
+} from "@/lib/finance";
 import { parseMes } from "@/lib/search-params";
 import { PageHeader, StatCard, MonthSelect } from "@/components/ui-kit";
 import { usePagination } from "@/hooks/use-pagination";
@@ -73,7 +79,7 @@ const empty = (): Despesa => ({
   observacoes: "",
 });
 
-function statusBadge(s: string) {
+function statusBadge(s: StatusDespesa) {
   if (s === "pago")
     return <Badge className="bg-success text-success-foreground hover:bg-success/90">Pago</Badge>;
   if (s === "atrasado") return <Badge variant="destructive">Atrasado</Badge>;
@@ -84,21 +90,6 @@ function statusBadge(s: string) {
       </Badge>
     );
   return <Badge variant="outline">Pendente</Badge>;
-}
-
-function computeStatus(d: Despesa): "pago" | "pendente" | "atrasado" | "aguardando" {
-  if (d.status === "pago") return "pago";
-  if (
-    d.recorrente &&
-    d.tipo_recorrencia === "variavel" &&
-    (d.valor === null || Number(d.valor) === 0)
-  ) {
-    return "aguardando";
-  }
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const v = new Date(d.vencimento + "T00:00:00");
-  return v < today ? "atrasado" : "pendente";
 }
 
 function DespesaForm({ editing, onClose }: { editing?: Despesa; onClose?: () => void }) {
@@ -290,6 +281,7 @@ function Contas() {
   const [aba, setAba] = useState<"todas" | "pendente" | "aguardando" | "atrasado" | "pago">(
     "todas",
   );
+
   const [q, setQ] = useState("");
   const list = useTable<Despesa>("despesas", "vencimento", true);
   const upd = useUpdate("despesas");
@@ -299,36 +291,28 @@ function Contas() {
   // diferente do Dashboard/Fluxo de Caixa, que agrupam despesas pagas pela
   // DATA_PAGAMENTO (regime de caixa). Os totais aqui e lá podem divergir
   // quando uma conta é paga fora do mês de vencimento — isso é esperado.
-  // Aplica status calculado (atrasado) e ordena por vencimento ASC
-  const enriched = useMemo(() => {
-    return (list.data ?? []).map((r) => ({ ...r, status: computeStatus(r) }));
-  }, [list.data]);
+  //
+  // O status vem de `statusDespesa` (lib/finance.ts), o mesmo que alimenta
+  // despesasPagas/despesasPendentes no Dashboard e na ferramenta MCP. Enquanto
+  // esta tela tinha a própria `computeStatus`, uma despesa marcada como paga
+  // sem `data_pagamento` aparecia PAGA aqui e PENDENTE lá.
+  const enriched = useMemo(() => comStatusDespesa(list.data ?? []), [list.data]);
+
+  const totMes = useMemo(() => despesasDoMesPorVencimento(enriched, mes), [enriched, mes]);
 
   const rowsMes = useMemo(
     () =>
-      enriched
-        .filter((r) => monthKey(r.vencimento) === mes)
+      totMes
         .filter((r) => (aba === "todas" ? true : r.status === aba))
         .filter((r) => !q || r.nome.toLowerCase().includes(q.toLowerCase()))
         .sort((a, b) => a.vencimento.localeCompare(b.vencimento)),
-    [enriched, mes, aba, q],
+    [totMes, aba, q],
   );
 
   // Paginação só para renderização; os totais/rodapé continuam sobre rowsMes.
   const pag = usePagination(rowsMes, 20, `${mes}|${aba}|${q}`);
 
-  const totMes = enriched.filter((r) => monthKey(r.vencimento) === mes);
-  const totalPago = totMes
-    .filter((r) => r.status === "pago")
-    .reduce((s, r) => s + Number(r.valor || 0), 0);
-  const totalPendente = totMes
-    .filter((r) => r.status === "pendente")
-    .reduce((s, r) => s + Number(r.valor || 0), 0);
-  const totalAtrasado = totMes
-    .filter((r) => r.status === "atrasado")
-    .reduce((s, r) => s + Number(r.valor || 0), 0);
-  const totalAguardando = totMes.filter((r) => r.status === "aguardando").length;
-  const totalGeral = totalPago + totalPendente + totalAtrasado;
+  const totais = useMemo(() => totaisPorStatusDespesa(totMes), [totMes]);
 
   const marcarPago = (r: Despesa) => {
     upd.mutate({
@@ -358,10 +342,10 @@ function Contas() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-6">
-        <StatCard label={`Total · ${monthLabel(mes)}`} value={brl(totalGeral)} tone="primary" />
-        <StatCard label="Pago" value={brl(totalPago)} tone="success" />
-        <StatCard label="Pendente" value={brl(totalPendente)} tone="warning" />
-        <StatCard label="Atrasado" value={brl(totalAtrasado)} tone="destructive" />
+        <StatCard label={`Total · ${monthLabel(mes)}`} value={brl(totais.geral)} tone="primary" />
+        <StatCard label="Pago" value={brl(totais.pago)} tone="success" />
+        <StatCard label="Pendente" value={brl(totais.pendente)} tone="warning" />
+        <StatCard label="Atrasado" value={brl(totais.atrasado)} tone="destructive" />
       </div>
 
       <div className="flex flex-wrap gap-2 mb-4 items-center">
@@ -382,14 +366,14 @@ function Contas() {
           <TabsTrigger value="todas">Todas ({totMes.length})</TabsTrigger>
           <TabsTrigger value="pendente">Pendentes</TabsTrigger>
           <TabsTrigger value="aguardando">
-            Aguardando{totalAguardando > 0 ? ` (${totalAguardando})` : ""}
+            Aguardando{totais.aguardando > 0 ? ` (${totais.aguardando})` : ""}
           </TabsTrigger>
           <TabsTrigger value="atrasado">Atrasadas</TabsTrigger>
           <TabsTrigger value="pago">Pagas</TabsTrigger>
         </TabsList>
         <TabsContent value={aba} className="mt-4">
           <div
-            className="rounded-2xl border bg-card overflow-hidden"
+            className="rounded-xl border bg-card overflow-hidden"
             style={{ boxShadow: "var(--shadow-soft)" }}
           >
             <Table>

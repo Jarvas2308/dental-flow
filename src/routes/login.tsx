@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { BrandMark, BrandSignature } from "@/components/brand";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -67,40 +68,21 @@ function LoginPage() {
 
   return (
     <main className="min-h-screen grid lg:grid-cols-2">
-      <div
-        className="hidden lg:flex flex-col justify-between p-12 text-primary-foreground"
-        style={{ background: "var(--gradient-primary)" }}
-      >
-        <div className="flex items-center gap-2.5">
-          <div className="h-10 w-10 rounded-xl bg-white/15 grid place-items-center font-bold backdrop-blur">
-            O
-          </div>
-          <div className="font-semibold tracking-tight">Odonto Financeiro</div>
+      <div className="hidden lg:flex flex-col justify-between bg-brand-wash p-12">
+        <BrandSignature />
+        <div className="grid place-items-center">
+          <BrandMark size={160} />
         </div>
-        <div className="space-y-4 max-w-md">
-          <h1 className="text-4xl font-semibold tracking-tight leading-tight">
-            Controle financeiro completo do seu consultório.
-          </h1>
-          <p className="text-primary-foreground/80">
-            Receitas, despesas, procedimentos e laboratório — tudo num só lugar, com lucro líquido
-            calculado automaticamente.
-          </p>
-        </div>
-        <div className="text-xs text-primary-foreground/70">
-          © {new Date().getFullYear()} Odonto Financeiro
+        <div className="text-xs text-muted-foreground">
+          © {new Date().getFullYear()} Anna Julia Leduc · Cirurgiã&#8209;Dentista
         </div>
       </div>
 
       <div className="flex items-center justify-center p-6 sm:p-12 bg-background">
         <div className="w-full max-w-sm">
-          <div className="lg:hidden mb-8 flex items-center gap-2.5">
-            <div
-              className="h-10 w-10 rounded-xl grid place-items-center text-primary-foreground font-bold"
-              style={{ background: "var(--gradient-primary)" }}
-            >
-              O
-            </div>
-            <div className="font-semibold tracking-tight">Odonto Financeiro</div>
+          <div className="lg:hidden mb-8 flex items-center gap-[11px]">
+            <BrandMark size={40} />
+            <BrandSignature />
           </div>
 
           <h2 className="text-2xl font-semibold tracking-tight">Bem-vindo de volta</h2>

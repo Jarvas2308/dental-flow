@@ -10,7 +10,8 @@ técnicas controladas e comandos úteis.
 
 Sistema pessoal de gestão financeira para consultório odontológico (usuário
 único: o proprietário). Stack: **TanStack Start (React 19)** + **Tailwind CSS v4**
-+ **shadcn/UI** no frontend e **Lovable Cloud (Supabase / PostgreSQL)** no backend.
+
+- **shadcn/UI** no frontend e **Lovable Cloud (Supabase / PostgreSQL)** no backend.
 
 Estado atual:
 
@@ -50,19 +51,19 @@ realizado.
 
 Helpers principais em `src/lib/finance.ts`:
 
-| Helper | Finalidade |
-| --- | --- |
-| `fatorLiquido(a)` | Fator bruto→líquido de um atendimento (considera taxa). |
-| `resumoAtendimento(...)` | Total, recebido, saldo, status por atendimento. |
-| `receitasRecebidas(...)` | Entradas efetivamente recebidas. |
-| `valoresEmAberto(...)` | Saldos pendentes por atendimento. |
-| `contasAReceber(...)` | Lista consolidada de contas a receber. |
-| `noMes(data, mes)` | Verifica se uma data pertence ao mês (`monthKey`). |
-| `recebimentosNoMes(...)` | Recebimentos filtrados pela data do recebimento. |
-| `despesasPagas / despesasPagasNoMes / totalDespesasPagasNoMes` | Despesas pagas por `data_pagamento`. |
-| `despesasPendentes / despesasPendentesNoMes / totalDespesasPendentesNoMes` | Despesas pendentes por vencimento. |
-| `caixaRealizado(entradas, saidasPagas)` | Recebimentos − despesas pagas. |
-| `resultadoPrevisto(caixa, pendentes)` | Caixa realizado − despesas pendentes. |
+| Helper                                                                     | Finalidade                                              |
+| -------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `fatorLiquido(a)`                                                          | Fator bruto→líquido de um atendimento (considera taxa). |
+| `resumoAtendimento(...)`                                                   | Total, recebido, saldo, status por atendimento.         |
+| `receitasRecebidas(...)`                                                   | Entradas efetivamente recebidas.                        |
+| `valoresEmAberto(...)`                                                     | Saldos pendentes por atendimento.                       |
+| `contasAReceber(...)`                                                      | Lista consolidada de contas a receber.                  |
+| `noMes(data, mes)`                                                         | Verifica se uma data pertence ao mês (`monthKey`).      |
+| `recebimentosNoMes(...)`                                                   | Recebimentos filtrados pela data do recebimento.        |
+| `despesasPagas / despesasPagasNoMes / totalDespesasPagasNoMes`             | Despesas pagas por `data_pagamento`.                    |
+| `despesasPendentes / despesasPendentesNoMes / totalDespesasPendentesNoMes` | Despesas pendentes por vencimento.                      |
+| `caixaRealizado(entradas, saidasPagas)`                                    | Recebimentos − despesas pagas.                          |
+| `resultadoPrevisto(caixa, pendentes)`                                      | Caixa realizado − despesas pendentes.                   |
 
 ---
 
@@ -119,10 +120,10 @@ Helpers principais em `src/lib/finance.ts`:
 
 ## 7. RPCs existentes
 
-| RPC | Finalidade |
-| --- | --- |
-| `salvar_atendimento_completo(...)` | Cria/edita atendimento com procedimentos e recebimentos numa única transação. Valida paciente, valor bruto, data, status de NF, coerência de cada recebimento (valor/taxa/líquido) e que a soma dos recebimentos não exceda o valor bruto. Retorna `{ atendimento_id, created, procedimentos, recebimentos }`. |
-| `gerar_despesas_recorrentes(p_competencia)` | Gera as ocorrências mensais das despesas recorrentes para a competência informada, de forma idempotente. Retorna `{ criadas, existentes }`. |
+| RPC                                         | Finalidade                                                                                                                                                                                                                                                                                                     |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `salvar_atendimento_completo(...)`          | Cria/edita atendimento com procedimentos e recebimentos numa única transação. Valida paciente, valor bruto, data, status de NF, coerência de cada recebimento (valor/taxa/líquido) e que a soma dos recebimentos não exceda o valor bruto. Retorna `{ atendimento_id, created, procedimentos, recebimentos }`. |
+| `gerar_despesas_recorrentes(p_competencia)` | Gera as ocorrências mensais das despesas recorrentes para a competência informada, de forma idempotente. Retorna `{ criadas, existentes }`.                                                                                                                                                                    |
 
 Ambas usam `auth.uid()` e `SET search_path = public`.
 
@@ -461,8 +462,8 @@ código trata a remoção como não crítica.
 
 - **Issuer do MCP** (`src/lib/mcp/index.ts`): derivado de `VITE_SUPABASE_URL`
   ou `VITE_SUPABASE_PROJECT_ID`, com erro explícito se nenhum existir.
-- **Variáveis de ambiente do servidor** (`_supabase.ts`,
-  `auth-middleware.ts`): as `SUPABASE_*` só existem no runtime do servidor e
+- **Variáveis de ambiente do servidor** (`_supabase.ts`): as `SUPABASE_*` só
+  existem no runtime do servidor e
   dependem do que a plataforma injeta no publish; as `VITE_SUPABASE_*`, que são
   as mesmas credenciais publicáveis, servem de fallback. Sem isso, o `!`
   produzia um cliente com URL `undefined` e as ferramentas MCP falhavam em
@@ -527,8 +528,130 @@ Duas correções foram necessárias no arquivo da primeira migração, descobert
 ao conferi-la contra o banco real:
 
 - O nome da política de UPDATE era `Authenticated users can update app settings
-  row`, e não `Authenticated users can update app_settings`.
+row`, e não `Authenticated users can update app_settings`.
 - A ordem estava errada: essa política filtra por `id = 1`, então o
   `DROP COLUMN id` falhava com `cannot drop column id ... because other objects
-  depend on it` enquanto ela existisse. Os `DROP POLICY` passaram para antes das
+depend on it` enquanto ela existisse. Os `DROP POLICY` passaram para antes das
   alterações de coluna.
+
+---
+
+## 16. Fase 5 — Consolidação, dívida técnica e relatório de NF (2026-09-18)
+
+Correções e unificações, sem mudança de regra financeira nem de layout, mais
+uma tela nova de nota fiscal. Nenhum número existente muda de valor: todas as
+consolidações apontam para a regra que já era a correta.
+
+### 16.1 Despesas recorrentes: geração deixou de acontecer por navegação
+
+A tela de Despesas tinha um efeito com dependência `[mes]` chamando
+`gerar(mes, false)`. Navegar para um mês passado criava as recorrências daquele
+mês no banco, em silêncio. Gravar linha financeira como efeito colateral de
+navegação é o pior tipo de surpresa num sistema de caixa.
+
+Agora existe uma única checagem automática, em `src/routes/_app.tsx`, uma vez
+por sessão e sempre no mês corrente. Gerar outra competência é ação explícita,
+pelo botão "Gerar recorrentes", que continua funcionando para qualquer mês.
+
+`useGerarRecorrentes` (`src/hooks/use-recurring.ts`) ganhou `useCallback` e uma
+trava síncrona por `useRef`. A guarda anterior lia `loading`, que é estado e só
+vale no render seguinte: duas chamadas no mesmo tick passavam as duas. A RPC é
+idempotente e não duplicava linhas, mas eram dois round-trips e duas
+invalidações por abertura de tela.
+
+### 16.2 Status de despesa com uma definição só
+
+A tela de Despesas tinha a própria `computeStatus`, que considerava paga
+qualquer linha com `status = 'pago'`, enquanto `despesasPagas` exige
+`data_pagamento` para posicionar a saída no caixa. Uma despesa marcada como
+paga sem data aparecia PAGA na tela e PENDENTE no Dashboard, no Fluxo de Caixa
+e na ferramenta MCP.
+
+`src/lib/finance.ts` passou a exportar `statusDespesa`, `comStatusDespesa`,
+`totaisPorStatusDespesa` e `despesasDoMesPorVencimento`. `despesasPagas` e
+`despesasPendentes` foram reescritas sobre `statusDespesa`, e `contas.tsx`
+consome os mesmos helpers, inclusive para os quatro totais do topo.
+
+Divergência que continua sendo de propósito: a tela de Despesas recorta pelo
+VENCIMENTO (competência) e o Dashboard/Fluxo posiciona a saída pela
+DATA_PAGAMENTO (caixa). Conta que vence em julho e é paga em agosto aparece em
+meses diferentes nas duas visões.
+
+### 16.3 Validação de recebimento no banco
+
+Migração `20260918120000_validar_recebimento_no_update.sql`:
+
+- `trg_validar_recebimento_nao_excede` passou a valer para
+  `INSERT OR UPDATE OF valor, atendimento_id`. Só cobria INSERT, então um
+  UPDATE de `recebimentos.valor` podia deixar a soma acima do `valor_bruto` do
+  atendimento — e `useUpdate` é genérico sobre `TableName`, que inclui
+  `recebimentos`.
+- A função ganhou `SELECT ... FOR UPDATE` no atendimento. Sem o lock, dois
+  inserts concorrentes leem a mesma soma, ambos passam na checagem e o total
+  estoura.
+- No UPDATE, a própria linha sai da soma pelo id; somá-la junto de `NEW`
+  contaria o valor duas vezes e rejeitaria alteração legítima.
+
+**Ainda não aplicada no banco.** Aplicar em branch do Supabase antes de
+produção e confirmar os dois casos: UPDATE acima do saldo levanta exceção,
+insert legítimo continua passando.
+
+### 16.4 Duplicações removidas
+
+- `fluxo-caixa.tsx`: `saldoAcumulado` e `saldoAtual` eram o mesmo cálculo com
+  cortes de data diferentes. Viraram `saldoAte(limite)`.
+- `consultorio.tsx`: os dois blocos de filtro (tabela e card "Recebido no
+  período") viraram `filtrarPorAtributos`, com os padrões de NF e de forma de
+  pagamento em `NF_DO_FILTRO` e `FORMA_DO_FILTRO`. O recorte por data continua
+  separado, que é justamente a diferença entre as duas listas. A chave de
+  ordenação `"lucrativos"`, idêntica a `"liquido_desc"`, foi removida — um link
+  antigo com `?sort=lucrativos` cai no padrão `data_desc`.
+- `contarPorAcomp`/`consultasPorAcomp` viraram `consultasPorAcompanhamento` em
+  `src/lib/dtm.ts`, consumida por `dtm.tsx` e `pacientes.$id.tsx`.
+- O rateio e a margem de `procedures-analytics.tsx` saíram do componente para
+  `src/lib/procedures-analytics.ts` (`linhasDeProcedimento`,
+  `agruparPorProcedimento`), agora com testes.
+
+### 16.5 Leitura e configuração
+
+- `QueryClient` (`src/router.tsx`) com `staleTime: 30_000` e
+  `refetchOnWindowFocus: false`. As telas carregam tabelas inteiras e toda
+  navegação refazia tudo. As mutações continuam invalidando as queries
+  afetadas, e invalidação vence o `staleTime`.
+- `fetchAllPages` ganhou `MAX_PAGES = 500`. O laço parava só com bloco vazio,
+  o que depende de o servidor respeitar `Range`; um backend que o ignore
+  devolve sempre a mesma página e a aba congelava sem erro. Agora vira exceção
+  com mensagem.
+- `src/integrations/supabase/client.server.ts` (service role, ignora RLS) e
+  `auth-middleware.ts` foram removidos: nenhum dos dois era importado. A
+  entrada `SUPABASE_SERVICE_ROLE_KEY` saiu do `.env.example` junto — manter
+  referência a um segredo sem consumidor é risco sem contrapartida.
+- `bun run check` passou a incluir `build`, igual ao CI.
+
+### 16.6 Tela nova: Nota Fiscal (`/nota-fiscal`)
+
+O campo `nota_fiscal_status` era editável no Consultório, mas não havia
+nenhuma visão agregada — uma nota esquecida não reaparecia em lugar nenhum.
+
+A tela recorta pela data do ATENDIMENTO (competência do documento) e mostra:
+
+- total a emitir no mês e quanto desse valor já entrou no caixa (via
+  `resumosPorAtendimento`, a mesma conta do Consultório);
+- alerta de pendências de meses ANTERIORES ao selecionado, que é o buraco que
+  a tela existe para fechar;
+- abas por situação, busca, paginação e o status editável na linha;
+- resumo de pendentes por mês nos últimos 12 meses, clicável.
+
+Estado na URL: `?mes`, `?aba`, `?q`, validados por `src/lib/search-params.ts`.
+Status ausente conta como `pendente`, que é o padrão do banco para linha
+antiga.
+
+### 16.7 Testes e verificação (2026-09-18)
+
+- **Total de testes:** 137 passando (19 arquivos), contra 96 em 15 arquivos.
+- Novos: `use-recurring` (trava, invalidação, toasts), `pacientes`
+  (`resolvePacienteId`, incluindo o caso em que cria paciente),
+  `procedures-analytics` (rateio e margem), `nota-fiscal` (rota), mais os
+  status de despesa em `finance.test.ts` e o teto de páginas em
+  `supabase-pagination.test.ts`.
+- `bun run check` (typecheck + lint + test + build): exit 0.

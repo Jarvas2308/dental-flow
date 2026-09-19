@@ -17,7 +17,7 @@ import {
   type ParcelaRow,
 } from "@/lib/finance";
 import { brl, formatDateBR } from "@/lib/format";
-import { sortDtmAcompanhamentos } from "@/lib/dtm";
+import { consultasPorAcompanhamento, sortDtmAcompanhamentos } from "@/lib/dtm";
 import { PageHeader, StatCard, EmptyState } from "@/components/ui-kit";
 import { AtendimentoForm } from "@/components/atendimento-form";
 import { ConsultaForm } from "@/components/consulta-form";
@@ -103,19 +103,10 @@ function PacienteDetalhePage() {
     );
   }, [dados, paciente]);
 
-  const consultasPorAcomp = useMemo(() => {
-    const m = new Map<string, { numero: number; data_realizada: string }[]>();
-    for (const c of dados?.dtmConsultas ?? []) {
-      const list = m.get(c.acompanhamento_id) ?? [];
-      list.push(c);
-      m.set(c.acompanhamento_id, list);
-    }
-    for (const [k, list] of m) {
-      list.sort((a, b) => a.numero - b.numero);
-      m.set(k, list);
-    }
-    return m;
-  }, [dados?.dtmConsultas]);
+  const consultasPorAcomp = useMemo(
+    () => consultasPorAcompanhamento(dados?.dtmConsultas ?? []),
+    [dados?.dtmConsultas],
+  );
 
   if (consulta.isLoading) {
     return (
@@ -127,7 +118,7 @@ function PacienteDetalhePage() {
 
   if (consulta.isError) {
     return (
-      <div className="rounded-2xl border bg-card" style={{ boxShadow: "var(--shadow-soft)" }}>
+      <div className="rounded-xl border bg-card" style={{ boxShadow: "var(--shadow-soft)" }}>
         <EmptyState
           icon={<UserX className="h-8 w-8 text-destructive" />}
           title="Não foi possível carregar este paciente"
@@ -145,7 +136,7 @@ function PacienteDetalhePage() {
   // Link antigo ou paciente excluído: mostra saída em vez de quebrar.
   if (!paciente) {
     return (
-      <div className="rounded-2xl border bg-card" style={{ boxShadow: "var(--shadow-soft)" }}>
+      <div className="rounded-xl border bg-card" style={{ boxShadow: "var(--shadow-soft)" }}>
         <EmptyState
           icon={<UserX className="h-8 w-8" />}
           title="Paciente não encontrado"
@@ -210,10 +201,7 @@ function PacienteDetalhePage() {
       </div>
 
       {emAberto.length > 0 && (
-        <div
-          className="rounded-2xl border bg-card mb-4"
-          style={{ boxShadow: "var(--shadow-soft)" }}
-        >
+        <div className="rounded-xl border bg-card mb-4" style={{ boxShadow: "var(--shadow-soft)" }}>
           <div className="border-b px-4 py-3 text-sm font-medium flex items-center gap-2">
             <HandCoins className="h-4 w-4 text-warning" />
             Tratamentos com saldo em aberto
@@ -249,7 +237,7 @@ function PacienteDetalhePage() {
         </div>
       )}
 
-      <div className="rounded-2xl border bg-card" style={{ boxShadow: "var(--shadow-soft)" }}>
+      <div className="rounded-xl border bg-card" style={{ boxShadow: "var(--shadow-soft)" }}>
         <div className="border-b px-4 py-3 text-sm font-medium">Histórico cronológico</div>
         {historico.length === 0 ? (
           <EmptyState
@@ -293,10 +281,7 @@ function PacienteDetalhePage() {
       </div>
 
       {dtmDoPaciente.length > 0 && (
-        <div
-          className="rounded-2xl border bg-card mt-4"
-          style={{ boxShadow: "var(--shadow-soft)" }}
-        >
+        <div className="rounded-xl border bg-card mt-4" style={{ boxShadow: "var(--shadow-soft)" }}>
           <div className="border-b px-4 py-3 text-sm font-medium flex items-center gap-2">
             <Activity className="h-4 w-4 text-primary" />
             Acompanhamentos DTM
