@@ -75,7 +75,7 @@
       {
         "name": "resumo_financeiro",
         "title": "Resumo financeiro do mês",
-        "description": "Retorna o resumo financeiro de um mês (AAAA-MM): recebimentos efetivos, despesas pagas, despesas pendentes e caixa realizado.",
+        "description": "Retorna o resumo financeiro de um mês (AAAA-MM): recebimentos efetivos, ganhos extras, despesas pagas, despesas pendentes, custos de laboratório, caixa realizado e resultado previsto. Os números são os mesmos exibidos no Dashboard.",
         "annotations": {
           "readOnlyHint": true,
           "idempotentHint": true,
