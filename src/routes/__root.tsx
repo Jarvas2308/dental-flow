@@ -33,16 +33,17 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({ error, reset }: { error: unknown; reset: () => void }) {
   useEffect(() => {
     console.error(error);
   }, [error]);
   const router = useRouter();
+  const errorMessage = error instanceof Error ? error.message : String(error);
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold">Algo deu errado</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
+        <p className="mt-2 text-sm text-muted-foreground">{errorMessage}</p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
@@ -70,7 +71,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content: "Sistema financeiro e gerencial para consultório odontológico",
       },
       { property: "og:title", content: "Odonto Financeiro — Gestão de Consultório Odontológico" },
-      { property: "og:url", content: "https://annajuliaodonto.lovable.app/" },
+      { property: "og:url", content: "https://annajulia-odonto.vercel.app/" },
       { name: "twitter:title", content: "Odonto Financeiro — Gestão de Consultório Odontológico" },
       {
         property: "og:description",
@@ -82,13 +83,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       {
         property: "og:image",
-        content:
-          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/41b49e82-e04a-4ffd-a151-2ef6cd54e8c9/id-preview-4b95a6fb--bedfb0e7-8d22-43ef-acfd-d0447599edc2.lovable.app-1778476481943.png",
+        content: "https://annajulia-odonto.vercel.app/og.png",
       },
       {
         name: "twitter:image",
-        content:
-          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/41b49e82-e04a-4ffd-a151-2ef6cd54e8c9/id-preview-4b95a6fb--bedfb0e7-8d22-43ef-acfd-d0447599edc2.lovable.app-1778476481943.png",
+        content: "https://annajulia-odonto.vercel.app/og.png",
       },
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:type", content: "website" },

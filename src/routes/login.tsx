@@ -23,9 +23,9 @@ export const Route = createFileRoute("/login")({
         content:
           "Acesse o painel do Odonto Financeiro para controlar receitas, despesas e o lucro líquido do seu consultório.",
       },
-      { property: "og:url", content: "https://annajuliaodonto.lovable.app/login" },
+      { property: "og:url", content: "https://annajulia-odonto.vercel.app/login" },
     ],
-    links: [{ rel: "canonical", href: "https://annajuliaodonto.lovable.app/login" }],
+    links: [{ rel: "canonical", href: "https://annajulia-odonto.vercel.app/login" }],
   }),
   validateSearch: (s: Record<string, unknown>) => ({
     next: typeof s.next === "string" ? s.next : "",

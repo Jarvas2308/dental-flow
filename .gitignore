@@ -43,3 +43,6 @@ dist-ssr
 
 # Config local de dev (contorna bug do plugin da Lovable no Windows)
 vite.config.local.ts
+
+# Vercel build output
+.vercel/
