@@ -66,3 +66,21 @@ export function proximaTentativa(
 export function estaPendenteHoje(dataPrevista: string): boolean {
   return dataPrevista <= todayISO();
 }
+
+type TratamentoProposto = PropostaFollowup & { id: string; status?: string | null };
+type TentativaContatoFull = TentativaContato & { tratamento_proposto_id: string };
+
+// Quantos tratamentos em acompanhamento têm a próxima tentativa de contato
+// vencida ou marcada para hoje. Usado no dashboard e no badge da sidebar —
+// extraído para os dois não divergirem.
+export function contarFollowupPendente(
+  tratamentos: TratamentoProposto[],
+  tentativas: TentativaContatoFull[],
+): number {
+  return tratamentos
+    .filter((t) => t.status === "acompanhando")
+    .filter((t) => {
+      const tts = tentativas.filter((x) => x.tratamento_proposto_id === t.id);
+      return estaPendenteHoje(proximaTentativa(t, tts).dataPrevista);
+    }).length;
+}

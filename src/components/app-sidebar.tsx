@@ -7,8 +7,15 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/u
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";
 import { useAppSettings, useUpdateLogo } from "@/hooks/use-logo";
+import { useNavBadges } from "@/hooks/use-nav-badges";
 import { BrandSignature, MARK_SRC } from "@/components/brand";
 import { items, mobilePrimaryPaths, navGroups } from "@/lib/nav";
+
+// Badge numérico por rota — só as duas telas com pendência acionável no dia.
+function useNavBadgeByPath(): Record<string, number> {
+  const { consultasHoje, followupPendentes } = useNavBadges();
+  return { "/consultas": consultasHoje, "/followup": followupPendentes };
+}
 
 const mobilePrimary = mobilePrimaryPaths.map((p) => items.find((i) => i.to === p)!);
 
@@ -121,6 +128,7 @@ function LogoBadge() {
 export function AppSidebar() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const { signOut, user } = useAuth();
+  const badgeByPath = useNavBadgeByPath();
 
   return (
     <aside className="hidden md:flex w-64 shrink-0 flex-col border-r bg-sidebar text-sidebar-foreground">
@@ -143,6 +151,7 @@ export function AppSidebar() {
               const item = items.find((i) => i.to === to)!;
               const { label, icon: Icon } = item;
               const active = path === to || path.startsWith(to + "/");
+              const badge = badgeByPath[to];
               return (
                 <Link
                   key={to}
@@ -158,6 +167,11 @@ export function AppSidebar() {
                 >
                   <Icon className="h-4 w-4" />
                   {label}
+                  {!!badge && (
+                    <span className="ml-auto rounded-full bg-warning-soft px-1.5 py-px text-[10.5px] font-bold text-warning">
+                      {badge}
+                    </span>
+                  )}
                 </Link>
               );
             })}

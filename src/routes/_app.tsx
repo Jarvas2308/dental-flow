@@ -7,6 +7,7 @@ import { AppSidebar, MobileNav } from "@/components/app-sidebar";
 import { routeLabel } from "@/lib/nav";
 import { BrandMark } from "@/components/brand";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { GlobalSearch } from "@/components/global-search";
 import { ChevronRight, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/_app")({
@@ -75,7 +76,8 @@ function TopBar() {
           </>
         )}
       </nav>
-      <div className="ml-auto">
+      <div className="ml-auto flex items-center gap-2">
+        <GlobalSearch />
         <ThemeToggle />
       </div>
     </header>

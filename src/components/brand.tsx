@@ -29,7 +29,7 @@ export function BrandMark({
 export function BrandSignature({ className }: { className?: string }) {
   return (
     <div className={cn("leading-none", className)}>
-      <div className="font-brand text-lg font-semibold tracking-[0.01em]">Anna Julia Leduc</div>
+      <div className="font-brand text-[17px] font-semibold whitespace-nowrap tracking-[0.01em]">Anna Julia Leduc</div>
       <div className="mt-[3px] text-[8.5px] font-semibold uppercase tracking-[0.19em] text-muted-foreground">
         Cirurgiã&#8209;Dentista
       </div>

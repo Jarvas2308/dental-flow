@@ -15,8 +15,8 @@ import {
 } from "@/lib/format";
 import { parseMes } from "@/lib/search-params";
 import { receitasRecebidas, valoresEmAberto, resumoMensal } from "@/lib/finance";
-import { proximaTentativa, estaPendenteHoje } from "@/lib/followup";
-import { PageHeader, StatCard, ErrorState, MonthSelect } from "@/components/ui-kit";
+import { contarFollowupPendente } from "@/lib/followup";
+import { PageHeader, StatCard, ErrorState, AlertBanner, MonthSelect } from "@/components/ui-kit";
 import {
   ResponsiveContainer,
   BarChart,
@@ -39,6 +39,7 @@ import {
   CalendarDays,
   CalendarClock,
   PhoneCall,
+  AlertTriangle,
 } from "lucide-react";
 import { ProceduresAnalytics } from "@/components/procedures-analytics";
 
@@ -131,15 +132,7 @@ function Dashboard() {
   }, [consultas.data]);
 
   const pendentesFollowup = useMemo(
-    () =>
-      (tratamentosPropostos.data ?? [])
-        .filter((t) => t.status === "acompanhando")
-        .filter((t) => {
-          const tts = (tentativasContato.data ?? []).filter(
-            (x) => x.tratamento_proposto_id === t.id,
-          );
-          return estaPendenteHoje(proximaTentativa(t, tts).dataPrevista);
-        }).length,
+    () => contarFollowupPendente(tratamentosPropostos.data ?? [], tentativasContato.data ?? []),
     [tratamentosPropostos.data, tentativasContato.data],
   );
 
@@ -157,6 +150,9 @@ function Dashboard() {
   );
   const totPendente = aberto.reduce((s, r) => s + r.valor_liquido, 0);
   const qtdPendente = aberto.length;
+  // Só para o banner de alerta — mesma fonte do alerta de /contas-receber.
+  const vencidas = useMemo(() => aberto.filter((v) => v.vencimento < todayISO()), [aberto]);
+  const totalVencido = vencidas.reduce((s, v) => s + v.valor_liquido, 0);
   // Receita contratada total = já recebido (todos os meses) + a receber
   const totRecebidoGeral = recebidas.reduce((s, r) => s + r.valor_liquido, 0);
   const totContratado = totRecebidoGeral + totPendente;
@@ -233,6 +229,28 @@ function Dashboard() {
             onRetry={refetch}
           />
         </div>
+      )}
+
+      {(vencidas.length > 0 || pendentesFollowup > 0) && (
+        <AlertBanner
+          tone="destructive"
+          icon={<AlertTriangle className="h-5 w-5" />}
+          title={[
+            vencidas.length > 0 ? `${vencidas.length} conta(s) vencida(s)` : "",
+            pendentesFollowup > 0 ? `${pendentesFollowup} follow-up(s) pendente(s) hoje` : "",
+          ]
+            .filter(Boolean)
+            .join(" e ")}
+          description={vencidas.length > 0 ? `Total vencido ${brl(totalVencido)}` : undefined}
+          action={
+            <Link
+              to="/contas-receber"
+              className="rounded-lg border border-current/30 px-3 py-1.5 text-sm font-medium"
+            >
+              Resolver
+            </Link>
+          }
+        />
       )}
 
       <div className="mb-2 flex items-center gap-2">
